@@ -42,7 +42,7 @@ unix {
 }
 
 
-INCLUDEPATH += /usr/include/opencv2
+INCLUDEPATH += /usr/local/include/opencv2
 
 
 LIBS += -L  /opt/local/lib/ -lopencv_core
