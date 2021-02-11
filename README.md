@@ -1,11 +1,13 @@
 # Projet de fin d'études - Outil de segmentation interactive pour les nuages de points 3D LiDAR
 
-Encadrants : 
+Encadrants :
+
 - Michaël Clément
 - Rémi Giraud
 
-Groupe : 
--  Zhong Yi Chen
+Groupe :
+
+- Zhong Yi Chen
 - Julien Legere
-- Arthur Mondon 
+- Arthur Mondon
 - Tsiory Rakotoarisoa
