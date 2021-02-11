@@ -118,6 +118,39 @@ void MainWindow::openImage()
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
 }
 
+void MainWindow::openRangeImage()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString(), "Binary file (*.bin)");
+    if (fileName == nullptr) return;
+
+    RangeImage ri(fileName.toStdString());
+    _img = ri.createMatFromXYZ();
+
+    float scale = min(MAX_WIDTH /(2*_img.cols), MAX_HEIGHT/_img.rows);
+    if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);
+
+    _cl->clear();
+    _cl->setImgRef(_img);
+    _cl->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
+    _ui->nbSpxSlider->setMaximum(_cl->nbSpx());
+    setNbSpxSlider(_cl->nbSpx()/4);
+    updateSuperpixelsLevel();
+
+
+    int w_width = min(2*_img.cols, (int)MAX_WIDTH);
+    int w_height = min(_img.rows, (int)MAX_HEIGHT);
+
+    this->resize(w_width + 50, w_height + 2.25*_ui->widgetSliders->height() + _ui->selectionButton->height() );
+
+    _ui->widgetSliders->resize(w_width, _ui->widgetSliders->height());
+    _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
+    _ui->selectionButton->setMaximumWidth(w_width/2.0);
+
+    _ui->statusBar->addWidget(_ui->pixelValuesLabel);
+    _ui->statusBar->addWidget(_ui->pixelColorLabel);
+}
+
+
 void MainWindow::updateSuperpixelsLevel(){
     _cl->updateSuperpixels(_ui->nbSpxSlider->value());
 }

@@ -15,6 +15,8 @@
 #include "slic.h"
 #include "clickablelabel.h"
 
+#include "rangeimage.h"
+
 using namespace cv;
 
 #define MAX_WIDTH 1600.0
@@ -31,6 +33,9 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public slots:
+
+    void openRangeImage();
+
     void openImage();
     void updateSuperpixelsLevel();
     void updateSuperpixelsWeight();
