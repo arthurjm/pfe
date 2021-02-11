@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
     _ui->valueWeightSlider->setNum(INITIAL_WEIGHT);
     _ui->weightSlider->setValue(INITIAL_WEIGHT);
 
-    connect(_ui->actionOpen_file, SIGNAL(triggered()), this, SLOT(openImage()));
+    connect(_ui->actionOpen_file, SIGNAL(triggered()), this, SLOT(openRangeImage()));
     connect(_ui->nbSpxSlider, SIGNAL(sliderReleased()), this, SLOT(updateSuperpixelsLevel()));
     connect(_ui->nbSpxSlider, SIGNAL(valueChanged(int)), this, SLOT(updateSliderValues()));
     connect(_ui->weightSlider, SIGNAL(sliderReleased()), this, SLOT(updateSuperpixelsWeight()));
@@ -42,6 +42,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_ui->selectionButton, SIGNAL(released()), this, SLOT(switchMode()));
     connect(_ui->contoursButton, SIGNAL(released()), this, SLOT(switchContours()));
 
+    connect(_ui->spinBoxMaxSpx, SIGNAL(valueChanged(int)), this, SLOT(updateMaxSpxSlider()));
+    connect(_ui->spinBoxMaxWeight, SIGNAL(valueChanged(int)), this, SLOT(updateMaxWeightSlider()));
+
 
     connect(_cl, SIGNAL(pixelValue(QPoint, QColor, int)), this, SLOT(displayPixelValues(QPoint, QColor, int)));
     connect(_cl, SIGNAL(mousePos(int,int)), this, SLOT(displayCursor(int, int)));
@@ -49,7 +52,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     // _img = imread("../../images/banana1.bmp");
-    _img = imread("../../images/flower.jpg");
+    _img = imread("../../../data/images/flower.jpg");
+    if(_img.cols==0) _img = imread("../../data/images/flower.jpg");
 
     float scale = MAX_WIDTH /(2*_img.cols);
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);
@@ -57,15 +61,21 @@ MainWindow::MainWindow(QWidget *parent) :
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);
 
     _cl->setImgRef(_img);
-    _cl->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
-    _ui->nbSpxSlider->setMaximum(_cl->nbSpx());
-    updateSuperpixelsLevel();
+    _cl->setMaximumLevel(MAX_LEVEL);
+    _ui->nbSpxSlider->setMaximum(MAX_LEVEL);
+    _ui->spinBoxMaxSpx->setValue(MAX_LEVEL);
+    _ui->weightSlider->setMaximum(MAX_WEIGHT);
+    _ui->spinBoxMaxWeight->setValue(MAX_WEIGHT);
+
+    _ui->spinBoxMaxWeight->setVisible(false); //remove to enable changing max values of weight
+
+    initSuperpixelsLevel();
 
 
     int w_width = min(2*_img.cols, (int)MAX_WIDTH);
     int w_height = min(_img.rows, (int)MAX_HEIGHT);
 
-    this->resize(w_width + 50, w_height + 2.25*_ui->widgetSliders->height() + _ui->selectionButton->height() );
+    this->resize(w_width + 50, w_height + 2.0*_ui->widgetSliders->height() + _ui->selectionButton->height() );
 
     _ui->widgetSliders->resize(w_width, _ui->widgetSliders->height());
     _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
@@ -99,16 +109,12 @@ void MainWindow::openImage()
 
     _cl->clear();
     _cl->setImgRef(_img);
-    _cl->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
-    _ui->nbSpxSlider->setMaximum(_cl->nbSpx());
-    setNbSpxSlider(_cl->nbSpx()/4);
-    updateSuperpixelsLevel();
-
+    initSuperpixelsLevel();
 
     int w_width = min(2*_img.cols, (int)MAX_WIDTH);
     int w_height = min(_img.rows, (int)MAX_HEIGHT);
 
-    this->resize(w_width + 50, w_height + 2.25*_ui->widgetSliders->height() + _ui->selectionButton->height() );
+    this->resize(w_width + 50, w_height + 2.0*_ui->widgetSliders->height() + _ui->selectionButton->height() );
 
     _ui->widgetSliders->resize(w_width, _ui->widgetSliders->height());
     _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
@@ -131,16 +137,12 @@ void MainWindow::openRangeImage()
 
     _cl->clear();
     _cl->setImgRef(_img);
-    _cl->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
-    _ui->nbSpxSlider->setMaximum(_cl->nbSpx());
-    setNbSpxSlider(_cl->nbSpx()/4);
-    updateSuperpixelsLevel();
-
+    initSuperpixelsLevel();
 
     int w_width = min(2*_img.cols, (int)MAX_WIDTH);
     int w_height = min(_img.rows, (int)MAX_HEIGHT);
 
-    this->resize(w_width + 50, w_height + 2.25*_ui->widgetSliders->height() + _ui->selectionButton->height() );
+    this->resize(w_width + 50, w_height + 2.0*_ui->widgetSliders->height() + _ui->selectionButton->height() );
 
     _ui->widgetSliders->resize(w_width, _ui->widgetSliders->height());
     _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
@@ -150,28 +152,35 @@ void MainWindow::openRangeImage()
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
 }
 
+void MainWindow::initSuperpixelsLevel(){
+    _cl->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), true);
+}
 
 void MainWindow::updateSuperpixelsLevel(){
-    _cl->updateSuperpixels(_ui->nbSpxSlider->value());
+    _cl->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), false);
 }
 
 void MainWindow::updateSuperpixelsWeight(){
-    if (_ui->weightSlider->value() == _ui->weightSlider->maximum())
-        _cl->initSuperpixels(INITIAL_NB_SPX, INT_MAX);
-    else
-        _cl->initSuperpixels(INITIAL_NB_SPX, _ui->weightSlider->value());
-    _ui->nbSpxSlider->setMaximum(_cl->nbSpx());
-    updateSuperpixelsLevel();
-    _cl->clearScribble();
+    initSuperpixelsLevel();
+    _cl->clear();
 }
 
 void MainWindow::updateSliderValues(){
     _ui->valueNbSpxSlider->setNum(_ui->nbSpxSlider->value());
-    if (_ui->weightSlider->value() == _ui->weightSlider->maximum()){
-        _ui->valueWeightSlider->setText(trUtf8("\u221e")); // Symbol infinite
-    } else {
-        _ui->valueWeightSlider->setNum(_ui->weightSlider->value());
-    }
+    // if (_ui->weightSlider->value() == _ui->weightSlider->maximum()){
+    //     _ui->valueWeightSlider->setText(trUtf8("\u221e")); // Symbol infinite
+    // } else {
+    _ui->valueWeightSlider->setNum(_ui->weightSlider->value());
+    // }
+}
+
+void MainWindow::updateMaxSpxSlider(){
+    _cl->setMaximumLevel(_ui->spinBoxMaxSpx->value());
+    _ui->nbSpxSlider->setMaximum(_ui->spinBoxMaxSpx->value());
+}
+
+void MainWindow::updateMaxWeightSlider(){
+    _ui->weightSlider->setMaximum(_ui->spinBoxMaxWeight->value());
 }
 
 void MainWindow::setNbSpxSlider(int treeLevel){
@@ -226,10 +235,10 @@ void MainWindow::switchMode(){
         this->setCursor(Qt::PointingHandCursor);
 
         //set nb spx on max level and disable it :
-        _ui->valueNbSpxSlider->setNum(_cl->nbSpx());
-        _ui->nbSpxSlider->setValue(_cl->nbSpx());
-        _cl->updateSuperpixels(_ui->nbSpxSlider->value());
-        _ui->nbSpxSlider->setVisible(false);
+        // _ui->valueNbSpxSlider->setNum(_cl->nbSpx());
+        // _ui->nbSpxSlider->setValue(_cl->nbSpx());
+        // _cl->updateSuperpixels(_ui->nbSpxSlider->value());
+        // _ui->nbSpxSlider->setVisible(false);
     }
 }
 

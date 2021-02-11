@@ -39,9 +39,9 @@ void RangeImage::loadRangeImage(string fileName)
         _minValue[3] = min(_minValue[3], _data[i].depth);
 
         _maxValue[0] = max(_maxValue[0], _data[i].x);
-        _maxValue[1] = max(_maxValue[0], _data[i].y);
-        _maxValue[2] = max(_maxValue[0], _data[i].z);
-        _maxValue[3] = max(_maxValue[0], _data[i].depth);
+        _maxValue[1] = max(_maxValue[1], _data[i].y);
+        _maxValue[2] = max(_maxValue[2], _data[i].z);
+        _maxValue[3] = max(_maxValue[3], _data[i].depth);
     }
 }
 
@@ -52,7 +52,7 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
     vector<float> min(idx.size()), max(idx.size());
     for (size_t i = 0; i < idx.size(); i++)
     {
-        cout << idx.at(i) << endl;
+     
         if (idx.at(i) != 4)
         {
             min.at(i) = _minValue[idx.at(i)];
@@ -69,19 +69,23 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
             return normVal;
         }
     }
-    cout << "yolo ! " << endl;
-
     int size = _width * _height;
-    float val;
+    float val, remission;
     for (int i = 0; i < size; i++)
     {
+        remission = *((float *)(_data) + i * DIM + 4);
+
         for (size_t j = 0; j < idx.size(); j++)
         {
-            //val = *((float *)(_data) + i * DIM + idx.at(j));
-            val = 255;
-            //cout << i << endl;
-            //val = roundf(((val - min.at(j)) / max.at(j)) * 255);
-            normVal.push_back((uchar)val);
+            if (remission != -1.f)
+            {
+                val = *((float *)(_data) + i * DIM + idx.at(j));
+                val = roundf((val - min.at(j)) / (max.at(j) - min.at(j)) * 255);
+                val *= remission;
+                normVal.push_back((uchar)val);
+            }
+            else
+                normVal.push_back((uchar)0);
         }
     }
     return normVal;
@@ -98,7 +102,6 @@ cv::Mat RangeImage::createCvMat(vector<uchar> dataBGR)
 {
     cv::Mat m = cv::Mat(_height, _width, CV_8UC3); // initialize matrix of uchar of 3-channel where you will store vec data
     size_t size = _height * _width * 3;
-    cout << dataBGR.size() << " | " << size << endl; 
     if (dataBGR.size() == size)
         memcpy(m.data, dataBGR.data(), dataBGR.size() * sizeof(uchar));
     else

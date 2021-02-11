@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Fast Hierarchy</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QWidget" name="widgetImages">
@@ -89,12 +89,18 @@
       <x>30</x>
       <y>20</y>
       <width>901</width>
-      <height>80</height>
+      <height>103</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayoutSliders">
      <item row="2" column="2">
       <widget class="QLabel" name="valueWeightSlider">
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="text">
         <string>20</string>
        </property>
@@ -110,13 +116,13 @@
      <item row="2" column="1">
       <widget class="QSlider" name="weightSlider">
        <property name="minimum">
-        <number>5</number>
+        <number>1</number>
        </property>
        <property name="maximum">
-        <number>200</number>
+        <number>20</number>
        </property>
        <property name="value">
-        <number>20</number>
+        <number>10</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -150,8 +156,14 @@
       <widget class="QLabel" name="valueNbSpxSlider">
        <property name="minimumSize">
         <size>
-         <width>100</width>
+         <width>40</width>
          <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="baseSize">
@@ -192,6 +204,32 @@
       <widget class="QPushButton" name="saveSelectionButton">
        <property name="text">
         <string>Save Selection</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QSpinBox" name="spinBoxMaxSpx">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>10000</number>
+       </property>
+       <property name="singleStep">
+        <number>100</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QSpinBox" name="spinBoxMaxWeight">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="singleStep">
+        <number>10</number>
        </property>
       </widget>
      </item>

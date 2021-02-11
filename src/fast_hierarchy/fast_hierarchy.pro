@@ -5,11 +5,10 @@
 #-------------------------------------------------
 
 QT       += core gui
-QMAKE_CXXFLAGS += -std=c++14
-CONFIG += c++14
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = slic_hierarchy
+TARGET = fast_hierarchy
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -26,14 +25,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    slic.cpp \
     clickablelabel.cpp \
+    superpixelhierarchy.cpp \
     rangeimage.cpp \
 
 HEADERS  += mainwindow.h \
-    slic.h \
     clickablelabel.h \
-    rangeimage.h \
+    superpixelhierarchymex.hpp \
+    superpixelhierarchy.h \
+     rangeimage.h \
 
 FORMS    += mainwindow.ui
 
@@ -41,8 +41,8 @@ FORMS    += mainwindow.ui
 unix {
     CONFIG += link_pkgconfig
     PKGCONFIG += opencv
-    
 }
+
 
 INCLUDEPATH += /usr/local/include/
 

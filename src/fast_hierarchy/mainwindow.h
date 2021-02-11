@@ -12,17 +12,19 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 
-#include "slic.h"
 #include "clickablelabel.h"
 
 #include "rangeimage.h"
 
 using namespace cv;
 
-#define MAX_WIDTH 1600.0
+#define MAX_WIDTH 2100.0
 #define MAX_HEIGHT 800.0
-#define INITIAL_NB_SPX 1000.0
-#define INITIAL_WEIGHT 40
+#define INITIAL_NB_SPX 300.0
+#define INITIAL_WEIGHT 20
+#define MAX_LEVEL 1000
+#define MAX_WEIGHT 20
+
 
 namespace Ui {
 class MainWindow;
@@ -33,13 +35,15 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public slots:
-
-    void openRangeImage();
-
     void openImage();
+    void openRangeImage();
     void updateSuperpixelsLevel();
+    void initSuperpixelsLevel();
     void updateSuperpixelsWeight();
     void updateSliderValues();
+    void updateMaxSpxSlider();
+    void updateMaxWeightSlider();
+
     void resetSelection();
     void save();
     void displayPixelValues(QPoint pPos, QColor pCol, int pLabelSpx);
@@ -47,6 +51,7 @@ public slots:
     void setNbSpxSlider(int treeLevel);
     void switchMode();
     void switchContours();
+
 
 
 public:

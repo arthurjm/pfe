@@ -8,7 +8,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "slic.h"
+#include "superpixelhierarchy.h"
 
 using namespace cv;
 
@@ -25,8 +25,7 @@ public:
     QImage cvToQt(Mat &pSrc);
     Mat qtToCv(const QImage &pSrc);
     void setImgRef(Mat pImg);
-    void initSuperpixels(int pNbSpx, int pWeight);
-    void updateSuperpixels(int pNbSpx);
+    void updateSuperpixels(int pNbSpx, int pWeight, bool buildScribbleLevels);
     void generateSuperpixelsZoom(int pNbSpx, int pWeight);
     void saveSelection();
 
@@ -40,6 +39,7 @@ public:
     void clearScribble();
 
     void setContours(bool showContours);
+    void setMaximumLevel(int pMaxLevel){ _maxLevel = pMaxLevel;}
 
 signals:
     void mousePos(int pX, int pY);
@@ -59,9 +59,11 @@ private:
     void drawPointTo(const QPoint &pPoint, QColor pColor);
     void drawLineTo(const QPoint &endPoint, QColor pColor);
 
+    SuperpixelHierarchy *_sh;
 
-    Slic *_slic;
-    Mat _imgRef;
+    int _maxLevel;
+
+    Mat _imgRef, _imgContours;
     Mat _leftImgContours;
     Mat _leftImgClusters;
     Mat _rightImgContours;
@@ -75,15 +77,14 @@ private:
 
     int _xRoi = 0;
     int _yRoi = 0;
-    int _zoom = 1;
-
-    int currentTreeLevel;
+    int _zoomValueLeft = 1;
+    int _zoomValueRight = 1;
 
     QPainter painter;
     bool _isScribble;
     bool _showContours;
     int labelisationMode;
-    int penWidth = 15;
+    int penWidth = 10;
 };
 
 #endif // CLICKABLELABEL_H
