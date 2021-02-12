@@ -38,7 +38,7 @@ void test_put()
 void trie(nc::NdArray<int> &array, nc::NdArray<unsigned int> index)
 {
     auto array2 = array.copy();
-    for(int i = 0; i < array.size(); i++){
+    for(uint32_t i = 0; i < array.size(); i++){
         array2[i] = array[index[i]];
     }
     array = array2;
@@ -46,14 +46,17 @@ void trie(nc::NdArray<int> &array, nc::NdArray<unsigned int> index)
 
 int main(int argc, char *argv[])
 {
-    // CloudPoints cp(argv[1]);
-    // RangeImage ri(cp);
+    if (argc >= 2)
+    {
+        CloudPoints cp(argv[1]);
+        RangeImage ri(cp);
+    }
 
     // test_put();
 
-    QApplication a(argc, argv);
-    MainWindow w;
-    w.show();
+    // QApplication a(argc, argv);
+    // MainWindow w;
+    // w.show();
 
-    return a.exec();
+    // return a.exec();
 }

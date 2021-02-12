@@ -43,8 +43,8 @@ private:
     void loadRangeImage(string fileName);
 
     riVertex *_data;
-    int _width;
     int _height;
+    int _width;
 };
 
 #endif
