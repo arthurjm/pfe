@@ -138,7 +138,7 @@ void SuperpixelHierarchy::initPic() {
     _pixelsInCluster = pic;
 }
 
-cv::Mat SuperpixelHierarchy::buildHierarchy(const cv::Mat &pImage, const cv::Mat &pContours, int pNbSpx, int pWeight, bool buildScribbleLevels){
+cv::Mat SuperpixelHierarchy::buildHierarchy(const cv::Mat &pImage, const cv::Mat &pContours, int pNbSpx, int pWeight, bool buildScribbleLevels, const riVertex* riData){
     connect = pWeight;
     w = pImage.cols;
     h = pImage.rows;
@@ -158,13 +158,14 @@ cv::Mat SuperpixelHierarchy::buildHierarchy(const cv::Mat &pImage, const cv::Mat
             image_shift[j+i*h+h*w] = imgLine(i+j*w+h*w);
             image_shift[j+i*h+2*h*w] = imgLine(i+j*w+2*h*w);
             edge_shift[j+i*h] = edgeLine(i+j*w);
-            if(h!=pContours.rows) edge_shift[j+i*h] = 0;
+            //if(h!=pContours.rows) 
+            edge_shift[j+i*h] = 0;
         }
     }
 
     SuperpixelHierarchyMex SH;
     SH.init(h,w,connect,iterSwitch);
-    SH.buildTree(image_shift,edge_shift);
+    SH.buildTree(image_shift, riData, edge_shift);
     //Extraction of parameters from the tree
     int * parent = (int *) malloc(h*w*sizeof(int));
     int * label = (int *) malloc(h*w*sizeof(int));

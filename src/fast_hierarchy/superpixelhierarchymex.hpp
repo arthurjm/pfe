@@ -8,7 +8,7 @@
 #include <float.h>
 #include <limits.h>
 #include <string.h>
-
+#include "rangeimage.h"
 using namespace std;
 
 template<class T>
@@ -75,16 +75,23 @@ private:
 
     int *m_temp;
 
+    // JL, ZY : Three array to store range image data
+    float* m_coord, *m_remission, *m_depth;
+
 public:
     SuperpixelHierarchyMex()
     {
-        m_arcmem = NULL;
-        m_arcptr = NULL;
-        m_frtarc = NULL;
-        m_minarc = NULL;
-        m_arctmp = NULL;
-        m_color  = NULL;
-        m_temp   = NULL;
+        m_arcmem    = NULL;
+        m_arcptr    = NULL;
+        m_frtarc    = NULL;
+        m_minarc    = NULL;
+        m_arctmp    = NULL;
+        m_color     = NULL;
+        m_temp      = NULL;
+        // JL, ZY 
+        m_coord     = NULL;
+        m_depth     = NULL;
+        m_remission = NULL;
     }
 
     ~SuperpixelHierarchyMex() { clean(); }
@@ -117,11 +124,16 @@ public:
         for (int i=0; i<m_arcmax; ++i) { m_arcptr[i] = &m_arcmem[i]; }
         m_regionnum = m_vexnum; m_treeSize = 0;
 
+        // JL, ZY : range image 
+        m_coord = new float[m_vexnum*3];
+        m_remission = new float[m_vexnum];
+        m_depth = new float[m_vexnum];
     }
 
-    void buildTree(unsigned char *img, unsigned char *edge = NULL)
+    void buildTree(unsigned char *img, const riVertex* riData, unsigned char *edge = NULL)
     {
         createVexLab(img);
+        createVexRIData(riData);
         buildGraph(edge);
         m_iter = 0;
         int maxDistColor = 0;
@@ -191,7 +203,7 @@ public:
             if (m_iter > m_iterSwitch) dist *= distEdge;
 
             //ARTHUR: added to weight the spatial distance
-            dist = ((float)m_connect/20.0) * (float)dist;
+            dist = ((float)m_connect/20.0) * (float)dist; 
 
             if (dist < m_dist[lu]) { m_dist[lu] = dist; m_minarc[lu] = arc; }
             if (dist < m_dist[lv]) { m_dist[lv] = dist; m_minarc[lv] = arc; }
@@ -358,6 +370,10 @@ private:
         delete [] m_arctmp;
         delete [] m_color;
         delete [] m_temp;
+        // JL, ZY
+        delete [] m_remission;
+        delete [] m_coord;
+        delete [] m_depth;
     }
 
     int computeEdge(int h, int w, int connect)
@@ -544,6 +560,18 @@ private:
                     insertArc(id0, idt, boundary);
                 }
             }
+        }
+    }
+    
+    // JL, ZY : set range image data
+    void createVexRIData(const riVertex* riData)
+    {
+        for(int i = 0; i < m_vexmax; i++){
+            m_coord[i*3] = riData[i].x;
+            m_coord[i*3+1] = riData[i].y;
+            m_coord[i*3+2] = riData[i].z;
+            m_depth[i] = riData[i].depth;
+            m_remission[i] = riData[i].remission;
         }
     }
 

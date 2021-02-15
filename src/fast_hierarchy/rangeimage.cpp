@@ -201,3 +201,7 @@ cv::Mat RangeImage::morphDilate(cv::Mat img){
     cv::dilate(img, img_dilate, element);
     return img_dilate;
 }
+
+const riVertex* RangeImage::getData(){
+    return _data;
+}

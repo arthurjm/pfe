@@ -9,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "superpixelhierarchy.h"
-
+#include "rangeimage.h"
 using namespace cv;
 
 class MainWindow;
@@ -41,6 +41,13 @@ public:
     void setContours(bool showContours);
     void setMaximumLevel(int pMaxLevel){ _maxLevel = pMaxLevel;}
 
+    /**
+    * set the default range image 
+    * 
+    * @param ri reference on an RangeImage
+    * */
+    void setRangeImage(RangeImage& ri);
+
 signals:
     void mousePos(int pX, int pY);
     void pixelValue(QPoint pPos, QColor pCol, int pLabelSpx);
@@ -71,6 +78,8 @@ private:
     Mat _zoomLeftImg;
     Mat _coloredImg;
     Mat _rightImgNoContours;
+
+    RangeImage _rangeImage;
 
 
     QPoint lastPoint;

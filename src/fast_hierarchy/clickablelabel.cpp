@@ -44,7 +44,12 @@ cv::Mat ClickableLabel::qtToCv(const QImage &src){
 void ClickableLabel::setImgRef(Mat pImg){
     _imgRef = pImg;
     _coloredImg = pImg;
-    _imgContours = imread("../../../data/images/bigcat_edge.png");
+    //_imgContours = imread("../../../data/images/bigcat_edge.png");
+    _imgContours = pImg; // changed in the futur 
+}
+
+void ClickableLabel::setRangeImage(RangeImage& ri){
+    _rangeImage = ri;
 }
 
 /*
@@ -74,7 +79,7 @@ void ClickableLabel::clearScribble(){
  */
  void ClickableLabel::updateSuperpixels(int pNbSpx, int pWeight, bool buildScribbleLevels){
    if(_imgRef.empty()) return;
-   _leftImgContours = _sh->buildHierarchy(_imgRef.clone(), _imgContours.clone(), pNbSpx, pWeight, buildScribbleLevels);
+   _leftImgContours = _sh->buildHierarchy(_imgRef.clone(), _imgContours.clone(), pNbSpx, pWeight, buildScribbleLevels, _rangeImage.getData());
    _leftImgClusters = _leftImgContours.clone();
    _zoomLeftImg = applyZoom(_leftImgContours);
    _rightImgContours =  Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255,255,255));

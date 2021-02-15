@@ -26,6 +26,8 @@ class RangeImage
 {
 
 public:
+    RangeImage() : _data(nullptr) {}
+
     /**
      * Range image must be a raw binary format (.bin) with (h * w * 6) as dimension
      * @param fileName location of range image
@@ -51,6 +53,12 @@ public:
      * @return an opencv Mat
      * */
     cv::Mat createImageFromRemission();
+
+    /** 
+     * Access _data with read only permission
+     * @return an const pointer of _data
+     * */
+    const riVertex* getData();
 
 private:
     /**
@@ -86,7 +94,7 @@ private:
     cv::Mat morphClose(cv::Mat img);
 
     /**
-     * Apply dilatation morphology to input image
+     * Apply dilation morphology to input image
      * 
      * @param img input matrices with format CV_8UC3
      * @return an opencv Mat

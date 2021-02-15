@@ -51,9 +51,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_cl, SIGNAL(updateSlider(int)), this, SLOT(setNbSpxSlider(int)));
 
 
-    // _img = imread("../../images/banana1.bmp");
-    _img = imread("../../../data/images/flower.jpg");
-    if(_img.cols==0) _img = imread("../../data/images/flower.jpg");
+    //_img = imread("../../data/images/banana1.bmp");
+    //if(_img.cols==0) _img = imread("../../data/range_images/000045.bin");
+    
+    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../../../data/range_image"), "Binary file (*.bin)");
+    //string fileName = "../../../data/range_image/000045.bin";
+
+    RangeImage ri(fileName.toStdString());
+    //_img = ri.createImageFromXYZ();
+    //_img = ri.createImageFromDepth();
+    _img = ri.createImageFromRemission();
 
     float scale = MAX_WIDTH /(2*_img.cols);
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);
@@ -61,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);
 
     _cl->setImgRef(_img);
+    _cl->setRangeImage(ri);
     _cl->setMaximumLevel(MAX_LEVEL);
     _ui->nbSpxSlider->setMaximum(MAX_LEVEL);
     _ui->spinBoxMaxSpx->setValue(MAX_LEVEL);
@@ -126,7 +134,7 @@ void MainWindow::openImage()
 
 void MainWindow::openRangeImage()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString(), "Binary file (*.bin)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../../../data/range_image"), "Binary file (*.bin)");
     if (fileName == nullptr) return;
 
     RangeImage ri(fileName.toStdString());
@@ -139,6 +147,7 @@ void MainWindow::openRangeImage()
 
     _cl->clear();
     _cl->setImgRef(_img);
+    _cl->setRangeImage(ri);
     initSuperpixelsLevel();
 
     int w_width = min(2*_img.cols, (int)MAX_WIDTH);
