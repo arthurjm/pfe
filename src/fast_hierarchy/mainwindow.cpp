@@ -130,7 +130,9 @@ void MainWindow::openRangeImage()
     if (fileName == nullptr) return;
 
     RangeImage ri(fileName.toStdString());
-    _img = ri.createMatFromXYZ();
+    //_img = ri.createImageFromXYZ();
+    //_img = ri.createImageFromDepth();
+    _img = ri.createImageFromRemission();
 
     float scale = min(MAX_WIDTH /(2*_img.cols), MAX_HEIGHT/_img.rows);
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);

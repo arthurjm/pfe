@@ -52,7 +52,7 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
     vector<float> min(idx.size()), max(idx.size());
     for (size_t i = 0; i < idx.size(); i++)
     {
-     
+
         if (idx.at(i) != 4)
         {
             min.at(i) = _minValue[idx.at(i)];
@@ -81,7 +81,7 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
             {
                 val = *((float *)(_data) + i * DIM + idx.at(j));
                 val = roundf((val - min.at(j)) / (max.at(j) - min.at(j)) * 255);
-                val *= remission;
+                //val *= remission;
                 normVal.push_back((uchar)val);
             }
             else
@@ -91,21 +91,113 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
     return normVal;
 }
 
-cv::Mat RangeImage::createMatFromXYZ()
+void RangeImage::interpolationBGR(vector<uchar> &dataColor, int halfsizeX, int halfsizeY)
 {
-    vector<int> idx = {0, 1, 2};
-    vector<uchar> dataBGR = normalizedValue(idx);
-    return createCvMat(dataBGR);
+    for (int i = 0; i < _height; i++)
+    {
+        for (int j = 0; j < _width; j++)
+        {
+            if (dataColor.at(i * _width * 3 + j * 3) == 0 && dataColor.at(i * _width * 3 + j * 3 + 1) == 0 && dataColor.at(i * _width * 3 + j * 3 + 2) == 0)
+            {
+                int sumB = 0;
+                int sumG = 0;
+                int sumR = 0;
+                int sum = 0;
+                for (int y = i - halfsizeY; y <= i + halfsizeY; y++)
+                {
+                    for (int x = j - halfsizeX; x <= j + halfsizeX; x++)
+                    {
+                        if (x < _width && y < _height && x >= 0 && y >= 0)
+                        {
+                            if (x != j || y != i)
+                            {
+                                sumB += dataColor.at(y * _width * 3 + x * 3);
+                                sumG += dataColor.at(y * _width * 3 + x * 3 + 1);
+                                sumR += dataColor.at(y * _width * 3 + x * 3 + 2);
+                                sum++;
+                            }
+                        }
+                    }
+                }
+                dataColor.at(i * _width * 3 + j * 3) = sumB / sum;
+                dataColor.at(i * _width * 3 + j * 3 + 1) = sumG / sum;
+                dataColor.at(i * _width * 3 + j * 3 + 2) = sumR / sum;
+            }
+        }
+    }
 }
 
-cv::Mat RangeImage::createCvMat(vector<uchar> dataBGR)
+cv::Mat RangeImage::createImageFromXYZ()
 {
-    cv::Mat m = cv::Mat(_height, _width, CV_8UC3); // initialize matrix of uchar of 3-channel where you will store vec data
-    size_t size = _height * _width * 3;
-    if (dataBGR.size() == size)
-        memcpy(m.data, dataBGR.data(), dataBGR.size() * sizeof(uchar));
-    else
-        cerr << "invalide dataBGR in createCvMat function" << endl;
+    vector<int> idx = {0, 1, 2};
+    vector<uchar> dataColor = normalizedValue(idx);
+    //interpolationBGR(dataColor, 0, 2);
+    cv::Mat img =  createCvMat(dataColor);
+    img = morphClose(img);
+    return img;
+}
 
+cv::Mat RangeImage::createImageFromDepth()
+{
+    vector<int> idx = {3};
+    vector<uchar> dataColor = normalizedValue(idx);
+    cv::Mat img =  createCvMat(dataColor, CV_8UC1);
+    img = morphClose(img);
+    return img;
+}
+
+
+cv::Mat RangeImage::createImageFromRemission()
+{
+    vector<int> idx = {4};
+    vector<uchar> dataColor = normalizedValue(idx);
+    cv::Mat img =  createCvMat(dataColor, CV_8UC1);
+    img = morphClose(img);
+    return img;
+}
+
+cv::Mat RangeImage::createCvMat(vector<uchar> dataColor, int type)
+{
+
+    if (!(type == CV_8UC3 || type == CV_8UC1))
+        cerr << "invalide CV_TYPE in createCvMat function" << endl;
+
+    cv::Mat m = cv::Mat(_height, _width, type);
+
+    size_t size = _height * _width;
+    if (type == CV_8UC3)
+        size *= 3;
+
+    if (dataColor.size() == size)
+        memcpy(m.data, dataColor.data(), dataColor.size() * sizeof(uchar));
+    else
+        cerr << "invalide dataColor in createCvMat function" << endl;
+
+    if (type == CV_8UC1)
+    {
+        cv::Mat tmp = cv::Mat(_height, _width, CV_8UC3);
+        cv::cvtColor(m, tmp, CV_GRAY2BGR);
+        m = tmp;
+    }
     return m;
+}
+
+cv::Mat RangeImage::morphClose(cv::Mat img){
+    // Test : Apply dilation
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+                                                cv::Size(1, 3));
+    cv::Mat img_close;
+    cv::morphologyEx(img, img_close, cv::MORPH_CLOSE, element);
+    return img_close;
+}
+
+
+
+cv::Mat RangeImage::morphDilate(cv::Mat img){
+    // Test : Apply dilation
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+                                                cv::Size(1, 3));
+    cv::Mat img_dilate;
+    cv::dilate(img, img_dilate, element);
+    return img_dilate;
 }

@@ -35,9 +35,22 @@ public:
     RangeImage(string fileName, int width = 1024, int height = 64);
 
     /**
-     * @return an vector BGR from XYZ
+     * Create BGR image from XYZ coordinates 
+     * @return an opencv Mat
      * */
-    cv::Mat createMatFromXYZ();
+    cv::Mat createImageFromXYZ();
+
+    /**
+     * Create gray image from depth
+     * @return an opencv Mat
+     * */
+    cv::Mat createImageFromDepth();
+
+    /**
+     * Create gray image from remission
+     * @return an opencv Mat
+     * */
+    cv::Mat createImageFromRemission();
 
 private:
     /**
@@ -53,12 +66,32 @@ private:
      * */
     vector<uchar> normalizedValue(vector<int> idx);
 
+    void interpolationBGR(vector<uchar> &dataColor, int halfsizeX, int halfsizeY);
+
     /**
      * Transform a range image to openCV matrice 
-     * @param 
+     * @param dataColor 
+     * @param type only CV_8UC3 and CV_8UC1 are allowed
      * @return openCV matrice
      **/
-    cv::Mat createCvMat(vector<uchar> dataBGR);
+    cv::Mat createCvMat(vector<uchar> dataColor, int type = CV_8UC3);
+
+
+    /**
+     * Apply closing morphology to input image
+     * 
+     * @param img input matrices with format CV_8UC3
+     * @return an opencv Mat
+     * */
+    cv::Mat morphClose(cv::Mat img);
+
+    /**
+     * Apply dilatation morphology to input image
+     * 
+     * @param img input matrices with format CV_8UC3
+     * @return an opencv Mat
+     * */
+    cv::Mat morphDilate(cv::Mat img);
 
     riVertex *_data;
     int _width;
