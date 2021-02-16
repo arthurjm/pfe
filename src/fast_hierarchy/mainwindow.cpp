@@ -59,8 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     RangeImage ri(fileName.toStdString());
     //_img = ri.createImageFromXYZ();
-    //_img = ri.createImageFromDepth();
-    _img = ri.createImageFromRemission();
+    _img = ri.createBGRFromColorMap(3);
 
     float scale = MAX_WIDTH /(2*_img.cols);
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);
@@ -138,9 +137,8 @@ void MainWindow::openRangeImage()
     if (fileName == nullptr) return;
 
     RangeImage ri(fileName.toStdString());
-    //_img = ri.createImageFromXYZ();
-    //_img = ri.createImageFromDepth();
-    _img = ri.createImageFromRemission();
+    // _img = ri.createImageFromXYZ();
+    _img = ri.createBGRFromColorMap(3);
 
     float scale = min(MAX_WIDTH /(2*_img.cols), MAX_HEIGHT/_img.rows);
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);

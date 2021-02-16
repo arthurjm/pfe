@@ -43,6 +43,9 @@ void RangeImage::loadRangeImage(string fileName)
         _maxValue[2] = max(_maxValue[2], _data[i].z);
         _maxValue[3] = max(_maxValue[3], _data[i].depth);
     }
+    // cout << "min x : " << _minValue[0] << " | max x : " << _maxValue[0] << endl;
+    // cout << "min y : " << _minValue[1] << " | max y : " << _maxValue[2] << endl;
+    // cout << "min z : " << _minValue[2] << " | max z : " << _maxValue[2] << endl;
 }
 
 vector<uchar> RangeImage::normalizedValue(vector<int> idx)
@@ -74,6 +77,7 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
     for (int i = 0; i < size; i++)
     {
         remission = *((float *)(_data) + i * DIM + 4);
+        //cout << i / _width << " |" << i % _width<< endl;
 
         for (size_t j = 0; j < idx.size(); j++)
         {
@@ -91,69 +95,119 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
     return normVal;
 }
 
-void RangeImage::interpolationBGR(vector<uchar> &dataColor, int halfsizeX, int halfsizeY)
+void RangeImage::interpolationBGR(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter)
 {
-    for (int i = 0; i < _height; i++)
+    for (int iter = 0; iter < nbIter; iter++)
     {
-        for (int j = 0; j < _width; j++)
+        for (int i = 0; i < _height; i++)
         {
-            if (dataColor.at(i * _width * 3 + j * 3) == 0 && dataColor.at(i * _width * 3 + j * 3 + 1) == 0 && dataColor.at(i * _width * 3 + j * 3 + 2) == 0)
+            for (int j = 0; j < _width; j++)
             {
-                int sumB = 0;
-                int sumG = 0;
-                int sumR = 0;
-                int sum = 0;
-                for (int y = i - halfsizeY; y <= i + halfsizeY; y++)
+                if (dataColor.at(i * _width * 3 + j * 3) == 0 
+                && dataColor.at(i * _width * 3 + j * 3 + 1) == 0 
+                && dataColor.at(i * _width * 3 + j * 3 + 2) == 0)
                 {
-                    for (int x = j - halfsizeX; x <= j + halfsizeX; x++)
+                    int sumB = 0;
+                    int sumG = 0;
+                    int sumR = 0;
+                    int sum = 0;
+                    for (int y = i - halfsizeY; y <= i + halfsizeY; y++)
                     {
-                        if (x < _width && y < _height && x >= 0 && y >= 0)
+                        for (int x = j - halfsizeX; x <= j + halfsizeX; x++)
                         {
-                            if (x != j || y != i)
+                            if (x < _width && y < _height && x >= 0 && y >= 0)
                             {
-                                sumB += dataColor.at(y * _width * 3 + x * 3);
-                                sumG += dataColor.at(y * _width * 3 + x * 3 + 1);
-                                sumR += dataColor.at(y * _width * 3 + x * 3 + 2);
-                                sum++;
+                                if (x != j || y != i)
+                                {
+                                    if (dataColor.at(y * _width * 3 + x * 3) != 0 
+                                    || dataColor.at(y * _width * 3 + x * 3 + 1) != 0 
+                                    || dataColor.at(y * _width * 3 + x * 3 + 2) != 0)
+                                    {
+                                        sumB += dataColor.at(y * _width * 3 + x * 3);
+                                        sumG += dataColor.at(y * _width * 3 + x * 3 + 1);
+                                        sumR += dataColor.at(y * _width * 3 + x * 3 + 2);
+                                        sum++;
+                                    }
+                                }
                             }
                         }
                     }
+                    if (sum != 0)
+                    {
+                        dataColor.at(i * _width * 3 + j * 3) = sumB / sum;
+                        dataColor.at(i * _width * 3 + j * 3 + 1) = sumG / sum;
+                        dataColor.at(i * _width * 3 + j * 3 + 2) = sumR / sum;
+                    }
                 }
-                dataColor.at(i * _width * 3 + j * 3) = sumB / sum;
-                dataColor.at(i * _width * 3 + j * 3 + 1) = sumG / sum;
-                dataColor.at(i * _width * 3 + j * 3 + 2) = sumR / sum;
             }
         }
     }
 }
 
+void RangeImage::interpolationGray(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter)
+{
+    for (int iter = 0; iter < nbIter; iter++)
+    {
+        vector<uchar>  dataClone(dataColor);
+        for (int i = 0; i < _height; i++)
+        {
+            for (int j = 0; j < _width; j++)
+            {
+                if (dataColor.at(i * _width + j) == 0)
+                {
+                    int sumGray = 0;
+                    int sum = 0;
+                    for (int y = i - halfsizeY; y <= i + halfsizeY; y++)
+                    {
+                        for (int x = j - halfsizeX; x <= j + halfsizeX; x++)
+                        {
+                            if (x < _width && y < _height && x >= 0 && y >= 0)
+                            {
+                                if (x != j || y != i)
+                                {
+                                    if (dataColor.at(y * _width + x ) != 0 )
+                                    {
+                                        sumGray += dataColor.at(y * _width + x);
+                                        sum++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (sum != 0)
+                    {
+                        dataClone.at(i * _width + j ) = sumGray / sum;
+                    }
+                }
+            }
+        }
+        dataColor = dataClone;
+    }
+}
+
+cv::Mat RangeImage::createBGRFromColorMap(int idx, bool interpolation, bool closing){
+    vector<uchar> dataColor = normalizedValue({idx});
+    if (interpolation) 
+        interpolationGray(dataColor, 0, 2, 4);
+    cv::Mat img = createCvMat(dataColor, CV_8UC1);
+    cv::Mat img2;
+    cv::applyColorMap(img,img2,cv::COLORMAP_HSV);
+
+    if(closing)
+        img2 = morphClose(img2);
+    return img2;
+}
+
 cv::Mat RangeImage::createImageFromXYZ()
 {
-    vector<int> idx = {0, 1, 2};
+    vector<int> idx = {0,1,2};
     vector<uchar> dataColor = normalizedValue(idx);
-    //interpolationBGR(dataColor, 0, 2);
-    cv::Mat img =  createCvMat(dataColor);
-    img = morphClose(img);
-    return img;
-}
-
-cv::Mat RangeImage::createImageFromDepth()
-{
-    vector<int> idx = {3};
-    vector<uchar> dataColor = normalizedValue(idx);
-    cv::Mat img =  createCvMat(dataColor, CV_8UC1);
-    img = morphClose(img);
-    return img;
-}
-
-
-cv::Mat RangeImage::createImageFromRemission()
-{
-    vector<int> idx = {4};
-    vector<uchar> dataColor = normalizedValue(idx);
-    cv::Mat img =  createCvMat(dataColor, CV_8UC1);
-    img = morphClose(img);
-    return img;
+    //interpolationBGR(dataColor, 0, 2, 4);
+    cv::Mat img = createCvMat(dataColor);
+    cv::Mat img2;
+    cv::applyColorMap(img,img2,cv::COLORMAP_HSV);
+    //img2 = morphClose(img2);
+    return img2;
 }
 
 cv::Mat RangeImage::createCvMat(vector<uchar> dataColor, int type)
@@ -182,7 +236,8 @@ cv::Mat RangeImage::createCvMat(vector<uchar> dataColor, int type)
     return m;
 }
 
-cv::Mat RangeImage::morphClose(cv::Mat img){
+cv::Mat RangeImage::morphClose(cv::Mat img)
+{
     // Test : Apply dilation
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 3));
@@ -191,9 +246,8 @@ cv::Mat RangeImage::morphClose(cv::Mat img){
     return img_close;
 }
 
-
-
-cv::Mat RangeImage::morphDilate(cv::Mat img){
+cv::Mat RangeImage::morphDilate(cv::Mat img)
+{
     // Test : Apply dilation
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 3));
@@ -202,6 +256,7 @@ cv::Mat RangeImage::morphDilate(cv::Mat img){
     return img_dilate;
 }
 
-const riVertex* RangeImage::getData(){
+const riVertex *RangeImage::getData()
+{
     return _data;
 }
