@@ -7,7 +7,6 @@
 #include "NumCpp.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
-// #include <opencv2/imgproc.hpp>
 #define DIM 6
 #define RI_X 0
 #define RI_Y 1

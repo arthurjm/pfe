@@ -17,7 +17,7 @@ public:
     /* Class constructors and deconstructors. */
     SuperpixelHierarchy();
 
-    cv::Mat buildHierarchy(const cv::Mat &pImage, const cv::Mat &pContours, int pNbSpx, int pWeight, bool buildScribbleLevels, const riVertex* riData);
+    cv::Mat buildHierarchy(const cv::Mat &pImage, const cv::Mat &pContours, int pNbSpx, int pWeight, bool buildScribbleLevels, RangeImage& rangeImage);
 
     void getSuperpixels(int *parent, int *label, int *treeu, int *treev, int &nvertex, int &nregion, int &N);
 

@@ -78,7 +78,7 @@ private:
     int *m_temp;
 
     // JL, ZY : Three array to store range image data
-    float *m_coord, *m_remission, *m_depth;
+    unsigned short* m_BGRX, *m_BGRY, *m_BGRZ, *m_BGRDepth, *m_BGRRemission;
 
 public:
     SuperpixelHierarchyMex()
@@ -91,9 +91,11 @@ public:
         m_color = NULL;
         m_temp = NULL;
         // JL, ZY
-        m_coord = NULL;
-        m_depth = NULL;
-        m_remission = NULL;
+        m_BGRX = NULL;
+        m_BGRY = NULL;
+        m_BGRZ = NULL;
+        m_BGRDepth = NULL;
+        m_BGRRemission = NULL;
     }
 
     ~SuperpixelHierarchyMex() { clean(); }
@@ -139,15 +141,18 @@ public:
         m_treeSize = 0;
 
         // JL, ZY : range image
-        m_coord = new float[m_vexnum * 3];
-        m_remission = new float[m_vexnum];
-        m_depth = new float[m_vexnum];
+        m_BGRX = new unsigned short[m_vexnum * 3];
+        m_BGRY = new unsigned short[m_vexnum * 3];
+        m_BGRZ = new unsigned short[m_vexnum * 3];
+        m_BGRDepth = new unsigned short[m_vexnum * 3];
+        m_BGRRemission = new unsigned short[m_vexnum * 3];
+
     }
 
-    void buildTree(unsigned char *img, const riVertex *riData, unsigned char *edge = NULL)
+    void buildTree(unsigned char *img, RangeImage& rangeImage, unsigned char *edge = NULL)
     {
-        createVexLab(img);
-        createVexRIData(riData);
+        createVexLab(img, m_color);
+        createVexRIData(rangeImage);
         buildGraph(edge);
         m_iter = 0;
         int maxDistColor = 0;
@@ -209,24 +214,11 @@ public:
             dc[1] = uc[1] - vc[1];
             dc[2] = uc[2] - vc[2];
 
-            // JL, ZY : 3D coordinates term
-            float *ucoord = m_coord + 3 * u;
-            float *vcoord = m_coord + 3 * v;
-            float dcoord[3];
-            dcoord[0] = ucoord[0] - vcoord[0];
-            dcoord[1] = ucoord[1] - vcoord[1];
-            dcoord[2] = ucoord[2] - vcoord[2];
-            // euclidean distance term
-            int distCoord = roundf(sqrtf(dcoord[0]*dcoord[0]+dcoord[1]*dcoord[1]+dcoord[2]*dcoord[2]));
-
-            int distDepth = roundf(fabs(m_depth[u] - m_depth[v]));
-            int distRemission = roundf(fabs(m_remission[u] - m_remission[v]));
-
             // [1] color term
             int distColor = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
             // [2] boundary term
             int distEdge = arc->confidence;
-            int dist = distColor + distCoord + distDepth + distRemission;
+            int dist = distColor;
             if (m_iter > m_iterSwitch)
                 dist *= distEdge;
 
@@ -415,9 +407,11 @@ private:
         delete[] m_color;
         delete[] m_temp;
         // JL, ZY
-        delete[] m_remission;
-        delete[] m_coord;
-        delete[] m_depth;
+        delete[] m_BGRX;
+        delete[] m_BGRY;
+        delete[] m_BGRZ;
+        delete[] m_BGRDepth;
+        delete[] m_BGRRemission;
     }
 
     int computeEdge(int h, int w, int connect)
@@ -434,13 +428,14 @@ private:
         // return sqrt((dc*dc/(_nc*_nc)) + (ds*ds/(_ns*_ns)));
     }
 
-    void createVexRGB(unsigned char *img)
+    // JL, ZY : change function with destination parameter
+    void createVexRGB(unsigned char *img, unsigned short* dst)
     {
         unsigned char *ptrr = img;
         unsigned char *ptrg = ptrr + m_vexnum;
         unsigned char *ptrb = ptrg + m_vexnum;
         unsigned char *ptre = ptrg;
-        unsigned short *ptrd = m_color;
+        unsigned short *ptrd = dst;
         while (ptrr != ptre)
         {
             *ptrd = *ptrr++;
@@ -450,7 +445,8 @@ private:
         }
     }
 
-    void createVexLab(unsigned char *img)
+    // JL, ZY : change function with destination parameter
+    void createVexLab(unsigned char *img, unsigned short* dst)
     {
         // Lab color space
         const double Xr = 0.950456; //D65
@@ -502,7 +498,7 @@ private:
         unsigned char *ptrr = img;
         unsigned char *ptrg = ptrr + m_vexnum;
         unsigned char *ptrb = ptrg + m_vexnum;
-        unsigned short *ptrd = m_color;
+        unsigned short *ptrd = dst;
         int R, G, B, X, Y, Z;
         for (int i = 0; i < m_vexnum; ++i)
         {
@@ -524,7 +520,8 @@ private:
         }
     }
 
-    void createVexYCbCr(unsigned char *img)
+    // JL, ZY : change function with destination parameter
+    void createVexYCbCr(unsigned char *img, unsigned short* dst)
     {
         const double M[3][3] = {0.299, 0.587, 0.114,
                                 -0.168736, -0.331264, 0.5,
@@ -546,7 +543,7 @@ private:
         unsigned char *ptrg = ptrr + m_vexnum;
         unsigned char *ptrb = ptrg + m_vexnum;
         unsigned char *ptre = ptrg;
-        unsigned short *ptrd = m_color;
+        unsigned short *ptrd = dst;
         int R, G, B;
         while (ptrr != ptre)
         {
@@ -619,17 +616,17 @@ private:
     }
 
     // JL, ZY : set range image data
-    void createVexRIData(const riVertex *riData)
+    void createVexRIData(RangeImage& rangeImage)
     {
-        for (int i = 0; i < m_vexmax; i++)
-        {
-            m_coord[i * 3] = riData[i].x;
-            m_coord[i * 3 + 1] = riData[i].y;
-            m_coord[i * 3 + 2] = riData[i].z;
-            m_depth[i] = riData[i].depth;
-            m_remission[i] = riData[i].remission;
-        }
+        createVexLab(rangeImage.createBGRFromColorMap(RI_X).data, m_BGRX);
+        createVexLab(rangeImage.createBGRFromColorMap(RI_Y).data, m_BGRY);
+        createVexLab(rangeImage.createBGRFromColorMap(RI_Z).data, m_BGRZ);
+        createVexLab(rangeImage.createBGRFromColorMap(RI_DEPTH).data, m_BGRDepth);
+        createVexLab(rangeImage.createBGRFromColorMap(RI_REMISSION).data, m_BGRRemission);
+
     }
+
+    //TODO : Change RGB function to BGR function
 };
 
 #endif

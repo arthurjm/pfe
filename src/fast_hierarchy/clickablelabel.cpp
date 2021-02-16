@@ -79,7 +79,7 @@ void ClickableLabel::clearScribble(){
  */
  void ClickableLabel::updateSuperpixels(int pNbSpx, int pWeight, bool buildScribbleLevels){
    if(_imgRef.empty()) return;
-   _leftImgContours = _sh->buildHierarchy(_imgRef.clone(), _imgContours.clone(), pNbSpx, pWeight, buildScribbleLevels, _rangeImage.getData());
+   _leftImgContours = _sh->buildHierarchy(_imgRef.clone(), _imgContours.clone(), pNbSpx, pWeight, buildScribbleLevels, _rangeImage);
    _leftImgClusters = _leftImgContours.clone();
    _zoomLeftImg = applyZoom(_leftImgContours);
    _rightImgContours =  Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255,255,255));

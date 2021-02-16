@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     RangeImage ri(fileName.toStdString());
     //_img = ri.createImageFromXYZ();
-    _img = ri.createBGRFromColorMap(3,false);
+    _img = ri.createBGRFromColorMap(1,true);
 
     float scale = MAX_WIDTH /(2*_img.cols);
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);
