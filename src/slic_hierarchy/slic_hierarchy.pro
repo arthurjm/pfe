@@ -27,13 +27,13 @@ SOURCES += main.cpp\
             mainwindow.cpp \
             slic.cpp \
             clickablelabel.cpp \
-            cloudpoints.cpp \
+            pointcloud.cpp \
             rangeimage.cpp \
 
 HEADERS  += mainwindow.h \
             slic.h \
             clickablelabel.h \
-            cloudpoints.h \
+            pointcloud.h \
             rangeimage.h \
 
 FORMS    += mainwindow.ui
@@ -44,8 +44,6 @@ unix {
     PKGCONFIG += opencv
 }
 
-
 INCLUDEPATH += /usr/local/include/
-
 
 LIBS += -L  /opt/local/lib/ -lopencv_core

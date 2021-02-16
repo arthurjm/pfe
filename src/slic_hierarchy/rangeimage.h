@@ -5,7 +5,7 @@
 #include <string>
 
 #include "NumCpp.hpp"
-#include "cloudpoints.h"
+#include "pointcloud.h"
 
 #define DIM 6
 #define HEIGHT 64
@@ -36,12 +36,15 @@ public:
      * @param height height of the range image
      **/
     RangeImage(string fileName, int height = HEIGHT, int width = WIDTH);
-    RangeImage(CloudPoints cp, int height = HEIGHT, int width = WIDTH,
+    RangeImage(PointCloud cp, int height = HEIGHT, int width = WIDTH,
                float proj_fov_up = FOV_UP, float proj_fov_down = FOV_DOWN);
+    riVertex * getData(){return _data;};
+    int getHeight() { return _height; };
+    int getWidth() { return _width; };
 
 private:
     void loadRangeImage(string fileName);
-
+    void pointCloudProjection(PointCloud cp, float proj_fov_up, float proj_fov_down);
     riVertex *_data;
     int _height;
     int _width;
