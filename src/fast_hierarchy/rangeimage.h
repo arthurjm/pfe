@@ -7,9 +7,7 @@
 #include "NumCpp.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
+// #include <opencv2/imgproc.hpp>
 #define DIM 6
 #define RI_X 0
 #define RI_Y 1
@@ -59,7 +57,7 @@ public:
      * @param closing boolean to activate closing morphologie
      * @return an uchar array
      * */
-    cv::Mat createBGRFromColorMap(int idx, bool interpolation = false, bool closing = false);
+    cv::Mat createBGRFromColorMap(int idx, bool interpolate = false, bool closing = false);
 
     /** 
      * Access _data with read only permission
@@ -83,21 +81,13 @@ private:
 
     /**
      * Apply interpolation on dead pixels (remission == -1).
-     * @param dataColor an array contain BGR color information 
+     * @param dataColor an array contains image information 
      * @param haflsizeX halfsize X of the kernel 
      * @param halfsizeY halfsize Y of the kernel 
      * @param nbIter number of iteration
+     * @param BGR boolean indicate if dataColor is a gray or color image
      * */
-    void interpolationBGR(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter);
-
-    /**
-     * Apply interpolation on dead pixels (remission == -1).
-     * @param dataColor an array contain gray color information 
-     * @param haflsizeX halfsize X of the kernel 
-     * @param halfsizeY halfsize Y of the kernel 
-     * @param nbIter number of iteration
-     * */
-    void interpolationGray(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter);
+    void interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter, bool BGR);
 
     /**
      * Transform a range image to openCV matrice 

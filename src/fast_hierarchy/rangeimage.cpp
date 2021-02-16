@@ -95,17 +95,20 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
     return normVal;
 }
 
-void RangeImage::interpolationBGR(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter)
+void RangeImage::interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter, bool BGR)
 {
+    int nbChannel = 1;
+    if (BGR)
+        nbChannel = 3;
     for (int iter = 0; iter < nbIter; iter++)
     {
         for (int i = 0; i < _height; i++)
         {
             for (int j = 0; j < _width; j++)
             {
-                if (dataColor.at(i * _width * 3 + j * 3) == 0 
-                && dataColor.at(i * _width * 3 + j * 3 + 1) == 0 
-                && dataColor.at(i * _width * 3 + j * 3 + 2) == 0)
+                if (dataColor.at(i * _width * nbChannel + j * nbChannel) == 0 && 
+                (!BGR || (dataColor.at(i * _width * nbChannel + j * nbChannel + 1) == 0 
+                && dataColor.at(i * _width * nbChannel + j * nbChannel + 2) == 0)))
                 {
                     int sumB = 0;
                     int sumG = 0;
@@ -119,93 +122,61 @@ void RangeImage::interpolationBGR(vector<uchar> &dataColor, int halfsizeX, int h
                             {
                                 if (x != j || y != i)
                                 {
-                                    if (dataColor.at(y * _width * 3 + x * 3) != 0 
-                                    || dataColor.at(y * _width * 3 + x * 3 + 1) != 0 
-                                    || dataColor.at(y * _width * 3 + x * 3 + 2) != 0)
-                                    {
-                                        sumB += dataColor.at(y * _width * 3 + x * 3);
-                                        sumG += dataColor.at(y * _width * 3 + x * 3 + 1);
-                                        sumR += dataColor.at(y * _width * 3 + x * 3 + 2);
-                                        sum++;
-                                    }
+                                    if (dataColor.at(y * _width * nbChannel + x * nbChannel) != 0 
+                                    || (BGR && ( dataColor.at(y * _width * nbChannel + x * nbChannel + 1) != 0 
+                                    || dataColor.at(y * _width * nbChannel + x * nbChannel + 2) != 0)))
+                                        {
+                                            sumB += dataColor.at(y * _width * nbChannel + x * nbChannel);
+
+                                            if (BGR)
+                                            {
+                                                sumG += dataColor.at(y * _width * nbChannel + x * nbChannel + 1);
+                                                sumR += dataColor.at(y * _width * nbChannel + x * nbChannel + 2);
+                                            }
+                                            sum++;
+                                        }
                                 }
                             }
                         }
                     }
                     if (sum != 0)
                     {
-                        dataColor.at(i * _width * 3 + j * 3) = sumB / sum;
-                        dataColor.at(i * _width * 3 + j * 3 + 1) = sumG / sum;
-                        dataColor.at(i * _width * 3 + j * 3 + 2) = sumR / sum;
-                    }
-                }
-            }
-        }
-    }
-}
+                        dataColor.at(i * _width * nbChannel + j * nbChannel) = sumB / sum;
 
-void RangeImage::interpolationGray(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter)
-{
-    for (int iter = 0; iter < nbIter; iter++)
-    {
-        vector<uchar>  dataClone(dataColor);
-        for (int i = 0; i < _height; i++)
-        {
-            for (int j = 0; j < _width; j++)
-            {
-                if (dataColor.at(i * _width + j) == 0)
-                {
-                    int sumGray = 0;
-                    int sum = 0;
-                    for (int y = i - halfsizeY; y <= i + halfsizeY; y++)
-                    {
-                        for (int x = j - halfsizeX; x <= j + halfsizeX; x++)
+                        if (BGR)
                         {
-                            if (x < _width && y < _height && x >= 0 && y >= 0)
-                            {
-                                if (x != j || y != i)
-                                {
-                                    if (dataColor.at(y * _width + x ) != 0 )
-                                    {
-                                        sumGray += dataColor.at(y * _width + x);
-                                        sum++;
-                                    }
-                                }
-                            }
+                            dataColor.at(i * _width * nbChannel + j * nbChannel + 1) = sumG / sum;
+                            dataColor.at(i * _width * nbChannel + j * nbChannel + 2) = sumR / sum;
                         }
-                    }
-                    if (sum != 0)
-                    {
-                        dataClone.at(i * _width + j ) = sumGray / sum;
                     }
                 }
             }
         }
-        dataColor = dataClone;
     }
 }
 
-cv::Mat RangeImage::createBGRFromColorMap(int idx, bool interpolation, bool closing){
+cv::Mat RangeImage::createBGRFromColorMap(int idx, bool interpolate, bool closing)
+{
     vector<uchar> dataColor = normalizedValue({idx});
-    if (interpolation) 
-        interpolationGray(dataColor, 0, 2, 4);
+    if (interpolate)
+        interpolation(dataColor, 0, 2, 4, false);
     cv::Mat img = createCvMat(dataColor, CV_8UC1);
     cv::Mat img2;
-    cv::applyColorMap(img,img2,cv::COLORMAP_HSV);
+    cv::applyColorMap(img, img2, cv::COLORMAP_HSV);
 
-    if(closing)
+    if (closing)
         img2 = morphClose(img2);
     return img2;
 }
 
 cv::Mat RangeImage::createImageFromXYZ()
 {
-    vector<int> idx = {0,1,2};
+    vector<int> idx = {0, 1, 2};
     vector<uchar> dataColor = normalizedValue(idx);
-    //interpolationBGR(dataColor, 0, 2, 4);
+    interpolation(dataColor, 0, 2, 4, true);
     cv::Mat img = createCvMat(dataColor);
     cv::Mat img2;
-    cv::applyColorMap(img,img2,cv::COLORMAP_HSV);
+    cv::applyColorMap(img, img2, cv::COLORMAP_HSV);
     //img2 = morphClose(img2);
     return img2;
 }
