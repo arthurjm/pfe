@@ -43,3 +43,6 @@
 .vscode/settings.json
 src/.vscode/settings.json
 build/
+makefile
+Makefile
+.qmake.stash
