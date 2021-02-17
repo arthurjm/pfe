@@ -29,12 +29,14 @@ SOURCES += main.cpp\
     clickablelabel.cpp \
     superpixelhierarchy.cpp \
     rangeimage.cpp \
+    pointcloud.cpp \
 
 HEADERS  += mainwindow.h \
     clickablelabel.h \
     superpixelhierarchymex.hpp \
     superpixelhierarchy.h \
-     rangeimage.h \
+    rangeimage.h \
+    pointcloud.h \
 
 FORMS    += mainwindow.ui
 
