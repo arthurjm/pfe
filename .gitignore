@@ -36,13 +36,10 @@
 
 .vscode
 /src/images
-/src/slic_hierarchy/build
-/src/tests/build
 /src/ext
 /src/data
-/src/slic_hierarchy/*.bin
 /docs/*
 .vscode/c_cpp_properties.json
 .vscode/settings.json
 src/.vscode/settings.json
-src/slic_hierarchy/.vscode/settings.json
+build/

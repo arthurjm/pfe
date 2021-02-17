@@ -1,9 +1,10 @@
-#include "../slic_hierarchy/rangeimage.h"
+#include "rangeimage.h"
+#include "pointcloud.h"
 #include <gtest/gtest.h>
 
-#define CORRECT_FILE "../../data/000242.bin"
-#define WRONG_SHAPE_FILE "../../data/test_file/shape.bin"
-#define WRONG_REMISSIONS_FILE "../../data/test_file/remission.bin"
+#define CORRECT_FILE "../data/pointclouds_kitti/000242.bin"
+#define WRONG_SHAPE_FILE "../data/test_files/shape.bin"
+#define WRONG_REMISSIONS_FILE "../data/test_files/remissions.bin"
 
 #define EPSILON 0.0001
 TEST(RangeImage, creation)
@@ -27,12 +28,11 @@ TEST(RangeImage, points)
     PointCloud pc(CORRECT_FILE);
     RangeImage ri(pc);
     auto points = pc.getPoints();
-    riVertex *data = ri.getData();
+    const riVertex *data = ri.getData();
     int pc_size = points.shape().rows;
     int ri_size = ri.getWidth() * ri.getHeight();
 
     // Checks that all projected xyz coordinates exists in the point cloud and projected only once in range image
-    bool found = false;
     int c = 0;
     for (int i = 0; i < ri_size; i++)
     {
@@ -59,12 +59,11 @@ TEST(RangeImage, remssions)
 {
     PointCloud pc(CORRECT_FILE);
     RangeImage ri(pc);
-    riVertex *data = ri.getData();
+    const riVertex *data = ri.getData();
 
     int size = ri.getWidth() * ri.getHeight();
     float min = 2;
     float max = -1;
-
 
     // Remission is a percentage [0,1]
     for (int i = 0; i < size; i++)
@@ -83,14 +82,14 @@ TEST(RangeImage, depth)
 {
     PointCloud pc(CORRECT_FILE);
     RangeImage ri(pc);
-    riVertex *data = ri.getData();
+    const riVertex *data = ri.getData();
 
     // Depth is always >0
     int size = ri.getWidth() * ri.getHeight();
     for (int i = 0; i < size; i++)
     {
-        if(data[i].depth!=-1)
-            EXPECT_GE(data[i].depth,0.);
+        if (data[i].depth != -1)
+            EXPECT_GE(data[i].depth, 0.);
     }
 }
 

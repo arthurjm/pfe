@@ -31,12 +31,12 @@ SOURCES += main.cpp\
     rangeimage.cpp \
     pointcloud.cpp \
 
-HEADERS  += mainwindow.h \
-    clickablelabel.h \
-    superpixelhierarchymex.hpp \
-    superpixelhierarchy.h \
-    rangeimage.h \
-    pointcloud.h \
+HEADERS  += ../include/mainwindow.h \
+    ../include/clickablelabel.h \
+    ../include/superpixelhierarchymex.hpp \
+    ../include/superpixelhierarchy.h \
+    ../include/rangeimage.h \
+    ../include/pointcloud.h \
 
 FORMS    += mainwindow.ui
 
@@ -47,7 +47,8 @@ unix {
 }
 
 
-INCLUDEPATH += /usr/local/include/
+INCLUDEPATH += /usr/local/include/ \
+                ../include/
 
 
 LIBS += -L  /opt/local/lib/ -lopencv_core

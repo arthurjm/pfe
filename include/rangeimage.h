@@ -5,6 +5,7 @@
 #include <string>
 
 #include "NumCpp.hpp"
+#include "pointcloud.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #define DIM 6
@@ -14,7 +15,10 @@
 #define RI_DEPTH 3
 #define RI_REMISSION 4
 #define RI_LABEL 5
-
+#define HEIGHT 64
+#define WIDTH 1024
+#define FOV_UP 3.0
+#define FOV_DOWN -25.0
 
 using namespace std;
 
@@ -42,6 +46,8 @@ public:
      **/
     RangeImage(string fileName, int width = 1024, int height = 64);
 
+    RangeImage(PointCloud cp, int height = HEIGHT, int width = WIDTH,
+               float proj_fov_up = FOV_UP, float proj_fov_down = FOV_DOWN);
     /**
      * Create BGR image from XYZ coordinates 
      * @return an opencv Mat
@@ -62,7 +68,15 @@ public:
      * Access _data with read only permission
      * @return an const pointer of _data
      * */
-    const riVertex* getData();
+    const riVertex *getData();
+
+    /** 
+     * Access the height of the range image
+     * @return
+     * */
+    int getHeight();
+
+    int getWidth();
 
 private:
     /**
@@ -70,7 +84,7 @@ private:
      * @param fileName location of range image
      **/
     void loadRangeImage(string fileName);
-    
+
     /**
      * According to idx, normalize the associated data and assign it to an vector
      * @param idx an verctor helps to indicate the attribute of riVertex
@@ -96,7 +110,6 @@ private:
      **/
     cv::Mat createCvMat(vector<uchar> dataColor, int type = CV_8UC3);
 
-
     /**
      * Apply closing morphology to input image
      * 
@@ -113,13 +126,15 @@ private:
      * */
     cv::Mat morphDilate(cv::Mat img);
 
+    void pointCloudProjection(PointCloud cp, float proj_fov_up, float proj_fov_down);
+
     riVertex *_data;
     int _width;
     int _height;
 
     // x, y, z, depth
-    float _minValue[4]; 
-    float _maxValue[4]; 
+    float _minValue[4];
+    float _maxValue[4];
 };
 
 #endif
