@@ -63,3 +63,20 @@ instance = nombre d'objets presents sur la scène
 - Semantic segmantation = différentie tous les éléments de l'image sans les labeliser 
 - Instance segmantation  = met des labels uniquement sur les objets (moto, personnes, poubelle etc)
 - Panoptic segmentation = met des labels sur tout ce qu'il y a dans l'image (personne, moto, arbre, ciel etc)
+
+# Analyse de la projection nuage de points en range image
+
+*laserscan.py*
+
+* Lignes 120 - 121 : Calcul des profondeurs de chaque point 3D
+* Lignes 115 - 149 : Transformer les coordonnées 3D en 2D
+* Lignes 152 - 153 : Sauvegarde les profondeurs
+* Lignes 154 - 162 : Trier les données selon l'ordre décroissant de la profondeur
+* Lignes 164 - 169 : Créer des matrics numpy de dimensions de la range image.
+  Fonctionne comme une double boucle 
+```python
+for i in range(H):
+    for j in range(W):
+        proj_range[i,j] = depth[i,j]
+```
+Si deux depth différentes ont les même coordonnées dans la range image, la dernière de la matrice numpy depth sera écrite dans proj_range. C'est pour ça qu'on trie selon l'ordre décroissant de profondeur. Cela permet de garder en priorité les données les plus proches du scanneur.
