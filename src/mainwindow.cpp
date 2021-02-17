@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //_img = imread("../../data/images/banana1.bmp");
     //if(_img.cols==0) _img = imread("../../data/range_images/000045.bin");
     
-    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../../../data/range_image"), "Binary file (*.bin)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
     //string fileName = "../../../data/range_image/000045.bin";
 
     RangeImage ri(fileName.toStdString());
@@ -138,7 +138,7 @@ void MainWindow::openRangeImage()
 
     RangeImage ri(fileName.toStdString());
     // _img = ri.createImageFromXYZ();
-    _img = ri.createBGRFromColorMap(3);
+    _img = ri.createBGRFromColorMap(1,true);
 
     float scale = min(MAX_WIDTH /(2*_img.cols), MAX_HEIGHT/_img.rows);
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);

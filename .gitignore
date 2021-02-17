@@ -41,8 +41,10 @@
 /docs/*
 .vscode/c_cpp_properties.json
 .vscode/settings.json
+.vscode
 src/.vscode/settings.json
 build/
 makefile
 Makefile
 .qmake.stash
+*.user

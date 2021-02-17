@@ -78,7 +78,7 @@ private:
     int *m_temp;
 
     // JL, ZY : Three array to store range image data
-    unsigned short* m_BGRX, *m_BGRY, *m_BGRZ, *m_BGRDepth, *m_BGRRemission;
+    unsigned short *m_BGRX, *m_BGRY, *m_BGRZ, *m_BGRDepth, *m_BGRRemission;
 
 public:
     SuperpixelHierarchyMex()
@@ -146,10 +146,9 @@ public:
         m_BGRZ = new unsigned short[m_vexnum * 3];
         m_BGRDepth = new unsigned short[m_vexnum * 3];
         m_BGRRemission = new unsigned short[m_vexnum * 3];
-
     }
 
-    void buildTree(unsigned char *img, RangeImage& rangeImage, unsigned char *edge = NULL)
+    void buildTree(unsigned char *img, RangeImage &rangeImage, unsigned char *edge = NULL)
     {
         createVexLab(img, m_color);
         createVexRIData(rangeImage);
@@ -218,7 +217,43 @@ public:
             int distColor = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
             // [2] boundary term
             int distEdge = arc->confidence;
-            int dist = distColor;
+            // JL, ZY [3] range image term
+            uc = m_BGRX + 3 * u;
+            vc = m_BGRX + 3 * v;
+            dc[0] = uc[0] - vc[0];
+            dc[1] = uc[1] - vc[1];
+            dc[2] = uc[2] - vc[2];
+            int distX = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+
+            uc = m_BGRY + 3 * u;
+            vc = m_BGRY + 3 * v;
+            dc[0] = uc[0] - vc[0];
+            dc[1] = uc[1] - vc[1];
+            dc[2] = uc[2] - vc[2];
+            int distY = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+
+            uc = m_BGRZ + 3 * u;
+            vc = m_BGRZ + 3 * v;
+            dc[0] = uc[0] - vc[0];
+            dc[1] = uc[1] - vc[1];
+            dc[2] = uc[2] - vc[2];
+            int distZ = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+
+            uc = m_BGRDepth + 3 * u;
+            vc = m_BGRDepth + 3 * v;
+            dc[0] = uc[0] - vc[0];
+            dc[1] = uc[1] - vc[1];
+            dc[2] = uc[2] - vc[2];
+            int distDepth = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+
+            uc = m_BGRRemission + 3 * u;
+            vc = m_BGRRemission + 3 * v;
+            dc[0] = uc[0] - vc[0];
+            dc[1] = uc[1] - vc[1];
+            dc[2] = uc[2] - vc[2];
+            int distRemission = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+
+            int dist = distColor + distDepth;
             if (m_iter > m_iterSwitch)
                 dist *= distEdge;
 
@@ -290,6 +325,26 @@ public:
                 m_color[3 * pu + 0] = (m_color[3 * u + 0] * s1 + m_color[3 * pu + 0] * s2) / s;
                 m_color[3 * pu + 1] = (m_color[3 * u + 1] * s1 + m_color[3 * pu + 1] * s2) / s;
                 m_color[3 * pu + 2] = (m_color[3 * u + 2] * s1 + m_color[3 * pu + 2] * s2) / s;
+
+                m_BGRX[3 * pu + 0] = (m_BGRX[3 * u + 0] * s1 + m_BGRX[3 * pu + 0] * s2) / s;
+                m_BGRX[3 * pu + 1] = (m_BGRX[3 * u + 1] * s1 + m_BGRX[3 * pu + 1] * s2) / s;
+                m_BGRX[3 * pu + 2] = (m_BGRX[3 * u + 2] * s1 + m_BGRX[3 * pu + 2] * s2) / s;
+
+                m_BGRY[3 * pu + 0] = (m_BGRY[3 * u + 0] * s1 + m_BGRY[3 * pu + 0] * s2) / s;
+                m_BGRY[3 * pu + 1] = (m_BGRY[3 * u + 1] * s1 + m_BGRY[3 * pu + 1] * s2) / s;
+                m_BGRY[3 * pu + 2] = (m_BGRY[3 * u + 2] * s1 + m_BGRY[3 * pu + 2] * s2) / s;
+
+                m_BGRZ[3 * pu + 0] = (m_BGRZ[3 * u + 0] * s1 + m_BGRZ[3 * pu + 0] * s2) / s;
+                m_BGRZ[3 * pu + 1] = (m_BGRZ[3 * u + 1] * s1 + m_BGRZ[3 * pu + 1] * s2) / s;
+                m_BGRZ[3 * pu + 2] = (m_BGRZ[3 * u + 2] * s1 + m_BGRZ[3 * pu + 2] * s2) / s;
+
+                m_BGRDepth[3 * pu + 0] = (m_BGRDepth[3 * u + 0] * s1 + m_BGRDepth[3 * pu + 0] * s2) / s;
+                m_BGRDepth[3 * pu + 1] = (m_BGRDepth[3 * u + 1] * s1 + m_BGRDepth[3 * pu + 1] * s2) / s;
+                m_BGRDepth[3 * pu + 2] = (m_BGRDepth[3 * u + 2] * s1 + m_BGRDepth[3 * pu + 2] * s2) / s;
+
+                m_BGRRemission[3 * pu + 0] = (m_BGRRemission[3 * u + 0] * s1 + m_BGRRemission[3 * pu + 0] * s2) / s;
+                m_BGRRemission[3 * pu + 1] = (m_BGRRemission[3 * u + 1] * s1 + m_BGRRemission[3 * pu + 1] * s2) / s;
+                m_BGRRemission[3 * pu + 2] = (m_BGRRemission[3 * u + 2] * s1 + m_BGRRemission[3 * pu + 2] * s2) / s;
             }
         }
         m_vexnum = m_regionnum;
@@ -429,7 +484,7 @@ private:
     }
 
     // JL, ZY : change function with destination parameter
-    void createVexRGB(unsigned char *img, unsigned short* dst)
+    void createVexRGB(unsigned char *img, unsigned short *dst)
     {
         unsigned char *ptrr = img;
         unsigned char *ptrg = ptrr + m_vexnum;
@@ -438,15 +493,15 @@ private:
         unsigned short *ptrd = dst;
         while (ptrr != ptre)
         {
-            *ptrd = *ptrr++;
+            *ptrd = *ptrb++;
             *(ptrd + 1) = *ptrg++;
-            *(ptrd + 2) = *ptrb++;
+            *(ptrd + 2) = *ptrr++;
             ptrd += 3;
         }
     }
 
     // JL, ZY : change function with destination parameter
-    void createVexLab(unsigned char *img, unsigned short* dst)
+    void createVexLab(unsigned char *img, unsigned short *dst)
     {
         // Lab color space
         const double Xr = 0.950456; //D65
@@ -503,9 +558,9 @@ private:
         for (int i = 0; i < m_vexnum; ++i)
         {
 
-            R = *ptrr++;
+            B = *ptrr++;
             G = *ptrg++;
-            B = *ptrb++;
+            R = *ptrb++;
             X = (B * LABXB + G * LABXG + R * LABXR + halfShift) >> (shift - 4); //RGB->XYZ x16
             Y = (B * LABYB + G * LABYG + R * LABYR + halfShift) >> (shift - 4);
             Z = (B * LABZB + G * LABZG + R * LABZR + halfShift) >> (shift - 4);
@@ -521,7 +576,7 @@ private:
     }
 
     // JL, ZY : change function with destination parameter
-    void createVexYCbCr(unsigned char *img, unsigned short* dst)
+    void createVexYCbCr(unsigned char *img, unsigned short *dst)
     {
         const double M[3][3] = {0.299, 0.587, 0.114,
                                 -0.168736, -0.331264, 0.5,
@@ -547,9 +602,9 @@ private:
         int R, G, B;
         while (ptrr != ptre)
         {
-            R = *ptrr++;
+            B = *ptrr++;
             G = *ptrg++;
-            B = *ptrb++;
+            R = *ptrb++;
             *ptrd = (unsigned short)((YCbCrYR * R + YCbCrYG * G + YCbCrYB * B + halfShift) >> (shift - 4));
             *(ptrd + 1) = (unsigned short)((128 << 4) + ((YCbCrCbR * R + YCbCrCbG * G + YCbCrCbB * B + halfShift) >> (shift - 4)));
             *(ptrd + 2) = (unsigned short)((128 << 4) + ((YCbCrCrR * R + YCbCrCrG * G + YCbCrCrB * B + halfShift) >> (shift - 4)));
@@ -616,17 +671,36 @@ private:
     }
 
     // JL, ZY : set range image data
-    void createVexRIData(RangeImage& rangeImage)
+    void createVexRIData(RangeImage &rangeImage)
     {
-        createVexLab(rangeImage.createBGRFromColorMap(RI_X).data, m_BGRX);
-        createVexLab(rangeImage.createBGRFromColorMap(RI_Y).data, m_BGRY);
-        createVexLab(rangeImage.createBGRFromColorMap(RI_Z).data, m_BGRZ);
-        createVexLab(rangeImage.createBGRFromColorMap(RI_DEPTH).data, m_BGRDepth);
-        createVexLab(rangeImage.createBGRFromColorMap(RI_REMISSION).data, m_BGRRemission);
-
+        unsigned char *shift_BGRX = shiftBGR(rangeImage.createBGRFromColorMap(RI_X));
+        unsigned char *shift_BGRY = shiftBGR(rangeImage.createBGRFromColorMap(RI_Y));
+        unsigned char *shift_BGRZ = shiftBGR(rangeImage.createBGRFromColorMap(RI_Z));
+        unsigned char *shift_BGRDepth = shiftBGR(rangeImage.createBGRFromColorMap(RI_DEPTH));
+        unsigned char *shift_BGRRemission = shiftBGR(rangeImage.createBGRFromColorMap(RI_REMISSION));
+        createVexLab(shift_BGRX, m_BGRX);
+        createVexLab(shift_BGRY, m_BGRY);
+        createVexLab(shift_BGRZ, m_BGRZ);
+        createVexLab(shift_BGRDepth, m_BGRDepth);
+        createVexLab(shift_BGRRemission, m_BGRRemission);
     }
 
-    //TODO : Change RGB function to BGR function
+    unsigned char *shiftBGR(cv::Mat data)
+    {
+        cv::Mat_<float> imgLine = data.reshape(1, m_h * m_w).t();
+        unsigned char *image_shift = (unsigned char *)calloc((m_h * m_w) * 3, sizeof(unsigned char));
+
+        for (int i = 0; i < m_w; i++)
+        {
+            for (int j = 0; j < m_h; j++)
+            {
+                image_shift[j + i * m_h] = imgLine(i + j * m_w);
+                image_shift[j + i * m_h + m_h * m_w] = imgLine(i + j * m_w + m_h * m_w);
+                image_shift[j + i * m_h + 2 * m_h * m_w] = imgLine(i + j * m_w + 2 * m_h * m_w);
+            }
+        }
+        return image_shift;
+    }
 };
 
 #endif
