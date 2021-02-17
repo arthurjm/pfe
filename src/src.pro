@@ -9,9 +9,6 @@ QMAKE_CXXFLAGS += -std=c++14
 CONFIG += c++14
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = fast_hierarchy
-TEMPLATE = app
-
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -24,12 +21,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 
-SOURCES += main.cpp\
-        mainwindow.cpp \
-    clickablelabel.cpp \
-    superpixelhierarchy.cpp \
-    rangeimage.cpp \
-    pointcloud.cpp \
+SOURCES += ../src/mainwindow.cpp \
+    ../src/clickablelabel.cpp \
+    ../src/superpixelhierarchy.cpp \
+    ../src/rangeimage.cpp \
+    ../src/pointcloud.cpp \
 
 HEADERS  += ../include/mainwindow.h \
     ../include/clickablelabel.h \
@@ -38,7 +34,9 @@ HEADERS  += ../include/mainwindow.h \
     ../include/rangeimage.h \
     ../include/pointcloud.h \
 
-FORMS    += mainwindow.ui
+FORMS    += ../src/mainwindow.ui
+
+
 
 # add open CV
 unix {
@@ -52,3 +50,5 @@ INCLUDEPATH += /usr/local/include/ \
 
 
 LIBS += -L  /opt/local/lib/ -lopencv_core
+
+OBJECTS_DIR = ../tmp

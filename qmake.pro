@@ -1,9 +1,15 @@
-TEMPLATE = subdirs
+CONFIG   += release
 
-SUBDIRS =  \
-        project \
-        tests
-project.file = src/fast_hierarchy.pro
-tests.file = tests/gtest.pro
+TEMPLATE  = subdirs
 
-CONFIG += ordered
+SUBDIRS   = src
+
+src.file = src/app.pro
+
+debug {
+	SUBDIRS     += tests
+	tests.file = tests/gtest.pro
+}
+ 
+
+
