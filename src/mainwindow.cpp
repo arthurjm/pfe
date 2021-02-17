@@ -61,9 +61,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //_img = ri.createImageFromXYZ();
     _img = ri.createBGRFromColorMap(1,true);
 
-    float scale = MAX_WIDTH /(2*_img.cols);
+    float scale = MAX_WIDTH /(_img.cols);
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);
-    scale = MAX_HEIGHT / _img.rows;
+    scale = MAX_HEIGHT / (2*_img.rows);
     if(scale < 1.0) cv::resize(_img, _img, cv::Size(0,0), scale, scale);
 
     _cl->setImgRef(_img);
@@ -79,8 +79,8 @@ MainWindow::MainWindow(QWidget *parent) :
     initSuperpixelsLevel();
 
 
-    int w_width = min(2*_img.cols, (int)MAX_WIDTH);
-    int w_height = min(_img.rows, (int)MAX_HEIGHT);
+    int w_width = min(_img.cols, (int)MAX_WIDTH);
+    int w_height = min(2*_img.rows, (int)MAX_HEIGHT);
 
     this->resize(w_width + 50, w_height + 2.0*_ui->widgetSliders->height() + _ui->selectionButton->height() );
 
@@ -225,7 +225,7 @@ void MainWindow::displayPixelValues(QPoint pos, QColor col, int label_spx){
 }
 
 void MainWindow::displayCursor(int pX, int pY){
-    _ui->widgetCursor->move(pX +  _img.cols + 12, pY + 112);
+    _ui->widgetCursor->move(pX + 12, pY + _img.rows + 112);
 }
 
 void MainWindow::switchMode(){
