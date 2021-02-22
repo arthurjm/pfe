@@ -292,9 +292,10 @@ void ClickableLabel::mouseMoveEvent(QMouseEvent *event)
     else
     {
         emit mousePos(x, y); // if zoom right is disabled, must update x and y first
-        x = getGlobalCoord(x, _xRoi);
-        y = getGlobalCoord(y, _yRoi);
     }
+    x = getGlobalCoord(x, _xRoi);
+    y = getGlobalCoord(y, _yRoi);
+
     Vec3b bgrPixel = _imgRef.at<Vec3b>(y, x);
     QColor bgr(bgrPixel[2], bgrPixel[1], bgrPixel[0]);
     emit pixelValue(QPoint(x, y), bgr, _sh->labelOfPixel(cv::Point2i(x, y)));
