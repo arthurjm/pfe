@@ -5,6 +5,7 @@
 #define CORRECT_FILE "../data/pointclouds_kitti/000242.bin"
 #define WRONG_SHAPE_FILE "../data/test_files/shape.bin"
 #define WRONG_REMISSIONS_FILE "../data/test_files/remissions.bin"
+#define CORRECT_IRFILE "../data/range_image/000242.bin"
 
 #define EPSILON 0.0001
 TEST(RangeImage, creation)
@@ -93,6 +94,26 @@ TEST(RangeImage, depth)
     }
 }
 
-TEST(RangeImage, both_methods)
+TEST(RangeImage, data_validation)
 {
+    PointCloud pc(CORRECT_FILE);
+    RangeImage ri_pointcloud(pc);
+    RangeImage ri(CORRECT_IRFILE);
+
+    const riVertex *data1 = ri.getData();
+    const riVertex *data2 = ri_pointcloud.getData();
+
+    int size1 = ri.getWidth() * ri.getHeight();
+    int size2 = ri_pointcloud.getWidth() * ri_pointcloud.getHeight();
+
+    ASSERT_EQ(size1, size2);
+
+    for (int i = 0; i < size1; i++)
+    {
+        EXPECT_TRUE(data1[i].x - data2[i].x < EPSILON);
+        EXPECT_TRUE(data1[i].y - data2[i].y < EPSILON);
+        EXPECT_TRUE(data1[i].z - data2[i].z < EPSILON);
+        EXPECT_TRUE(data1[i].depth - data2[i].depth < EPSILON);
+        EXPECT_TRUE(data1[i].remission - data2[i].remission < EPSILON);
+    }
 }
