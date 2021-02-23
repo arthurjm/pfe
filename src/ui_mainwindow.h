@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.12.8
+** Created by: Qt User Interface Compiler version 5.15.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -36,7 +36,7 @@ public:
     QWidget *centralWidget;
     QWidget *horizontalWidget;
     QHBoxLayout *globalHorizontal;
-    QWidget *widgetLeft;
+    QWidget *widgetImage;
     QVBoxLayout *gloabalVerticalLeft;
     QWidget *widgetSliders;
     QGridLayout *gridLayoutSliders;
@@ -57,14 +57,28 @@ public:
     QHBoxLayout *horizontalLayout_3;
     QPushButton *selectionButton;
     QPushButton *contoursButton;
-    QWidget *widgetRight;
+    QGridLayout *gridLayout;
+    QHBoxLayout *horizontalLayout_2;
+    QWidget *widgetSidebar_1;
     QVBoxLayout *globalVerticalRight;
-    QCheckBox *checkBox_2;
-    QCheckBox *checkBox_4;
-    QCheckBox *checkBox_3;
-    QCheckBox *checkBox;
-    QCheckBox *checkBox_5;
-    QCheckBox *checkBox_6;
+    QCheckBox *display_Interpolation;
+    QCheckBox *display_Closing;
+    QRadioButton *display_XYZ;
+    QRadioButton *display_X;
+    QRadioButton *display_Y;
+    QRadioButton *display_Z;
+    QRadioButton *display_Depth;
+    QRadioButton *display_Remission;
+    QWidget *widgetSidebar_2;
+    QVBoxLayout *verticalLayout;
+    QCheckBox *SHWeight_X;
+    QCheckBox *SHWeight_Y;
+    QCheckBox *SHWeight_Z;
+    QCheckBox *SHWeight_Depth;
+    QCheckBox *SHWeight_Remission;
+    QHBoxLayout *horizontalLayout_5;
+    QLabel *label;
+    QLabel *label_2;
     QWidget *widgetCursor;
     QHBoxLayout *horizontalLayout_4;
     QRadioButton *cursor;
@@ -81,7 +95,7 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
-        MainWindow->resize(1217, 801);
+        MainWindow->resize(1334, 801);
         actionOpen_file = new QAction(MainWindow);
         actionOpen_file->setObjectName(QString::fromUtf8("actionOpen_file"));
         centralWidget = new QWidget(MainWindow);
@@ -94,16 +108,16 @@ public:
         globalHorizontal->setContentsMargins(11, 11, 11, 11);
         globalHorizontal->setObjectName(QString::fromUtf8("globalHorizontal"));
         globalHorizontal->setContentsMargins(10, 0, 0, 0);
-        widgetLeft = new QWidget(horizontalWidget);
-        widgetLeft->setObjectName(QString::fromUtf8("widgetLeft"));
-        widgetLeft->setMinimumSize(QSize(30, 30));
-        gloabalVerticalLeft = new QVBoxLayout(widgetLeft);
+        widgetImage = new QWidget(horizontalWidget);
+        widgetImage->setObjectName(QString::fromUtf8("widgetImage"));
+        widgetImage->setMinimumSize(QSize(30, 30));
+        gloabalVerticalLeft = new QVBoxLayout(widgetImage);
         gloabalVerticalLeft->setSpacing(10);
         gloabalVerticalLeft->setContentsMargins(11, 11, 11, 11);
         gloabalVerticalLeft->setObjectName(QString::fromUtf8("gloabalVerticalLeft"));
         gloabalVerticalLeft->setSizeConstraint(QLayout::SetDefaultConstraint);
         gloabalVerticalLeft->setContentsMargins(0, 0, 0, 0);
-        widgetSliders = new QWidget(widgetLeft);
+        widgetSliders = new QWidget(widgetImage);
         widgetSliders->setObjectName(QString::fromUtf8("widgetSliders"));
         widgetSliders->setMinimumSize(QSize(0, 0));
         widgetSliders->setMaximumSize(QSize(16777215, 16777215));
@@ -199,7 +213,7 @@ public:
 
         gloabalVerticalLeft->addWidget(widgetSliders);
 
-        widgetImages = new QWidget(widgetLeft);
+        widgetImages = new QWidget(widgetImage);
         widgetImages->setObjectName(QString::fromUtf8("widgetImages"));
         widgetImages->setMaximumSize(QSize(16777215, 16777215));
         gridImages = new QGridLayout(widgetImages);
@@ -243,52 +257,139 @@ public:
         gloabalVerticalLeft->addWidget(widgetImages);
 
 
-        globalHorizontal->addWidget(widgetLeft);
+        globalHorizontal->addWidget(widgetImage);
 
-        widgetRight = new QWidget(horizontalWidget);
-        widgetRight->setObjectName(QString::fromUtf8("widgetRight"));
-        widgetRight->setMaximumSize(QSize(16777215, 16777215));
-        globalVerticalRight = new QVBoxLayout(widgetRight);
+        gridLayout = new QGridLayout();
+        gridLayout->setSpacing(6);
+        gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
+        horizontalLayout_2 = new QHBoxLayout();
+        horizontalLayout_2->setSpacing(10);
+        horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
+        widgetSidebar_1 = new QWidget(horizontalWidget);
+        widgetSidebar_1->setObjectName(QString::fromUtf8("widgetSidebar_1"));
+        widgetSidebar_1->setEnabled(true);
+        widgetSidebar_1->setMaximumSize(QSize(16777215, 16777215));
+        globalVerticalRight = new QVBoxLayout(widgetSidebar_1);
         globalVerticalRight->setSpacing(5);
         globalVerticalRight->setContentsMargins(11, 11, 11, 11);
         globalVerticalRight->setObjectName(QString::fromUtf8("globalVerticalRight"));
         globalVerticalRight->setContentsMargins(0, 0, 0, 0);
-        checkBox_2 = new QCheckBox(widgetRight);
-        checkBox_2->setObjectName(QString::fromUtf8("checkBox_2"));
+        display_Interpolation = new QCheckBox(widgetSidebar_1);
+        display_Interpolation->setObjectName(QString::fromUtf8("display_Interpolation"));
+        display_Interpolation->setMinimumSize(QSize(0, 0));
 
-        globalVerticalRight->addWidget(checkBox_2);
+        globalVerticalRight->addWidget(display_Interpolation);
 
-        checkBox_4 = new QCheckBox(widgetRight);
-        checkBox_4->setObjectName(QString::fromUtf8("checkBox_4"));
+        display_Closing = new QCheckBox(widgetSidebar_1);
+        display_Closing->setObjectName(QString::fromUtf8("display_Closing"));
+        display_Closing->setMinimumSize(QSize(0, 0));
 
-        globalVerticalRight->addWidget(checkBox_4);
+        globalVerticalRight->addWidget(display_Closing);
 
-        checkBox_3 = new QCheckBox(widgetRight);
-        checkBox_3->setObjectName(QString::fromUtf8("checkBox_3"));
+        display_XYZ = new QRadioButton(widgetSidebar_1);
+        display_XYZ->setObjectName(QString::fromUtf8("display_XYZ"));
 
-        globalVerticalRight->addWidget(checkBox_3);
+        globalVerticalRight->addWidget(display_XYZ);
 
-        checkBox = new QCheckBox(widgetRight);
-        checkBox->setObjectName(QString::fromUtf8("checkBox"));
+        display_X = new QRadioButton(widgetSidebar_1);
+        display_X->setObjectName(QString::fromUtf8("display_X"));
 
-        globalVerticalRight->addWidget(checkBox);
+        globalVerticalRight->addWidget(display_X);
 
-        checkBox_5 = new QCheckBox(widgetRight);
-        checkBox_5->setObjectName(QString::fromUtf8("checkBox_5"));
+        display_Y = new QRadioButton(widgetSidebar_1);
+        display_Y->setObjectName(QString::fromUtf8("display_Y"));
 
-        globalVerticalRight->addWidget(checkBox_5);
+        globalVerticalRight->addWidget(display_Y);
 
-        checkBox_6 = new QCheckBox(widgetRight);
-        checkBox_6->setObjectName(QString::fromUtf8("checkBox_6"));
+        display_Z = new QRadioButton(widgetSidebar_1);
+        display_Z->setObjectName(QString::fromUtf8("display_Z"));
 
-        globalVerticalRight->addWidget(checkBox_6);
+        globalVerticalRight->addWidget(display_Z);
+
+        display_Depth = new QRadioButton(widgetSidebar_1);
+        display_Depth->setObjectName(QString::fromUtf8("display_Depth"));
+
+        globalVerticalRight->addWidget(display_Depth);
+
+        display_Remission = new QRadioButton(widgetSidebar_1);
+        display_Remission->setObjectName(QString::fromUtf8("display_Remission"));
+
+        globalVerticalRight->addWidget(display_Remission);
 
 
-        globalHorizontal->addWidget(widgetRight);
+        horizontalLayout_2->addWidget(widgetSidebar_1);
+
+        widgetSidebar_2 = new QWidget(horizontalWidget);
+        widgetSidebar_2->setObjectName(QString::fromUtf8("widgetSidebar_2"));
+        widgetSidebar_2->setEnabled(true);
+        verticalLayout = new QVBoxLayout(widgetSidebar_2);
+        verticalLayout->setSpacing(5);
+        verticalLayout->setContentsMargins(11, 11, 11, 11);
+        verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
+        verticalLayout->setContentsMargins(0, 0, 0, 0);
+        SHWeight_X = new QCheckBox(widgetSidebar_2);
+        SHWeight_X->setObjectName(QString::fromUtf8("SHWeight_X"));
+
+        verticalLayout->addWidget(SHWeight_X);
+
+        SHWeight_Y = new QCheckBox(widgetSidebar_2);
+        SHWeight_Y->setObjectName(QString::fromUtf8("SHWeight_Y"));
+
+        verticalLayout->addWidget(SHWeight_Y);
+
+        SHWeight_Z = new QCheckBox(widgetSidebar_2);
+        SHWeight_Z->setObjectName(QString::fromUtf8("SHWeight_Z"));
+
+        verticalLayout->addWidget(SHWeight_Z);
+
+        SHWeight_Depth = new QCheckBox(widgetSidebar_2);
+        SHWeight_Depth->setObjectName(QString::fromUtf8("SHWeight_Depth"));
+
+        verticalLayout->addWidget(SHWeight_Depth);
+
+        SHWeight_Remission = new QCheckBox(widgetSidebar_2);
+        SHWeight_Remission->setObjectName(QString::fromUtf8("SHWeight_Remission"));
+
+        verticalLayout->addWidget(SHWeight_Remission);
+
+
+        horizontalLayout_2->addWidget(widgetSidebar_2);
+
+
+        gridLayout->addLayout(horizontalLayout_2, 1, 0, 1, 1);
+
+        horizontalLayout_5 = new QHBoxLayout();
+        horizontalLayout_5->setSpacing(10);
+        horizontalLayout_5->setObjectName(QString::fromUtf8("horizontalLayout_5"));
+        label = new QLabel(horizontalWidget);
+        label->setObjectName(QString::fromUtf8("label"));
+        label->setMinimumSize(QSize(50, 30));
+        label->setMaximumSize(QSize(80, 30));
+        label->setTextFormat(Qt::AutoText);
+        label->setScaledContents(false);
+        label->setAlignment(Qt::AlignCenter);
+
+        horizontalLayout_5->addWidget(label);
+
+        label_2 = new QLabel(horizontalWidget);
+        label_2->setObjectName(QString::fromUtf8("label_2"));
+        label_2->setMinimumSize(QSize(50, 30));
+        label_2->setMaximumSize(QSize(80, 30));
+        label_2->setTextFormat(Qt::AutoText);
+        label_2->setScaledContents(false);
+        label_2->setAlignment(Qt::AlignCenter);
+
+        horizontalLayout_5->addWidget(label_2);
+
+
+        gridLayout->addLayout(horizontalLayout_5, 0, 0, 1, 1);
+
+
+        globalHorizontal->addLayout(gridLayout);
 
         widgetCursor = new QWidget(centralWidget);
         widgetCursor->setObjectName(QString::fromUtf8("widgetCursor"));
-        widgetCursor->setGeometry(QRect(1170, 0, 21, 23));
+        widgetCursor->setGeometry(QRect(1310, 0, 21, 23));
         horizontalLayout_4 = new QHBoxLayout(widgetCursor);
         horizontalLayout_4->setSpacing(6);
         horizontalLayout_4->setContentsMargins(11, 11, 11, 11);
@@ -298,6 +399,11 @@ public:
         cursor = new QRadioButton(widgetCursor);
         cursor->setObjectName(QString::fromUtf8("cursor"));
         cursor->setEnabled(false);
+        QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(cursor->sizePolicy().hasHeightForWidth());
+        cursor->setSizePolicy(sizePolicy);
         QPalette palette;
         QBrush brush(QColor(0, 0, 0, 255));
         brush.setStyle(Qt::SolidPattern);
@@ -381,6 +487,7 @@ public:
 #endif
         cursor->setPalette(palette);
         cursor->setAutoFillBackground(false);
+        cursor->setIconSize(QSize(16, 16));
         cursor->setCheckable(true);
         cursor->setChecked(true);
 
@@ -415,7 +522,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1217, 22));
+        menuBar->setGeometry(QRect(0, 0, 1334, 22));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QString::fromUtf8("menuFile"));
         MainWindow->setMenuBar(menuBar);
@@ -433,31 +540,40 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "Fast Hierarchy", nullptr));
-        actionOpen_file->setText(QApplication::translate("MainWindow", "&Open file", nullptr));
-#ifndef QT_NO_SHORTCUT
-        actionOpen_file->setShortcut(QApplication::translate("MainWindow", "Ctrl+O", nullptr));
-#endif // QT_NO_SHORTCUT
-        saveSelectionButton->setText(QApplication::translate("MainWindow", "Save Selection", nullptr));
-        resetSelectionButton->setText(QApplication::translate("MainWindow", "Reset Selection", nullptr));
-        nbSpxLabel->setText(QApplication::translate("MainWindow", "Number of superpixels", nullptr));
-        valueWeightSlider->setText(QApplication::translate("MainWindow", "20", nullptr));
+        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "Fast Hierarchy", nullptr));
+        actionOpen_file->setText(QCoreApplication::translate("MainWindow", "&Open file", nullptr));
+#if QT_CONFIG(shortcut)
+        actionOpen_file->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+O", nullptr));
+#endif // QT_CONFIG(shortcut)
+        saveSelectionButton->setText(QCoreApplication::translate("MainWindow", "Save Selection", nullptr));
+        resetSelectionButton->setText(QCoreApplication::translate("MainWindow", "Reset Selection", nullptr));
+        nbSpxLabel->setText(QCoreApplication::translate("MainWindow", "Number of superpixels", nullptr));
+        valueWeightSlider->setText(QCoreApplication::translate("MainWindow", "20", nullptr));
         selectedColorLabel->setText(QString());
-        valueNbSpxSlider->setText(QApplication::translate("MainWindow", "300", nullptr));
-        weightLabel->setText(QApplication::translate("MainWindow", "Weight", nullptr));
-        selectionButton->setText(QApplication::translate("MainWindow", "S\303\251lection", nullptr));
-        contoursButton->setText(QApplication::translate("MainWindow", "Objet + contours", nullptr));
-        checkBox_2->setText(QApplication::translate("MainWindow", "XYZ", nullptr));
-        checkBox_4->setText(QApplication::translate("MainWindow", "X", nullptr));
-        checkBox_3->setText(QApplication::translate("MainWindow", "Y", nullptr));
-        checkBox->setText(QApplication::translate("MainWindow", "Z", nullptr));
-        checkBox_5->setText(QApplication::translate("MainWindow", "Depth", nullptr));
-        checkBox_6->setText(QApplication::translate("MainWindow", "Remission", nullptr));
+        valueNbSpxSlider->setText(QCoreApplication::translate("MainWindow", "300", nullptr));
+        weightLabel->setText(QCoreApplication::translate("MainWindow", "Weight", nullptr));
+        selectionButton->setText(QCoreApplication::translate("MainWindow", "S\303\251lection", nullptr));
+        contoursButton->setText(QCoreApplication::translate("MainWindow", "Objet + contours", nullptr));
+        display_Interpolation->setText(QCoreApplication::translate("MainWindow", "Interpolation", nullptr));
+        display_Closing->setText(QCoreApplication::translate("MainWindow", "Closing", nullptr));
+        display_XYZ->setText(QCoreApplication::translate("MainWindow", "XYZ", nullptr));
+        display_X->setText(QCoreApplication::translate("MainWindow", "X", nullptr));
+        display_Y->setText(QCoreApplication::translate("MainWindow", "Y", nullptr));
+        display_Z->setText(QCoreApplication::translate("MainWindow", "Z", nullptr));
+        display_Depth->setText(QCoreApplication::translate("MainWindow", "Depth", nullptr));
+        display_Remission->setText(QCoreApplication::translate("MainWindow", "Remission", nullptr));
+        SHWeight_X->setText(QCoreApplication::translate("MainWindow", "X", nullptr));
+        SHWeight_Y->setText(QCoreApplication::translate("MainWindow", "Y", nullptr));
+        SHWeight_Z->setText(QCoreApplication::translate("MainWindow", "Z", nullptr));
+        SHWeight_Depth->setText(QCoreApplication::translate("MainWindow", "Depth", nullptr));
+        SHWeight_Remission->setText(QCoreApplication::translate("MainWindow", "Remission", nullptr));
+        label->setText(QCoreApplication::translate("MainWindow", "Display", nullptr));
+        label_2->setText(QCoreApplication::translate("MainWindow", "SHWeight", nullptr));
         cursor->setText(QString());
         pixelValuesLabel->setText(QString());
         pixelColorLabel->setText(QString());
         pixelSpxLabel->setText(QString());
-        menuFile->setTitle(QApplication::translate("MainWindow", "Fi&le", nullptr));
+        menuFile->setTitle(QCoreApplication::translate("MainWindow", "Fi&le", nullptr));
     } // retranslateUi
 
 };

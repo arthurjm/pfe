@@ -43,7 +43,7 @@
 .vscode/settings.json
 .vscode
 src/.vscode/settings.json
-build/
+build*/
 makefile
 Makefile
 Makefile.gtest
