@@ -55,7 +55,7 @@ public:
      * @param closing boolean to activate closing morphologie
      * @return an opencv Mat
      * */
-    cv::Mat createImageFromXYZ(bool interpolate, bool closing);
+    cv::Mat createImageFromXYZ(bool interpolate = false, bool closing = false);
 
     /**
      * Create a gray image according to the associate attribut at idx index,
@@ -89,6 +89,10 @@ private:
     void loadRangeImage(string fileName);
 
     /**
+     * Set label to -2 for unwanted composants (ex : dead pixels on the bottom)
+     * */
+    void separateInvalideComposant();
+    /**
      * According to idx, normalize the associated data and assign it to an vector
      * @param idx an verctor helps to indicate the attribute of riVertex
      * @return an vector of normalized data
@@ -96,14 +100,13 @@ private:
     vector<uchar> normalizedValue(vector<int> idx);
 
     /**
-     * Apply interpolation on dead pixels (remission == -1).
+     * Apply interpolation on dead pixels (remission == -1 and label != -2).
      * @param dataColor an array contains image information 
      * @param haflsizeX halfsize X of the kernel 
      * @param halfsizeY halfsize Y of the kernel 
-     * @param nbIter number of iteration
      * @param BGR boolean indicate if dataColor is a gray or color image
      * */
-    void interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter, bool BGR);
+    void interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, bool BGR);
 
     /**
      * Transform a range image to openCV matrice 
@@ -121,6 +124,7 @@ private:
      * */
     cv::Mat morphClose(cv::Mat img);
 
+    cv::Mat morphOpen(cv::Mat img);
     /**
      * Apply dilation morphology to input image
      * 
@@ -128,6 +132,8 @@ private:
      * @return an opencv Mat
      * */
     cv::Mat morphDilate(cv::Mat img);
+
+    cv::Mat morphErode(cv::Mat img);
 
     void pointCloudProjection(PointCloud cp, float proj_fov_up, float proj_fov_down);
 
