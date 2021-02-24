@@ -25,9 +25,9 @@ using namespace cv;
 #define MAX_LEVEL 1000
 #define MAX_WEIGHT 20
 
-
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
 
 class MainWindow : public QMainWindow
@@ -52,7 +52,11 @@ public slots:
     void switchMode();
     void switchContours();
 
-
+    /**
+     * Update the range image according to type
+     * @param type must belongs 0 to 6
+     * */
+    void updateDisplay(int type);
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -69,6 +73,9 @@ private:
     bool _isScribble = false;
     bool _showContours = true;
 
+    bool _interpolate = false;
+    bool _closing = false;
+    int _currentDisplayType;
 };
 
 #endif // MAINWINDOW_H

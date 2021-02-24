@@ -15,6 +15,7 @@
 #define RI_DEPTH 3
 #define RI_REMISSION 4
 #define RI_LABEL 5
+#define RI_XYZ 6
 #define HEIGHT 64
 #define WIDTH 1024
 #define FOV_UP 3.0
@@ -50,9 +51,11 @@ public:
                float proj_fov_up = FOV_UP, float proj_fov_down = FOV_DOWN);
     /**
      * Create BGR image from XYZ coordinates 
+     * @param  interpolation boolean to activate interpolation
+     * @param closing boolean to activate closing morphologie
      * @return an opencv Mat
      * */
-    cv::Mat createImageFromXYZ();
+    cv::Mat createImageFromXYZ(bool interpolate, bool closing);
 
     /**
      * Create a gray image according to the associate attribut at idx index,

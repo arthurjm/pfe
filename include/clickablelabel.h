@@ -16,11 +16,12 @@ class MainWindow;
 
 #define ZOOM_MAX 8
 
-class ClickableLabel : public QLabel{
+class ClickableLabel : public QLabel
+{
     Q_OBJECT
 
 public:
-    ClickableLabel(QWidget* parent = nullptr);
+    ClickableLabel(QWidget *parent = nullptr);
     virtual ~ClickableLabel();
     QImage cvToQt(Mat &pSrc);
     Mat qtToCv(const QImage &pSrc);
@@ -39,14 +40,22 @@ public:
     void clearScribble();
 
     void setContours(bool showContours);
-    void setMaximumLevel(int pMaxLevel){ _maxLevel = pMaxLevel;}
+    void setMaximumLevel(int pMaxLevel) { _maxLevel = pMaxLevel; }
 
     /**
     * set the default range image 
     * 
     * @param ri reference on an RangeImage
     * */
-    void setRangeImage(RangeImage& ri);
+    void setRangeImage(RangeImage &ri);
+
+    /**
+     * Generate a display matrice according to type
+     * @param type must belongs to 0 to 6
+     * @param  interpolation boolean to activate interpolation
+     * @param closing boolean to activate closing morphologie
+     * */
+    cv::Mat getDisplayMat(int type, bool interpolate, bool closing);
 
 signals:
     void mousePos(int pX, int pY);
@@ -55,9 +64,9 @@ signals:
     void updateSlider(int treeLevel);
 
 private:
-    void mousePressEvent(QMouseEvent* ev);
-    void mouseReleaseEvent(QMouseEvent* ev);
-    void mouseMoveEvent(QMouseEvent* ev);
+    void mousePressEvent(QMouseEvent *ev);
+    void mouseReleaseEvent(QMouseEvent *ev);
+    void mouseMoveEvent(QMouseEvent *ev);
     void wheelEvent(QWheelEvent *ev);
     void zoomIn(int pX, int pY);
     void zoomOut(int pX, int pY);
@@ -80,7 +89,6 @@ private:
     Mat _rightImgNoContours;
 
     RangeImage _rangeImage;
-
 
     QPoint lastPoint;
 

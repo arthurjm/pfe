@@ -285,15 +285,17 @@ cv::Mat RangeImage::createBGRFromColorMap(int idx, bool interpolate, bool closin
     return img2;
 }
 
-cv::Mat RangeImage::createImageFromXYZ()
+cv::Mat RangeImage::createImageFromXYZ(bool interpolate, bool closing)
 {
     vector<int> idx = {0, 1, 2};
     vector<uchar> dataColor = normalizedValue(idx);
-    interpolation(dataColor, 0, 2, 4, true);
+    if (interpolate)
+        interpolation(dataColor, 0, 2, 4, true);
     cv::Mat img = createCvMat(dataColor);
     cv::Mat img2;
     cv::applyColorMap(img, img2, cv::COLORMAP_HSV);
-    //img2 = morphClose(img2);
+    if (closing)
+        img2 = morphClose(img2);
     return img2;
 }
 

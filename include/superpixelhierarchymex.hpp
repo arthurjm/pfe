@@ -253,7 +253,7 @@ public:
             dc[2] = uc[2] - vc[2];
             int distRemission = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
 
-            int dist = distColor + distDepth;
+            int dist = distColor;
             if (m_iter > m_iterSwitch)
                 dist *= distEdge;
 

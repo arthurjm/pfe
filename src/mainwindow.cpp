@@ -54,6 +54,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_cl, SIGNAL(mousePos(int, int)), this, SLOT(displayCursor(int, int)));
     connect(_cl, SIGNAL(updateSlider(int)), this, SLOT(setNbSpxSlider(int)));
 
+    // Connect to range image display Radiobox
+    connect(_ui->display_XYZ, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_XYZ); });
+    connect(_ui->display_X, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_X); });
+    connect(_ui->display_Y, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_Y); });
+    connect(_ui->display_Z, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_Z); });
+    connect(_ui->display_Depth, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_DEPTH); });
+    connect(_ui->display_Remission, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_REMISSION); });
+
+    connect(_ui->display_Interpolation, &QCheckBox::clicked, this, [this]() { _interpolate = !_interpolate; updateDisplay(_currentDisplayType); });
+    connect(_ui->display_Closing, &QCheckBox::clicked, this, [this]() { _closing = !_closing; updateDisplay(_currentDisplayType); });
+
     //_img = imread("../../data/images/banana1.bmp");
     //if(_img.cols==0) _img = imread("../../data/range_images/000045.bin");
 
@@ -61,9 +72,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     //string fileName = "../../../data/range_image/000045.bin";
 
     RangeImage ri(fileName.toStdString());
-    //_img = ri.createImageFromXYZ();
     _img = ri.createBGRFromColorMap(1, true);
-
+    _ui->display_Y->setChecked(true);
+    _ui->display_Interpolation->setChecked(true);
+    _interpolate = true;
     float scale = MAX_WIDTH / (_img.cols);
     if (scale < 1.0)
         cv::resize(_img, _img, cv::Size(0, 0), scale, scale);
@@ -147,9 +159,10 @@ void MainWindow::openRangeImage()
         return;
 
     RangeImage ri(fileName.toStdString());
-    // _img = ri.createImageFromXYZ();
     _img = ri.createBGRFromColorMap(1, true);
-
+    _ui->display_Y->setChecked(true);
+    _ui->display_Interpolation->setChecked(true);
+    _interpolate = true;
     float scale = min(MAX_WIDTH / (_img.cols), MAX_HEIGHT / (2 * _img.rows));
     if (scale < 1.0)
         cv::resize(_img, _img, cv::Size(0, 0), scale, scale);
@@ -292,4 +305,12 @@ void MainWindow::switchContours()
         _cl->setContours(true);
         _ui->contoursButton->setText("Objet + contours");
     }
+}
+void MainWindow::updateDisplay(int type)
+{
+    _img = _cl->getDisplayMat(type, _interpolate, _closing);
+    _currentDisplayType = type;
+    _cl->clear();
+    _cl->setImgRef(_img);
+    initSuperpixelsLevel();
 }
