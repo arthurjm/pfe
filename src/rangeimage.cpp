@@ -259,10 +259,9 @@ void RangeImage::interpolation(vector<uchar> &dataColor, int halfsizeX, int half
                         {
                             if (x != j || y != i)
                             {
-                                if (dataColor.at(y * _width * nbChannel + x * nbChannel) != 0 || (BGR && (dataColor.at(y * _width * nbChannel + x * nbChannel + 1) != 0 || dataColor.at(y * _width * nbChannel + x * nbChannel + 2) != 0)))
+                                if (_data[y * _width + x].remission != -1)
                                 {
                                     sumB += dataColor.at(y * _width * nbChannel + x * nbChannel);
-
                                     if (BGR)
                                     {
                                         sumG += dataColor.at(y * _width * nbChannel + x * nbChannel + 1);
@@ -289,12 +288,20 @@ void RangeImage::interpolation(vector<uchar> &dataColor, int halfsizeX, int half
     }
 }
 
-cv::Mat RangeImage::createBGRFromColorMap(int idx, bool interpolate, bool closing)
+cv::Mat RangeImage::createBGRFromColorMap(int idx, bool interpolate, bool closing, bool equalHist)
 {
     vector<uchar> dataColor = normalizedValue({idx});
+
     if (interpolate)
         interpolation(dataColor, 0, 2, false);
     cv::Mat img = createCvMat(dataColor, CV_8UC1);
+    if (equalHist)
+    {
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+        cv::Mat tmp;
+        cv::equalizeHist(img, tmp);
+        img = tmp;
+    }
     cv::Mat img2;
     cv::applyColorMap(img, img2, cv::COLORMAP_JET);
 
@@ -303,13 +310,20 @@ cv::Mat RangeImage::createBGRFromColorMap(int idx, bool interpolate, bool closin
     return img2;
 }
 
-cv::Mat RangeImage::createImageFromXYZ(bool interpolate, bool closing)
+cv::Mat RangeImage::createImageFromXYZ(bool interpolate, bool closing, bool equalHist)
 {
     vector<int> idx = {0, 1, 2};
     vector<uchar> dataColor = normalizedValue(idx);
     if (interpolate)
         interpolation(dataColor, 0, 2, true);
     cv::Mat img = createCvMat(dataColor);
+    if (equalHist)
+    {
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+        cv::Mat tmp;
+        cv::equalizeHist(img, tmp);
+        img = tmp;
+    }
     cv::Mat img2;
     cv::applyColorMap(img, img2, cv::COLORMAP_JET);
     if (closing)

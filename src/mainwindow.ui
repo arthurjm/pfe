@@ -421,6 +421,13 @@
              <number>0</number>
             </property>
             <item>
+             <widget class="QCheckBox" name="display_Hist">
+              <property name="text">
+               <string>EqualHist</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QCheckBox" name="display_Interpolation">
               <property name="minimumSize">
                <size>

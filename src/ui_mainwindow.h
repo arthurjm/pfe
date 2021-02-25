@@ -61,6 +61,7 @@ public:
     QHBoxLayout *horizontalLayout_2;
     QWidget *widgetSidebar_1;
     QVBoxLayout *globalVerticalRight;
+    QCheckBox *display_Hist;
     QCheckBox *display_Interpolation;
     QCheckBox *display_Closing;
     QRadioButton *display_XYZ;
@@ -274,6 +275,11 @@ public:
         globalVerticalRight->setContentsMargins(11, 11, 11, 11);
         globalVerticalRight->setObjectName(QString::fromUtf8("globalVerticalRight"));
         globalVerticalRight->setContentsMargins(0, 0, 0, 0);
+        display_Hist = new QCheckBox(widgetSidebar_1);
+        display_Hist->setObjectName(QString::fromUtf8("display_Hist"));
+
+        globalVerticalRight->addWidget(display_Hist);
+
         display_Interpolation = new QCheckBox(widgetSidebar_1);
         display_Interpolation->setObjectName(QString::fromUtf8("display_Interpolation"));
         display_Interpolation->setMinimumSize(QSize(0, 0));
@@ -554,6 +560,7 @@ public:
         weightLabel->setText(QCoreApplication::translate("MainWindow", "Weight", nullptr));
         selectionButton->setText(QCoreApplication::translate("MainWindow", "S\303\251lection", nullptr));
         contoursButton->setText(QCoreApplication::translate("MainWindow", "Objet + contours", nullptr));
+        display_Hist->setText(QCoreApplication::translate("MainWindow", "EqualHist", nullptr));
         display_Interpolation->setText(QCoreApplication::translate("MainWindow", "Interpolation", nullptr));
         display_Closing->setText(QCoreApplication::translate("MainWindow", "Closing", nullptr));
         display_XYZ->setText(QCoreApplication::translate("MainWindow", "XYZ", nullptr));

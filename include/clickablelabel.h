@@ -55,7 +55,7 @@ public:
      * @param  interpolation boolean to activate interpolation
      * @param closing boolean to activate closing morphologie
      * */
-    cv::Mat getDisplayMat(int type, bool interpolate, bool closing);
+    cv::Mat getDisplayMat(int type, bool interpolate, bool closing, bool equalHist);
 
 signals:
     void mousePos(int pX, int pY);

@@ -64,6 +64,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     connect(_ui->display_Interpolation, &QCheckBox::clicked, this, [this]() { _interpolate = !_interpolate; updateDisplay(_currentDisplayType); });
     connect(_ui->display_Closing, &QCheckBox::clicked, this, [this]() { _closing = !_closing; updateDisplay(_currentDisplayType); });
+    connect(_ui->display_Hist, &QCheckBox::clicked, this, [this]() { _equalHist = !_equalHist; updateDisplay(_currentDisplayType); });
 
     //_img = imread("../../data/images/banana1.bmp");
     //if(_img.cols==0) _img = imread("../../data/range_images/000045.bin");
@@ -308,7 +309,7 @@ void MainWindow::switchContours()
 }
 void MainWindow::updateDisplay(int type)
 {
-    _img = _cl->getDisplayMat(type, _interpolate, _closing);
+    _img = _cl->getDisplayMat(type, _interpolate, _closing, _equalHist);
     _currentDisplayType = type;
     _cl->clear();
     _cl->setImgRef(_img);

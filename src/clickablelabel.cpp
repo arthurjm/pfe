@@ -496,18 +496,18 @@ void ClickableLabel::setContours(bool showContours)
     updateDisplay();
 }
 
-cv::Mat ClickableLabel::getDisplayMat(int type, bool interpolate, bool closing)
+cv::Mat ClickableLabel::getDisplayMat(int type, bool interpolate, bool closing, bool equalHist)
 {
     cv::Mat m;
     if (type > 6 || type < 0)
         cerr << "Invalide type in ClickableLabel::getDisplayMat, it must in interval from 0 to 6!" << endl;
     else if (type != RI_XYZ)
     {
-        m = _rangeImage.createBGRFromColorMap(type, interpolate, closing);
+        m = _rangeImage.createBGRFromColorMap(type, interpolate, closing, equalHist);
     }
     else
     {
-        m = _rangeImage.createImageFromXYZ(interpolate, closing);
+        m = _rangeImage.createImageFromXYZ(interpolate, closing, equalHist);
     }
     return m;
 }

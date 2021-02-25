@@ -75,7 +75,8 @@ private:
 
     bool _interpolate = false;
     bool _closing = false;
-    int _currentDisplayType;
+    int _currentDisplayType = RI_Y;
+    bool _equalHist = false;
 };
 
 #endif // MAINWINDOW_H

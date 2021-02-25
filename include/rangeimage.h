@@ -55,7 +55,7 @@ public:
      * @param closing boolean to activate closing morphologie
      * @return an opencv Mat
      * */
-    cv::Mat createImageFromXYZ(bool interpolate = false, bool closing = false);
+    cv::Mat createImageFromXYZ(bool interpolate = false, bool closing = false, bool equalHist = false);
 
     /**
      * Create a gray image according to the associate attribut at idx index,
@@ -63,9 +63,10 @@ public:
      * @param idx indicate the attribut
      * @param  interpolation boolean to activate interpolation
      * @param closing boolean to activate closing morphologie
+     * @param equalHist boolean to activate equalize histogram
      * @return an uchar array
      * */
-    cv::Mat createBGRFromColorMap(int idx, bool interpolate = false, bool closing = false);
+    cv::Mat createBGRFromColorMap(int idx, bool interpolate = false, bool closing = false, bool equalHist = false);
 
     /** 
      * Access _data with read only permission
@@ -89,7 +90,7 @@ private:
     void loadRangeImage(string fileName);
 
     /**
-     * Set label to -2 for unwanted composants (ex : dead pixels on the bottom)
+     * Set label to -2 for unwanted components (ex : dead pixels on the bottom)
      * */
     void separateInvalideComposant();
     /**
