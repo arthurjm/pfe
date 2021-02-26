@@ -14,9 +14,9 @@ SHDist::SHDist(RangeImage &ri, int type, vector<int> idx)
         if (idx.at(i) >= 0 && idx.at(i) <= 4)
         {
             if (type == SHDIST_RAW)
-                _vecData.push_back(ri.getRawDataFromIndex(idx.at(i)));
+                _vecData.push_back(ri.getRawDataFromIndex(idx.at(i)).t());
             else
-                _vecData.push_back(convertRawDataToType(idx.at(i)));
+                _vecData.push_back(convertRawDataToType(idx.at(i)).t());
         }
         else
         {
@@ -49,6 +49,23 @@ cv::Mat SHDist::convertRawDataToType(int idx)
     return m;
 }
 
+void SHDist::mergeData(int u, int pu, int sizeU, int sizePu)
+{
+    int sizeVec = _vecData.size();
+    int size = sizeU + sizePu;
+    for (int i = 0; i < sizeVec; ++i)
+    {
+        cv::Mat m = _vecData.at(i);
+        int nbChannel = m.channels();
+        for (int j = 0; j < nbChannel; j++)
+        {
+            m.data[pu * nbChannel + j] = (m.data[pu * nbChannel + j] * sizePu + m.data[u * nbChannel + j] * sizeU) / size;
+        }
+    }
+}
+
+// A modif : dans mex.hpp [0][1] = 64 dans shdist [0][1] = 1 (transpose la matrice)
+
 int SHDist::computeDist(int u, int v, int mod, bool spatial2D)
 {
     int dist = 0;
@@ -75,10 +92,13 @@ int SHDist::computeDist(int u, int v, int mod, bool spatial2D)
     return dist;
 }
 
-// euclidian dist
-
 int SHDist::euclidianDistance(vector<float> vecU, vector<float> vecV)
 {
+    if (vecU.size() != vecV.size())
+    {
+        cerr << "vecU and vecV have differents size in euclidianDistance in SHDist" << endl;
+        exit(EXIT_FAILURE);
+    }
     float sum = 0;
     for (int i = 0; i < vecU.size(); i++)
     {
@@ -88,13 +108,17 @@ int SHDist::euclidianDistance(vector<float> vecU, vector<float> vecV)
     return res;
 }
 
-// mean dist
 int SHDist::meanDistance(vector<float> vecU, vector<float> vecV)
 {
+    if (vecU.size() != vecV.size())
+    {
+        cerr << "vecU and vecV have differents size in meanDistance in SHDist" << endl;
+        exit(EXIT_FAILURE);
+    }
     float sum = 0;
     for (int i = 0; i < vecU.size(); i++)
     {
-        sum += (vecU.at(i) - vecV.at(i));
+        sum += abs(vecU.at(i) - vecV.at(i));
     }
     int res = sum / (float)vecU.size();
     return res;
