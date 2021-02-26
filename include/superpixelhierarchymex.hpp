@@ -79,6 +79,8 @@ private:
 
     // JL, ZY : Three array to store range image data
     unsigned short *m_BGRX, *m_BGRY, *m_BGRZ, *m_BGRDepth, *m_BGRRemission;
+    float *m_coord3D, *m_remission, *m_depth;
+    int *m_coord2D;
 
 public:
     SuperpixelHierarchyMex()
@@ -96,6 +98,11 @@ public:
         m_BGRZ = NULL;
         m_BGRDepth = NULL;
         m_BGRRemission = NULL;
+
+        m_coord3D = NULL;
+        m_depth = NULL;
+        m_remission = NULL;
+        m_coord2D = NULL;
     }
 
     ~SuperpixelHierarchyMex() { clean(); }
@@ -146,11 +153,18 @@ public:
         m_BGRZ = new unsigned short[m_vexnum * 3];
         m_BGRDepth = new unsigned short[m_vexnum * 3];
         m_BGRRemission = new unsigned short[m_vexnum * 3];
+
+        m_coord3D = new float[m_vexnum * 3];
+        m_remission = new float[m_vexnum];
+        m_depth = new float[m_vexnum];
+
+        m_coord2D = new int[m_vexnum * 2];
     }
 
     void buildTree(unsigned char *img, RangeImage &rangeImage, unsigned char *edge = NULL)
     {
-        createVexLab(img, m_color);
+        uchar *image = shiftBGR(rangeImage.createImageFromXYZ());
+        createVexRGB(image, m_color);
         createVexRIData(rangeImage);
         buildGraph(edge);
         m_iter = 0;
@@ -218,42 +232,40 @@ public:
             // [2] boundary term
             int distEdge = arc->confidence;
             // JL, ZY [3] range image term
-            uc = m_BGRX + 3 * u;
-            vc = m_BGRX + 3 * v;
-            dc[0] = uc[0] - vc[0];
-            dc[1] = uc[1] - vc[1];
-            dc[2] = uc[2] - vc[2];
-            int distX = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+            // Spatial 3D
+            float ux = m_coord3D[3 * u + 0];
+            float uy = m_coord3D[3 * u + 1];
+            float uz = m_coord3D[3 * u + 2];
 
-            uc = m_BGRY + 3 * u;
-            vc = m_BGRY + 3 * v;
-            dc[0] = uc[0] - vc[0];
-            dc[1] = uc[1] - vc[1];
-            dc[2] = uc[2] - vc[2];
-            int distY = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+            float vx = m_coord3D[3 * v + 0];
+            float vy = m_coord3D[3 * v + 1];
+            float vz = m_coord3D[3 * v + 2];
 
-            uc = m_BGRZ + 3 * u;
-            vc = m_BGRZ + 3 * v;
-            dc[0] = uc[0] - vc[0];
-            dc[1] = uc[1] - vc[1];
-            dc[2] = uc[2] - vc[2];
-            int distZ = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+            float dx = (ux - vx) * 10;
+            float dy = (uy - vy) * 100;
+            float dz = (uz - vz) * 10;
 
-            uc = m_BGRDepth + 3 * u;
-            vc = m_BGRDepth + 3 * v;
-            dc[0] = uc[0] - vc[0];
-            dc[1] = uc[1] - vc[1];
-            dc[2] = uc[2] - vc[2];
-            int distDepth = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+            int dist3D = (int)(sqrtf(dx * dx + dy * dy + dz * dz));
 
-            uc = m_BGRRemission + 3 * u;
-            vc = m_BGRRemission + 3 * v;
-            dc[0] = uc[0] - vc[0];
-            dc[1] = uc[1] - vc[1];
-            dc[2] = uc[2] - vc[2];
-            int distRemission = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
+            // Spatial 2D
+            int ux2 = m_coord2D[2 * u + 0];
+            int uy2 = m_coord2D[2 * u + 1];
 
-            int dist = distColor;
+            int vx2 = m_coord2D[2 * v + 0];
+            int vy2 = m_coord2D[2 * v + 1];
+
+            int dx2 = (ux2 - vx2) * 100;
+            int dy2 = (uy2 - vy2) * 100;
+
+            int dist2D = (int)(sqrtf(dx2 * dx2 + dy2 * dy2));
+
+            //weight
+            float S = sqrtf((m_h * m_w) / m_vexnum);
+            float weight = m_connect / S;
+            // int dist = dist3D + weight * dist2D;
+            int dist = dist3D;
+
+            dist = distColor;
             if (m_iter > m_iterSwitch)
                 dist *= distEdge;
 
@@ -326,25 +338,15 @@ public:
                 m_color[3 * pu + 1] = (m_color[3 * u + 1] * s1 + m_color[3 * pu + 1] * s2) / s;
                 m_color[3 * pu + 2] = (m_color[3 * u + 2] * s1 + m_color[3 * pu + 2] * s2) / s;
 
-                m_BGRX[3 * pu + 0] = (m_BGRX[3 * u + 0] * s1 + m_BGRX[3 * pu + 0] * s2) / s;
-                m_BGRX[3 * pu + 1] = (m_BGRX[3 * u + 1] * s1 + m_BGRX[3 * pu + 1] * s2) / s;
-                m_BGRX[3 * pu + 2] = (m_BGRX[3 * u + 2] * s1 + m_BGRX[3 * pu + 2] * s2) / s;
+                // JL, ZY, update array
+                // update coord3D
+                m_coord3D[3 * pu + 0] = (m_coord3D[3 * u + 0] * s1 + m_coord3D[3 * pu + 0] * s2) / s;
+                m_coord3D[3 * pu + 1] = (m_coord3D[3 * u + 1] * s1 + m_coord3D[3 * pu + 1] * s2) / s;
+                m_coord3D[3 * pu + 2] = (m_coord3D[3 * u + 2] * s1 + m_coord3D[3 * pu + 2] * s2) / s;
 
-                m_BGRY[3 * pu + 0] = (m_BGRY[3 * u + 0] * s1 + m_BGRY[3 * pu + 0] * s2) / s;
-                m_BGRY[3 * pu + 1] = (m_BGRY[3 * u + 1] * s1 + m_BGRY[3 * pu + 1] * s2) / s;
-                m_BGRY[3 * pu + 2] = (m_BGRY[3 * u + 2] * s1 + m_BGRY[3 * pu + 2] * s2) / s;
-
-                m_BGRZ[3 * pu + 0] = (m_BGRZ[3 * u + 0] * s1 + m_BGRZ[3 * pu + 0] * s2) / s;
-                m_BGRZ[3 * pu + 1] = (m_BGRZ[3 * u + 1] * s1 + m_BGRZ[3 * pu + 1] * s2) / s;
-                m_BGRZ[3 * pu + 2] = (m_BGRZ[3 * u + 2] * s1 + m_BGRZ[3 * pu + 2] * s2) / s;
-
-                m_BGRDepth[3 * pu + 0] = (m_BGRDepth[3 * u + 0] * s1 + m_BGRDepth[3 * pu + 0] * s2) / s;
-                m_BGRDepth[3 * pu + 1] = (m_BGRDepth[3 * u + 1] * s1 + m_BGRDepth[3 * pu + 1] * s2) / s;
-                m_BGRDepth[3 * pu + 2] = (m_BGRDepth[3 * u + 2] * s1 + m_BGRDepth[3 * pu + 2] * s2) / s;
-
-                m_BGRRemission[3 * pu + 0] = (m_BGRRemission[3 * u + 0] * s1 + m_BGRRemission[3 * pu + 0] * s2) / s;
-                m_BGRRemission[3 * pu + 1] = (m_BGRRemission[3 * u + 1] * s1 + m_BGRRemission[3 * pu + 1] * s2) / s;
-                m_BGRRemission[3 * pu + 2] = (m_BGRRemission[3 * u + 2] * s1 + m_BGRRemission[3 * pu + 2] * s2) / s;
+                // update coord2D
+                m_coord2D[2 * pu + 0] = (m_coord2D[2 * u + 0] * s1 + m_coord2D[2 * pu + 0] * s2) / s;
+                m_coord2D[2 * pu + 1] = (m_coord2D[2 * u + 1] * s1 + m_coord2D[2 * pu + 1] * s2) / s;
             }
         }
         m_vexnum = m_regionnum;
@@ -467,6 +469,12 @@ private:
         delete[] m_BGRZ;
         delete[] m_BGRDepth;
         delete[] m_BGRRemission;
+
+        delete[] m_remission;
+        delete[] m_coord3D;
+        delete[] m_depth;
+
+        delete[] m_coord2D;
     }
 
     int computeEdge(int h, int w, int connect)
@@ -673,16 +681,28 @@ private:
     // JL, ZY : set range image data
     void createVexRIData(RangeImage &rangeImage)
     {
-        unsigned char *shift_BGRX = shiftBGR(rangeImage.createBGRFromColorMap(RI_X));
-        unsigned char *shift_BGRY = shiftBGR(rangeImage.createBGRFromColorMap(RI_Y));
-        unsigned char *shift_BGRZ = shiftBGR(rangeImage.createBGRFromColorMap(RI_Z));
-        unsigned char *shift_BGRDepth = shiftBGR(rangeImage.createBGRFromColorMap(RI_DEPTH));
-        unsigned char *shift_BGRRemission = shiftBGR(rangeImage.createBGRFromColorMap(RI_REMISSION));
+        unsigned char *shift_BGRX = shiftBGR(rangeImage.createColorMat({RI_X}));
+        unsigned char *shift_BGRY = shiftBGR(rangeImage.createColorMat({RI_Y}));
+        unsigned char *shift_BGRZ = shiftBGR(rangeImage.createColorMat({RI_Z}));
+        unsigned char *shift_BGRDepth = shiftBGR(rangeImage.createColorMat({RI_DEPTH}));
+        unsigned char *shift_BGRRemission = shiftBGR(rangeImage.createColorMat({RI_REMISSION}));
         createVexLab(shift_BGRX, m_BGRX);
         createVexLab(shift_BGRY, m_BGRY);
         createVexLab(shift_BGRZ, m_BGRZ);
         createVexLab(shift_BGRDepth, m_BGRDepth);
         createVexLab(shift_BGRRemission, m_BGRRemission);
+
+        const riVertex *riData = rangeImage.getData();
+        for (int i = 0; i < m_vexmax; i++)
+        {
+            m_coord3D[i * 3] = riData[i].x;
+            m_coord3D[i * 3 + 1] = riData[i].y;
+            m_coord3D[i * 3 + 2] = riData[i].z;
+            m_depth[i] = riData[i].depth;
+            m_remission[i] = riData[i].remission;
+            m_coord2D[i * 2] = i % m_w;
+            m_coord2D[i * 2 + 1] = i / m_h;
+        }
     }
 
     unsigned char *shiftBGR(cv::Mat data)

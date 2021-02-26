@@ -95,7 +95,6 @@ void RangeImage::pointCloudProjection(PointCloud cp, float proj_fov_up, float pr
     float fov_up = proj_fov_up / 180.0 * M_PI;     // field of view up in rad
     float fov_down = proj_fov_down / 180.0 * M_PI; // field of view down in rad
     float fov = abs(fov_down) + abs(fov_up);       // get field of view total in rad
-    // std::cout << "points:" << cp.getPoints().shape() << std::endl;
 
     // get depth of all points
     nc::NdArray<double> d_depth = nc::norm(cp.getPoints(), nc::Axis::COL);
@@ -216,15 +215,12 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
     for (int i = 0; i < size; i++)
     {
         remission = *((float *)(_data) + i * DIM + 4);
-        //cout << i / _width << " |" << i % _width<< endl;
-
         for (size_t j = 0; j < idx.size(); j++)
         {
             if (remission != -1.f)
             {
                 val = *((float *)(_data) + i * DIM + idx.at(j));
                 val = roundf((val - min.at(j)) / (max.at(j) - min.at(j)) * 255);
-                //val *= remission;
                 normVal.push_back((uchar)val);
             }
             else
@@ -288,47 +284,81 @@ void RangeImage::interpolation(vector<uchar> &dataColor, int halfsizeX, int half
     }
 }
 
-cv::Mat RangeImage::createBGRFromColorMap(int idx, bool interpolate, bool closing, bool equalHist)
+cv::Mat RangeImage::createColorMat(vector<int> idx, bool isGray, bool interpolate, bool closing, bool equalHist)
 {
-    vector<uchar> dataColor = normalizedValue({idx});
+    vector<uchar> dataColor = normalizedValue(idx);
+
+    bool isBGR = false;
+    int cvType = CV_8UC1;
+    if (idx.size() == 3)
+    {
+        cvType = CV_8UC3;
+        isBGR = true;
+    }
 
     if (interpolate)
-        interpolation(dataColor, 0, 2, false);
-    cv::Mat img = createCvMat(dataColor, CV_8UC1);
+        interpolation(dataColor, 0, 2, isBGR);
+
+    cv::Mat img = createCvMat(dataColor, cvType);
+
     if (equalHist)
     {
         cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
         cv::Mat tmp;
         cv::equalizeHist(img, tmp);
         img = tmp;
+        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
     }
-    cv::Mat img2;
-    cv::applyColorMap(img, img2, cv::COLORMAP_JET);
+
+    if(isGray){
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+    } else {
+        cv::Mat img2;
+        cv::applyColorMap(img, img2, cv::COLORMAP_JET);
+        img = img2;
+    }
 
     if (closing)
-        img2 = morphClose(img2);
-    return img2;
+        img = morphClose(img);
+    return img;
 }
 
-cv::Mat RangeImage::createImageFromXYZ(bool interpolate, bool closing, bool equalHist)
+cv::Mat RangeImage::createImageFromXYZ()
 {
-    vector<int> idx = {0, 1, 2};
-    vector<uchar> dataColor = normalizedValue(idx);
-    if (interpolate)
-        interpolation(dataColor, 0, 2, true);
-    cv::Mat img = createCvMat(dataColor);
-    if (equalHist)
+    vector<uchar> dataX = normalizedValue({RI_X});
+    vector<uchar> dataY = normalizedValue({RI_Y});
+    vector<uchar> dataZ = normalizedValue({RI_Z});
+
+    cv::Mat imgX = createCvMat(dataX, CV_8UC1);
+    cv::Mat imgY = createCvMat(dataY, CV_8UC1);
+    cv::Mat imgZ = createCvMat(dataZ, CV_8UC1);
+
+    cv::cvtColor(imgX, imgX, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(imgY, imgY, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(imgZ, imgZ, cv::COLOR_BGR2GRAY);
+
+    cv::Mat tmp;
+    cv::equalizeHist(imgX, tmp);
+    imgX = tmp;
+    cv::equalizeHist(imgY, tmp);
+    imgY = tmp;
+    cv::equalizeHist(imgZ, tmp);
+    imgZ = tmp;
+
+    vector<uchar> dataColor;
+    int size = _width * _height;
+    dataColor.reserve(size * 3);
+    for (int i = 0; i < size; ++i)
     {
-        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
-        cv::Mat tmp;
-        cv::equalizeHist(img, tmp);
-        img = tmp;
+        float re = _data[i].remission != -1 ? _data[i].remission : 1;
+        dataColor.push_back(imgX.data[i] * re);
+        dataColor.push_back(imgY.data[i] * re);
+        dataColor.push_back(imgZ.data[i] * re);
     }
-    cv::Mat img2;
-    cv::applyColorMap(img, img2, cv::COLORMAP_JET);
-    if (closing)
-        img2 = morphClose(img2);
-    return img2;
+    interpolation(dataColor, 0, 2, false);
+    cv::Mat img = createCvMat(dataColor);
+    return img;
 }
 
 cv::Mat RangeImage::createCvMat(vector<uchar> dataColor, int type)
@@ -400,6 +430,21 @@ cv::Mat RangeImage::morphErode(cv::Mat img)
 const riVertex *RangeImage::getData()
 {
     return _data;
+}
+
+cv::Mat RangeImage::getRawDataFromIndex(int index)
+{
+    int size = _height * _width;
+    vector<float> rawData;
+    rawData.reserve(size);
+    for (int i = 0; i < size; ++i)
+    {
+        float val = *((float *)(_data) + i * DIM + index);
+        rawData.push_back(val);
+    }
+    cv::Mat m = cv::Mat(_height, _width, CV_32FC1);
+    memcpy(m.data, rawData.data(), size * sizeof(float));
+    return m;
 }
 
 int RangeImage::getHeight()

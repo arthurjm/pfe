@@ -73,6 +73,7 @@ private:
     bool _isScribble = false;
     bool _showContours = true;
 
+    bool _isGray = false;
     bool _interpolate = false;
     bool _closing = false;
     int _currentDisplayType = RI_Y;

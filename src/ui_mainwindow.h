@@ -64,6 +64,7 @@ public:
     QCheckBox *display_Hist;
     QCheckBox *display_Interpolation;
     QCheckBox *display_Closing;
+    QCheckBox *display_Gray;
     QRadioButton *display_XYZ;
     QRadioButton *display_X;
     QRadioButton *display_Y;
@@ -291,6 +292,11 @@ public:
         display_Closing->setMinimumSize(QSize(0, 0));
 
         globalVerticalRight->addWidget(display_Closing);
+
+        display_Gray = new QCheckBox(widgetSidebar_1);
+        display_Gray->setObjectName(QString::fromUtf8("display_Gray"));
+
+        globalVerticalRight->addWidget(display_Gray);
 
         display_XYZ = new QRadioButton(widgetSidebar_1);
         display_XYZ->setObjectName(QString::fromUtf8("display_XYZ"));
@@ -563,6 +569,7 @@ public:
         display_Hist->setText(QCoreApplication::translate("MainWindow", "EqualHist", nullptr));
         display_Interpolation->setText(QCoreApplication::translate("MainWindow", "Interpolation", nullptr));
         display_Closing->setText(QCoreApplication::translate("MainWindow", "Closing", nullptr));
+        display_Gray->setText(QCoreApplication::translate("MainWindow", "Gray", nullptr));
         display_XYZ->setText(QCoreApplication::translate("MainWindow", "XYZ", nullptr));
         display_X->setText(QCoreApplication::translate("MainWindow", "X", nullptr));
         display_Y->setText(QCoreApplication::translate("MainWindow", "Y", nullptr));

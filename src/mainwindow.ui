@@ -454,6 +454,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="display_Gray">
+              <property name="text">
+               <string>Gray</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QRadioButton" name="display_XYZ">
               <property name="text">
                <string>XYZ</string>

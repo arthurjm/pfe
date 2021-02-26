@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->display_Depth, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_DEPTH); });
     connect(_ui->display_Remission, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_REMISSION); });
 
+    connect(_ui->display_Gray, &QCheckBox::clicked, this, [this]() { _isGray = !_isGray; updateDisplay(_currentDisplayType); });
     connect(_ui->display_Interpolation, &QCheckBox::clicked, this, [this]() { _interpolate = !_interpolate; updateDisplay(_currentDisplayType); });
     connect(_ui->display_Closing, &QCheckBox::clicked, this, [this]() { _closing = !_closing; updateDisplay(_currentDisplayType); });
     connect(_ui->display_Hist, &QCheckBox::clicked, this, [this]() { _equalHist = !_equalHist; updateDisplay(_currentDisplayType); });
@@ -73,10 +74,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     //string fileName = "../../../data/range_image/000045.bin";
 
     RangeImage ri(fileName.toStdString());
-    _img = ri.createBGRFromColorMap(1, true);
+    _interpolate = true;
+    _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
     _ui->display_Y->setChecked(true);
     _ui->display_Interpolation->setChecked(true);
-    _interpolate = true;
     float scale = MAX_WIDTH / (_img.cols);
     if (scale < 1.0)
         cv::resize(_img, _img, cv::Size(0, 0), scale, scale);
@@ -160,7 +161,7 @@ void MainWindow::openRangeImage()
         return;
 
     RangeImage ri(fileName.toStdString());
-    _img = ri.createBGRFromColorMap(1, true);
+    _img = ri.createColorMat({RI_Y}, true);
     _ui->display_Y->setChecked(true);
     _ui->display_Interpolation->setChecked(true);
     _interpolate = true;
@@ -309,7 +310,7 @@ void MainWindow::switchContours()
 }
 void MainWindow::updateDisplay(int type)
 {
-    _img = _cl->getDisplayMat(type, _interpolate, _closing, _equalHist);
+    _img = _cl->getDisplayMat(type, _isGray, _interpolate, _closing, _equalHist);
     _currentDisplayType = type;
     _cl->clear();
     _cl->setImgRef(_img);

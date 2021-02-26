@@ -51,28 +51,34 @@ public:
                float proj_fov_up = FOV_UP, float proj_fov_down = FOV_DOWN);
     /**
      * Create BGR image from XYZ coordinates 
-     * @param  interpolation boolean to activate interpolation
-     * @param closing boolean to activate closing morphologie
      * @return an opencv Mat
      * */
-    cv::Mat createImageFromXYZ(bool interpolate = false, bool closing = false, bool equalHist = false);
+    cv::Mat createImageFromXYZ();
 
     /**
      * Create a gray image according to the associate attribut at idx index,
      * use opencv to apply color map and return the cv::Mat corresponding.
      * @param idx indicate the attribut
-     * @param  interpolation boolean to activate interpolation
+     * @param isGray boolean to indicate which color to generate (Gray/BGR)
+     * @param interpolation boolean to activate interpolation
      * @param closing boolean to activate closing morphologie
      * @param equalHist boolean to activate equalize histogram
      * @return an uchar array
      * */
-    cv::Mat createBGRFromColorMap(int idx, bool interpolate = false, bool closing = false, bool equalHist = false);
+    cv::Mat createColorMat(vector<int> idx, bool isGray = false, bool interpolate = false, bool closing = false, bool equalHist = false);
 
     /** 
      * Access _data with read only permission
      * @return an const pointer of _data
      * */
     const riVertex *getData();
+
+    /**
+    * return a cv::Mat of raw data corresponding at the index information  
+    * @param index index of the data (RI_X, RI_Y, ...)
+    * @return a cv::Mat with raw data 
+    * */
+    cv::Mat getRawDataFromIndex(int index);
 
     /** 
      * Access the height of the range image
