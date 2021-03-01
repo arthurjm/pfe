@@ -9,7 +9,6 @@
 #include <limits.h>
 #include <string.h>
 #include "rangeimage.h"
-#include "shdist.h"
 using namespace std;
 
 template <class T>
@@ -78,9 +77,10 @@ private:
 
     int *m_temp;
 
-    // JL, ZY : class managing dist computation
-    SHDist *m_shdist;
-    
+    // JL, ZY : Three array to store range image data
+    unsigned short *m_BGRX, *m_BGRY, *m_BGRZ, *m_BGRDepth, *m_BGRRemission;
+    float *m_coord3D, *m_remission, *m_depth;
+    int *m_coord2D;
 
 public:
     SuperpixelHierarchyMex()
@@ -92,6 +92,17 @@ public:
         m_arctmp = NULL;
         m_color = NULL;
         m_temp = NULL;
+        // JL, ZY
+        m_BGRX = NULL;
+        m_BGRY = NULL;
+        m_BGRZ = NULL;
+        m_BGRDepth = NULL;
+        m_BGRRemission = NULL;
+
+        m_coord3D = NULL;
+        m_depth = NULL;
+        m_remission = NULL;
+        m_coord2D = NULL;
     }
 
     ~SuperpixelHierarchyMex() { clean(); }
@@ -136,12 +147,25 @@ public:
         m_regionnum = m_vexnum;
         m_treeSize = 0;
 
+        // JL, ZY : range image
+        m_BGRX = new unsigned short[m_vexnum * 3];
+        m_BGRY = new unsigned short[m_vexnum * 3];
+        m_BGRZ = new unsigned short[m_vexnum * 3];
+        m_BGRDepth = new unsigned short[m_vexnum * 3];
+        m_BGRRemission = new unsigned short[m_vexnum * 3];
+
+        m_coord3D = new float[m_vexnum * 3];
+        m_remission = new float[m_vexnum];
+        m_depth = new float[m_vexnum];
+
+        m_coord2D = new int[m_vexnum * 2];
     }
 
     void buildTree(unsigned char *img, RangeImage &rangeImage, unsigned char *edge = NULL)
     {
-        createVexRGB(img, m_color);
-        m_shdist = new SHDist(rangeImage, SHDIST_BGR, {RI_Y});
+        uchar *image = shiftBGR(rangeImage.createImageFromXYZ());
+        createVexRGB(image, m_color);
+        createVexRIData(rangeImage);
         buildGraph(edge);
         m_iter = 0;
         int maxDistColor = 0;
@@ -208,9 +232,23 @@ public:
             // [2] boundary term
             int distEdge = arc->confidence;
             // JL, ZY [3] range image term
+            // Spatial 3D
+            float ux = m_coord3D[3 * u + 0];
+            float uy = m_coord3D[3 * u + 1];
+            float uz = m_coord3D[3 * u + 2];
+
+            float vx = m_coord3D[3 * v + 0];
+            float vy = m_coord3D[3 * v + 1];
+            float vz = m_coord3D[3 * v + 2];
+
+            float dx = (ux - vx) * 10;
+            float dy = (uy - vy) * 100;
+            float dz = (uz - vz) * 10;
+
+            int dist3D = (int)(sqrtf(dx * dx + dy * dy + dz * dz));
 
             // Spatial 2D
-            /*int ux2 = m_coord2D[2 * u + 0];
+            int ux2 = m_coord2D[2 * u + 0];
             int uy2 = m_coord2D[2 * u + 1];
 
             int vx2 = m_coord2D[2 * v + 0];
@@ -226,10 +264,8 @@ public:
             float weight = m_connect / S;
             // int dist = dist3D + weight * dist2D;
             int dist = dist3D;
-            */
-            int dist = distColor;
-            dist = m_shdist->computeDist(u, v, SHDIST_MEAN, false);
 
+            dist = distColor;
             if (m_iter > m_iterSwitch)
                 dist *= distEdge;
 
@@ -302,7 +338,15 @@ public:
                 m_color[3 * pu + 1] = (m_color[3 * u + 1] * s1 + m_color[3 * pu + 1] * s2) / s;
                 m_color[3 * pu + 2] = (m_color[3 * u + 2] * s1 + m_color[3 * pu + 2] * s2) / s;
 
-                m_shdist->mergeData(u, pu, s1, s2);
+                // JL, ZY, update array
+                // update coord3D
+                m_coord3D[3 * pu + 0] = (m_coord3D[3 * u + 0] * s1 + m_coord3D[3 * pu + 0] * s2) / s;
+                m_coord3D[3 * pu + 1] = (m_coord3D[3 * u + 1] * s1 + m_coord3D[3 * pu + 1] * s2) / s;
+                m_coord3D[3 * pu + 2] = (m_coord3D[3 * u + 2] * s1 + m_coord3D[3 * pu + 2] * s2) / s;
+
+                // update coord2D
+                m_coord2D[2 * pu + 0] = (m_coord2D[2 * u + 0] * s1 + m_coord2D[2 * pu + 0] * s2) / s;
+                m_coord2D[2 * pu + 1] = (m_coord2D[2 * u + 1] * s1 + m_coord2D[2 * pu + 1] * s2) / s;
             }
         }
         m_vexnum = m_regionnum;
@@ -419,6 +463,18 @@ private:
         delete[] m_arctmp;
         delete[] m_color;
         delete[] m_temp;
+        // JL, ZY
+        delete[] m_BGRX;
+        delete[] m_BGRY;
+        delete[] m_BGRZ;
+        delete[] m_BGRDepth;
+        delete[] m_BGRRemission;
+
+        delete[] m_remission;
+        delete[] m_coord3D;
+        delete[] m_depth;
+
+        delete[] m_coord2D;
     }
 
     int computeEdge(int h, int w, int connect)
@@ -452,6 +508,117 @@ private:
         }
     }
 
+    // JL, ZY : change function with destination parameter
+    void createVexLab(unsigned char *img, unsigned short *dst)
+    {
+        // Lab color space
+        const double Xr = 0.950456; //D65
+        const double Yr = 1.0;
+        const double Zr = 1.088754;
+
+        double M[3][3] = {0.412453, 0.357580, 0.180423,
+                          0.212671, 0.715160, 0.072169,
+                          0.019334, 0.119193, 0.950227};
+
+        // Normalize for reference white point
+        M[0][0] /= Xr;
+        M[0][1] /= Xr;
+        M[0][2] /= Xr;
+        M[1][0] /= Yr;
+        M[1][1] /= Yr;
+        M[1][2] /= Yr;
+        M[2][0] /= Zr;
+        M[2][1] /= Zr;
+        M[2][2] /= Zr;
+
+        const double epsilon = 1.0 / 3;
+        const int shift = 20; // RGB->XYZ scale
+        const int halfShift = 1 << (shift - 1);
+        const int scaleLC = (int)(16 * (1 << shift));
+        const int scaleLT = (int)(116);
+
+        const int LABXR = (int)(M[0][0] * (1 << shift) + 0.5);
+        const int LABXG = (int)(M[0][1] * (1 << shift) + 0.5);
+        const int LABXB = (int)(M[0][2] * (1 << shift) + 0.5);
+        const int LABYR = (int)(M[1][0] * (1 << shift) + 0.5);
+        const int LABYG = (int)(M[1][1] * (1 << shift) + 0.5);
+        const int LABYB = (int)(M[1][2] * (1 << shift) + 0.5);
+        const int LABZR = (int)(M[2][0] * (1 << shift) + 0.5);
+        const int LABZG = (int)(M[2][1] * (1 << shift) + 0.5);
+        const int LABZB = (int)(M[2][2] * (1 << shift) + 0.5);
+
+        // build Lab lockup table
+        int table[4096]; // 4080 = 255*16
+        const int thresh = 36;
+        for (int i = 0; i < 4096; ++i)
+        {
+            if (i > thresh)
+                table[i] = (int)(pow(i / 4080.0, epsilon) * (1 << shift) + 0.5);
+            else
+                table[i] = (int)((29 * 29.0 * i / (6 * 6 * 3 * 4080) + 4.0 / 29) * (1 << shift) + 0.5);
+        }
+
+        unsigned char *ptrr = img;
+        unsigned char *ptrg = ptrr + m_vexnum;
+        unsigned char *ptrb = ptrg + m_vexnum;
+        unsigned short *ptrd = dst;
+        int R, G, B, X, Y, Z;
+        for (int i = 0; i < m_vexnum; ++i)
+        {
+
+            B = *ptrr++;
+            G = *ptrg++;
+            R = *ptrb++;
+            X = (B * LABXB + G * LABXG + R * LABXR + halfShift) >> (shift - 4); //RGB->XYZ x16
+            Y = (B * LABYB + G * LABYG + R * LABYR + halfShift) >> (shift - 4);
+            Z = (B * LABZB + G * LABZG + R * LABZR + halfShift) >> (shift - 4);
+            X = table[X];
+            Y = table[Y];
+            Z = table[Z];
+
+            *(ptrd + 0) = (scaleLT * Y - scaleLC + halfShift) >> (shift - 4);        // L: (0~100) X 16
+            *(ptrd + 1) = ((500 * (X - Y) + halfShift) >> (shift - 4)) + (128 << 4); // A: (0~255) X 16
+            *(ptrd + 2) = ((200 * (Y - Z) + halfShift) >> (shift - 4)) + (128 << 4); // B: (0~255) X 16
+            ptrd += 3;
+        }
+    }
+
+    // JL, ZY : change function with destination parameter
+    void createVexYCbCr(unsigned char *img, unsigned short *dst)
+    {
+        const double M[3][3] = {0.299, 0.587, 0.114,
+                                -0.168736, -0.331264, 0.5,
+                                0.5, -0.418688, -0.081312};
+
+        const int shift = 20; // RGB->YCbCr scale
+        const int halfShift = 1 << (shift - 1);
+        const int YCbCrYR = (int)(M[0][0] * (1 << shift) + 0.5);
+        const int YCbCrYG = (int)(M[0][1] * (1 << shift) + 0.5);
+        const int YCbCrYB = (int)(M[0][2] * (1 << shift) + 0.5);
+        const int YCbCrCbR = (int)(M[1][0] * (1 << shift) + 0.5);
+        const int YCbCrCbG = (int)(M[1][1] * (1 << shift) + 0.5);
+        const int YCbCrCbB = (int)(M[1][2] * (1 << shift) + 0.5);
+        const int YCbCrCrR = (int)(M[2][0] * (1 << shift) + 0.5);
+        const int YCbCrCrG = (int)(M[2][1] * (1 << shift) + 0.5);
+        const int YCbCrCrB = (int)(M[2][2] * (1 << shift) + 0.5);
+
+        unsigned char *ptrr = img;
+        unsigned char *ptrg = ptrr + m_vexnum;
+        unsigned char *ptrb = ptrg + m_vexnum;
+        unsigned char *ptre = ptrg;
+        unsigned short *ptrd = dst;
+        int R, G, B;
+        while (ptrr != ptre)
+        {
+            B = *ptrr++;
+            G = *ptrg++;
+            R = *ptrb++;
+            *ptrd = (unsigned short)((YCbCrYR * R + YCbCrYG * G + YCbCrYB * B + halfShift) >> (shift - 4));
+            *(ptrd + 1) = (unsigned short)((128 << 4) + ((YCbCrCbR * R + YCbCrCbG * G + YCbCrCbB * B + halfShift) >> (shift - 4)));
+            *(ptrd + 2) = (unsigned short)((128 << 4) + ((YCbCrCrR * R + YCbCrCrG * G + YCbCrCrB * B + halfShift) >> (shift - 4)));
+            ptrd += 3;
+        }
+    }
 
     void buildGraph(unsigned char *edge)
     {
@@ -511,164 +678,49 @@ private:
         }
     }
 
-};
-
-// JL, ZY : change function with destination parameter
-void createVexLab(unsigned char *img, unsigned short *dst)
-{
-    // Lab color space
-    const double Xr = 0.950456; //D65
-    const double Yr = 1.0;
-    const double Zr = 1.088754;
-
-    double M[3][3] = {0.412453, 0.357580, 0.180423,
-                      0.212671, 0.715160, 0.072169,
-                      0.019334, 0.119193, 0.950227};
-
-    // Normalize for reference white point
-    M[0][0] /= Xr;
-    M[0][1] /= Xr;
-    M[0][2] /= Xr;
-    M[1][0] /= Yr;
-    M[1][1] /= Yr;
-    M[1][2] /= Yr;
-    M[2][0] /= Zr;
-    M[2][1] /= Zr;
-    M[2][2] /= Zr;
-
-    const double epsilon = 1.0 / 3;
-    const int shift = 20; // RGB->XYZ scale
-    const int halfShift = 1 << (shift - 1);
-    const int scaleLC = (int)(16 * (1 << shift));
-    const int scaleLT = (int)(116);
-
-    const int LABXR = (int)(M[0][0] * (1 << shift) + 0.5);
-    const int LABXG = (int)(M[0][1] * (1 << shift) + 0.5);
-    const int LABXB = (int)(M[0][2] * (1 << shift) + 0.5);
-    const int LABYR = (int)(M[1][0] * (1 << shift) + 0.5);
-    const int LABYG = (int)(M[1][1] * (1 << shift) + 0.5);
-    const int LABYB = (int)(M[1][2] * (1 << shift) + 0.5);
-    const int LABZR = (int)(M[2][0] * (1 << shift) + 0.5);
-    const int LABZG = (int)(M[2][1] * (1 << shift) + 0.5);
-    const int LABZB = (int)(M[2][2] * (1 << shift) + 0.5);
-
-    // build Lab lockup table
-    int table[4096]; // 4080 = 255*16
-    const int thresh = 36;
-    for (int i = 0; i < 4096; ++i)
+    // JL, ZY : set range image data
+    void createVexRIData(RangeImage &rangeImage)
     {
-        if (i > thresh)
-            table[i] = (int)(pow(i / 4080.0, epsilon) * (1 << shift) + 0.5);
-        else
-            table[i] = (int)((29 * 29.0 * i / (6 * 6 * 3 * 4080) + 4.0 / 29) * (1 << shift) + 0.5);
-    }
+        unsigned char *shift_BGRX = shiftBGR(rangeImage.createColorMat({RI_X}));
+        unsigned char *shift_BGRY = shiftBGR(rangeImage.createColorMat({RI_Y}));
+        unsigned char *shift_BGRZ = shiftBGR(rangeImage.createColorMat({RI_Z}));
+        unsigned char *shift_BGRDepth = shiftBGR(rangeImage.createColorMat({RI_DEPTH}));
+        unsigned char *shift_BGRRemission = shiftBGR(rangeImage.createColorMat({RI_REMISSION}));
+        createVexLab(shift_BGRX, m_BGRX);
+        createVexLab(shift_BGRY, m_BGRY);
+        createVexLab(shift_BGRZ, m_BGRZ);
+        createVexLab(shift_BGRDepth, m_BGRDepth);
+        createVexLab(shift_BGRRemission, m_BGRRemission);
 
-    unsigned char *ptrr = img;
-    unsigned char *ptrg = ptrr + m_vexnum;
-    unsigned char *ptrb = ptrg + m_vexnum;
-    unsigned short *ptrd = dst;
-    int R, G, B, X, Y, Z;
-    for (int i = 0; i < m_vexnum; ++i)
-    {
-
-        B = *ptrr++;
-        G = *ptrg++;
-        R = *ptrb++;
-        X = (B * LABXB + G * LABXG + R * LABXR + halfShift) >> (shift - 4); //RGB->XYZ x16
-        Y = (B * LABYB + G * LABYG + R * LABYR + halfShift) >> (shift - 4);
-        Z = (B * LABZB + G * LABZG + R * LABZR + halfShift) >> (shift - 4);
-        X = table[X];
-        Y = table[Y];
-        Z = table[Z];
-
-        *(ptrd + 0) = (scaleLT * Y - scaleLC + halfShift) >> (shift - 4);        // L: (0~100) X 16
-        *(ptrd + 1) = ((500 * (X - Y) + halfShift) >> (shift - 4)) + (128 << 4); // A: (0~255) X 16
-        *(ptrd + 2) = ((200 * (Y - Z) + halfShift) >> (shift - 4)) + (128 << 4); // B: (0~255) X 16
-        ptrd += 3;
-    }
-}
-
-// JL, ZY : change function with destination parameter
-void createVexYCbCr(unsigned char *img, unsigned short *dst)
-{
-    const double M[3][3] = {0.299, 0.587, 0.114,
-                            -0.168736, -0.331264, 0.5,
-                            0.5, -0.418688, -0.081312};
-
-    const int shift = 20; // RGB->YCbCr scale
-    const int halfShift = 1 << (shift - 1);
-    const int YCbCrYR = (int)(M[0][0] * (1 << shift) + 0.5);
-    const int YCbCrYG = (int)(M[0][1] * (1 << shift) + 0.5);
-    const int YCbCrYB = (int)(M[0][2] * (1 << shift) + 0.5);
-    const int YCbCrCbR = (int)(M[1][0] * (1 << shift) + 0.5);
-    const int YCbCrCbG = (int)(M[1][1] * (1 << shift) + 0.5);
-    const int YCbCrCbB = (int)(M[1][2] * (1 << shift) + 0.5);
-    const int YCbCrCrR = (int)(M[2][0] * (1 << shift) + 0.5);
-    const int YCbCrCrG = (int)(M[2][1] * (1 << shift) + 0.5);
-    const int YCbCrCrB = (int)(M[2][2] * (1 << shift) + 0.5);
-
-    unsigned char *ptrr = img;
-    unsigned char *ptrg = ptrr + m_vexnum;
-    unsigned char *ptrb = ptrg + m_vexnum;
-    unsigned char *ptre = ptrg;
-    unsigned short *ptrd = dst;
-    int R, G, B;
-    while (ptrr != ptre)
-    {
-        B = *ptrr++;
-        G = *ptrg++;
-        R = *ptrb++;
-        *ptrd = (unsigned short)((YCbCrYR * R + YCbCrYG * G + YCbCrYB * B + halfShift) >> (shift - 4));
-        *(ptrd + 1) = (unsigned short)((128 << 4) + ((YCbCrCbR * R + YCbCrCbG * G + YCbCrCbB * B + halfShift) >> (shift - 4)));
-        *(ptrd + 2) = (unsigned short)((128 << 4) + ((YCbCrCrR * R + YCbCrCrG * G + YCbCrCrB * B + halfShift) >> (shift - 4)));
-        ptrd += 3;
-    }
-}
-
-// JL, ZY : set range image data
-void createVexRIData(RangeImage &rangeImage)
-{
-    unsigned char *shift_BGRX = shiftBGR(rangeImage.createColorMat({RI_X}));
-    unsigned char *shift_BGRY = shiftBGR(rangeImage.createColorMat({RI_Y}));
-    unsigned char *shift_BGRZ = shiftBGR(rangeImage.createColorMat({RI_Z}));
-    unsigned char *shift_BGRDepth = shiftBGR(rangeImage.createColorMat({RI_DEPTH}));
-    unsigned char *shift_BGRRemission = shiftBGR(rangeImage.createColorMat({RI_REMISSION}));
-    createVexLab(shift_BGRX, m_BGRX);
-    createVexLab(shift_BGRY, m_BGRY);
-    createVexLab(shift_BGRZ, m_BGRZ);
-    createVexLab(shift_BGRDepth, m_BGRDepth);
-    createVexLab(shift_BGRRemission, m_BGRRemission);
-
-    const riVertex *riData = rangeImage.getData();
-    for (int i = 0; i < m_vexmax; i++)
-    {
-        m_coord3D[i * 3] = riData[i].x;
-        m_coord3D[i * 3 + 1] = riData[i].y;
-        m_coord3D[i * 3 + 2] = riData[i].z;
-        m_depth[i] = riData[i].depth;
-        m_remission[i] = riData[i].remission;
-        m_coord2D[i * 2] = i % m_w;
-        m_coord2D[i * 2 + 1] = i / m_h;
-    }
-}
-
-// JL, ZY : shift canal BGR
-unsigned char *shiftBGR(cv::Mat data)
-{
-    cv::Mat_<float> imgLine = data.reshape(1, m_h * m_w).t();
-    unsigned char *image_shift = (unsigned char *)calloc((m_h * m_w) * 3, sizeof(unsigned char));
-
-    for (int i = 0; i < m_w; i++)
-    {
-        for (int j = 0; j < m_h; j++)
+        const riVertex *riData = rangeImage.getData();
+        for (int i = 0; i < m_vexmax; i++)
         {
-            image_shift[j + i * m_h] = imgLine(i + j * m_w);
-            image_shift[j + i * m_h + m_h * m_w] = imgLine(i + j * m_w + m_h * m_w);
-            image_shift[j + i * m_h + 2 * m_h * m_w] = imgLine(i + j * m_w + 2 * m_h * m_w);
+            m_coord3D[i * 3] = riData[i].x;
+            m_coord3D[i * 3 + 1] = riData[i].y;
+            m_coord3D[i * 3 + 2] = riData[i].z;
+            m_depth[i] = riData[i].depth;
+            m_remission[i] = riData[i].remission;
+            m_coord2D[i * 2] = i % m_w;
+            m_coord2D[i * 2 + 1] = i / m_h;
         }
     }
-    return image_shift;
-} 
 
+    unsigned char *shiftBGR(cv::Mat data)
+    {
+        cv::Mat_<float> imgLine = data.reshape(1, m_h * m_w).t();
+        unsigned char *image_shift = (unsigned char *)calloc((m_h * m_w) * 3, sizeof(unsigned char));
+
+        for (int i = 0; i < m_w; i++)
+        {
+            for (int j = 0; j < m_h; j++)
+            {
+                image_shift[j + i * m_h] = imgLine(i + j * m_w);
+                image_shift[j + i * m_h + m_h * m_w] = imgLine(i + j * m_w + m_h * m_w);
+                image_shift[j + i * m_h + 2 * m_h * m_w] = imgLine(i + j * m_w + 2 * m_h * m_w);
+            }
+        }
+        return image_shift;
+    }
+};
 
 #endif

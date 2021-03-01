@@ -175,7 +175,8 @@ void ClickableLabel::deleteSelection()
 void ClickableLabel::saveSelection()
 {
     cv::Mat imgToSave = _sh->displaySelection(cv::Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255)), _imgRef);
-    cv::imwrite("../../images/save.png", imgToSave);
+    // cv::imwrite("../../images/save.png", imgToSave);
+    cv::imwrite("./save.png", imgToSave);
 }
 
 /*

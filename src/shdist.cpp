@@ -37,7 +37,7 @@ cv::Mat SHDist::convertRawDataToType(int idx)
     switch (_type)
     {
     case SHDIST_GRAY:
-        m = _rangeimage.createColorMat({idx}, true);
+        m = _rangeimage.createColorMat({idx}, true, true);
         break;
     case SHDIST_BGR:
         m = _rangeimage.createColorMat({idx}, false);
@@ -64,20 +64,26 @@ void SHDist::mergeData(int u, int pu, int sizeU, int sizePu)
     }
 }
 
-// A modif : dans mex.hpp [0][1] = 64 dans shdist [0][1] = 1 (transpose la matrice)
-
 int SHDist::computeDist(int u, int v, int mod, bool spatial2D)
 {
     int dist = 0;
-
     for (int i = 0; i < _vecData.size(); ++i)
     {
+        int type = _vecData.at(i).type();
         vector<float> vecU, vecV;
         int nbChannel = _vecData.at(i).channels();
         for (int j = 0; j < nbChannel; j++)
         {
-            vecU.push_back(_vecData.at(i).data[u * nbChannel + j]);
-            vecV.push_back(_vecData.at(i).data[v * nbChannel + j]);
+            if (_vecData.at(i).type() == CV_32FC1 || _vecData.at(i).type() == CV_32FC3)
+            {
+                vecU.push_back(_vecData.at(i).at<float>(u * nbChannel + j));
+                vecV.push_back(_vecData.at(i).at<float>(v * nbChannel + j));
+            }
+            else
+            {
+                vecU.push_back(_vecData.at(i).at<uchar>(u * nbChannel + j));
+                vecV.push_back(_vecData.at(i).at<uchar>(v * nbChannel + j));
+            }
         }
         switch (mod)
         {
@@ -115,11 +121,12 @@ int SHDist::meanDistance(vector<float> vecU, vector<float> vecV)
         cerr << "vecU and vecV have differents size in meanDistance in SHDist" << endl;
         exit(EXIT_FAILURE);
     }
+    int size = vecU.size();
     float sum = 0;
-    for (int i = 0; i < vecU.size(); i++)
+    for (int i = 0; i < size; i++)
     {
-        sum += abs(vecU.at(i) - vecV.at(i));
+        sum += abs(vecU[i] - vecV[i]);
     }
-    int res = sum / (float)vecU.size();
+    int res = sum / (float)size;
     return res;
 }

@@ -44,7 +44,6 @@ public:
     void mergeData(int u, int pu, int sizeU, int sizePu);
 
 private:
-
     /**
     * convert raw data at index idx to type define in constructor and return cv::Mat associate
     * @param idx index of raw data of the range image
@@ -67,7 +66,6 @@ private:
      * @return the mean distance of vecX and vecY
      * */
     int meanDistance(vector<float> vecU, vector<float> vecV);
-
 
     vector<int> _index;
     RangeImage _rangeimage;
