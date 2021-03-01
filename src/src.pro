@@ -27,6 +27,7 @@ SOURCES += ../src/mainwindow.cpp \
     ../src/rangeimage.cpp \
     ../src/pointcloud.cpp \
     ../src/shdist.cpp \
+    ../src/slic.cpp \
 
 HEADERS  += ../include/mainwindow.h \
     ../include/clickablelabel.h \
@@ -35,6 +36,7 @@ HEADERS  += ../include/mainwindow.h \
     ../include/rangeimage.h \
     ../include/pointcloud.h \
     ../include/shdist.h \
+    ../include/slic.h \
 
 FORMS    += ../src/mainwindow.ui
 
