@@ -79,6 +79,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     RangeImage ri(fileName.toStdString());
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
+
+    _minSpx = (_img.rows * _img.cols) / (min(_img.rows, _img.cols) * min(_img.rows, _img.cols));
+
     _ui->display_Y->setChecked(true);
     _ui->display_Interpolation->setChecked(true);
     float scale = MAX_WIDTH / (_img.cols);
@@ -224,10 +227,12 @@ void MainWindow::updateSliderValues()
 
 void MainWindow::updateMaxSpxSlider()
 {
-    _cl->setMaximumLevel(_ui->spinBoxMaxSpx->value());
-    _ui->nbSpxSlider->setMaximum(_ui->spinBoxMaxSpx->value());
-    _ui->nbSpxSlider->setValue(_ui->spinBoxMaxSpx->value());
-    _ui->valueNbSpxSlider->setNum(_ui->spinBoxMaxSpx->value());
+    int value = max(_minSpx, _ui->spinBoxMaxSpx->value());
+    _ui->spinBoxMaxSpx->setValue(value);
+    _cl->setMaximumLevel(value);
+    _ui->nbSpxSlider->setMaximum(value);
+    _ui->nbSpxSlider->setValue(value);
+    _ui->valueNbSpxSlider->setNum(value);
 
     initSuperpixelsLevel();
     updateSuperpixelsLevel();

@@ -25,6 +25,7 @@ using namespace cv;
 #define MAX_LEVEL 500
 #define MAX_WEIGHT 20
 
+
 namespace Ui
 {
     class MainWindow;
@@ -78,6 +79,8 @@ private:
     bool _closing = false;
     int _currentDisplayType = RI_Y;
     bool _equalHist = false;
+
+    int _minSpx;
 };
 
 #endif // MAINWINDOW_H
