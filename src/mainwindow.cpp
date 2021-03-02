@@ -37,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _ui->valueWeightSlider->setNum(INITIAL_WEIGHT);
     _ui->weightSlider->setValue(INITIAL_WEIGHT);
 
+    _ui->valueNbSpxSlider->setNum(INITIAL_NB_SPX);
+    _ui->nbSpxSlider->setValue(INITIAL_NB_SPX);
+
     connect(_ui->actionOpen_file, SIGNAL(triggered()), this, SLOT(openRangeImage()));
     connect(_ui->nbSpxSlider, SIGNAL(sliderReleased()), this, SLOT(updateSuperpixelsLevel()));
     connect(_ui->nbSpxSlider, SIGNAL(valueChanged(int)), this, SLOT(updateSliderValues()));
@@ -95,7 +98,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     _ui->spinBoxMaxWeight->setVisible(false); //remove to enable changing max values of weight
 
-    initSuperpixelsLevel();
+    _cl->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
+    updateSuperpixelsLevel();
 
     int w_width = min(_img.cols, (int)MAX_WIDTH);
     int w_height = min(2 * _img.rows, (int)MAX_HEIGHT);
@@ -192,12 +196,14 @@ void MainWindow::openRangeImage()
 
 void MainWindow::initSuperpixelsLevel()
 {
-    _cl->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), true);
+    _cl->initSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value());
+    // _cl->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), true);
 }
 
 void MainWindow::updateSuperpixelsLevel()
 {
-    _cl->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), false);
+    //_cl->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), false);
+    _cl->updateSuperpixels(_ui->nbSpxSlider->value());
 }
 
 void MainWindow::updateSuperpixelsWeight()
@@ -314,5 +320,6 @@ void MainWindow::updateDisplay(int type)
     _currentDisplayType = type;
     _cl->clear();
     _cl->setImgRef(_img);
-    initSuperpixelsLevel();
+    // initSuperpixelsLevel();
+    updateSuperpixelsLevel();
 }

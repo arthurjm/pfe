@@ -35,11 +35,12 @@ typedef cv::Vec<float, 5> Vec5f;
  * step-size (distance between initial cluster locations) and the colour
  * distance parameter.
  */
-class Slic {
+class Slic
+{
 public:
     /* Class constructors and deconstructors. */
     Slic();
-    Slic(Slic* pSlic);
+    Slic(Slic *pSlic);
     ~Slic();
 
     /* Generate an over-segmentation for an image. */
@@ -90,20 +91,19 @@ public:
     vector<int> findLabelNeighbours(int pLabelSpx);
 
     /* Data access and attribution functions */
-    unsigned int nbLabels(){return _nbLabels;}
+    unsigned int nbLabels() { return _nbLabels; }
     const cv::Mat_<int> getClusters() const;
     const vector<int> selectedClusters() const;
-    const vector<vector<pair<int,int>>> getCls() const;
-    const vector<pair<int,int>> pixelsOfSuperpixel(int pLabel) const;
+    const vector<vector<pair<int, int>>> getCls() const;
+    const vector<pair<int, int>> pixelsOfSuperpixel(int pLabel) const;
     int labelOfPixel(int pRow, int pCol);
     void setClusters(const cv::Mat_<int> pClusters);
-    void setCls(vector<vector<pair<int,int>>> pCls);
+    void setCls(vector<vector<pair<int, int>>> pCls);
 
     int getTreeLevel();
     void setTreeLevel(int pZoom);
     void zoomInTree();
     void zoomOutTree();
-
 
 private:
     /* Compute the distance between a center and an individual pixel. */
@@ -116,7 +116,6 @@ private:
     void initData(const cv::Mat &pImage);
     /* Added */
     void initCls(int pCols, int pRows);
-
 
     /* The step size per cluster, and the colour (nc) and distance (ns)
      * parameters. */
@@ -136,7 +135,7 @@ private:
     /* The label of each selected cluster - Added */
     vector<int> _selectedClusters;
     /* The pixels contained in a superpixel for each superpixel. - Added */
-    vector<vector<pair<int,int>>> _cls;
+    vector<vector<pair<int, int>>> _cls;
 
     cv::Mat_<int> tree;
     cv::Mat_<int> saliency;
@@ -145,7 +144,6 @@ private:
     vector<int> bg;
 
     int treeLevel;
-
 };
 
 #endif

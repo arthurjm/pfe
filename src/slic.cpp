@@ -61,12 +61,14 @@ void Slic::initData(const cv::Mat &pImage)
         return;
     }
     _clusters = cv::Mat_<int>(pImage.rows, pImage.cols, -1);
-    _distances = cv::Mat_<float>(pImage.rows, pImage.cols, DBL_MAX);
+    _distances = cv::Mat_<float>(pImage.rows, pImage.cols, FLT_MAX);
+    cout << _step << endl;
     /* Initialize the centers and counters. */
-    for (int col = _step; col < pImage.cols - _step / 2; col += _step)
+    for (int col = _step/2; col <= pImage.cols - _step / 2; col += _step)
     {
-        for (int row = _step; row < pImage.rows - _step / 2; row += _step)
+        for (int row = _step/2; row <= pImage.rows - _step / 2; row += _step)
         {
+            cout << row << " " << col << endl;
             /* Find the local minimum (gradient-wise). */
             cv::Point nc = findLocalMinimum(pImage, cv::Point(row, col));
             cv::Vec3b colour = pImage.at<cv::Vec3b>(nc.x, nc.y);
@@ -75,6 +77,7 @@ void Slic::initData(const cv::Mat &pImage)
             /* Append to vector of centers. */
             _centers.push_back(center);
             _centerCounts.push_back(0);
+            cout << _centerCounts.size() << endl;
         }
     }
 }
@@ -117,7 +120,7 @@ float Slic::computeDist(int pCi, cv::Point pPixel, cv::Vec3b pColour)
  */
 cv::Point Slic::findLocalMinimum(const cv::Mat_<cv::Vec3b> &pImage, cv::Point pCenter)
 {
-    float min_grad = DBL_MAX;
+    float min_grad = FLT_MAX;
     cv::Point loc_min(pCenter.x, pCenter.y);
     for (int i = pCenter.x - 1; i < pCenter.x + 2; i++)
     {
@@ -352,6 +355,8 @@ void Slic::createConnectivity(const cv::Mat &pImage)
             }
         }
     }
+
+    cout << "label : " << label << endl;
     _nbLabels = label;
     _clusters = new_clusters;
     initCls(pImage.rows, pImage.cols);
@@ -1248,7 +1253,8 @@ int Slic::getTreeLevel()
 
 void Slic::setTreeLevel(int pLevel)
 {
-    treeLevel = _nbLabels - pLevel;
+    if(_nbLabels >= pLevel)
+        treeLevel = _nbLabels - pLevel;
 }
 
 void Slic::zoomInTree()

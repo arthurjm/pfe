@@ -9,6 +9,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "superpixelhierarchy.h"
+#include "slic.h"
 #include "rangeimage.h"
 using namespace cv;
 
@@ -26,7 +27,9 @@ public:
     QImage cvToQt(Mat &pSrc);
     Mat qtToCv(const QImage &pSrc);
     void setImgRef(Mat pImg);
-    void updateSuperpixels(int pNbSpx, int pWeight, bool buildScribbleLevels);
+    void initSuperpixels(int pNbSpx, int pWeight);
+    // void updateSuperpixels(int pNbSpx, int pWeight, bool buildScribbleLevels);
+    void updateSuperpixels(int pNbSpx);
     void generateSuperpixelsZoom(int pNbSpx, int pWeight);
     void saveSelection();
 
@@ -75,7 +78,8 @@ private:
     void drawPointTo(const QPoint &pPoint, QColor pColor);
     void drawLineTo(const QPoint &endPoint, QColor pColor);
 
-    SuperpixelHierarchy *_sh;
+    // SuperpixelHierarchy *_sh;
+    Slic *_slic;
 
     int _maxLevel;
 
