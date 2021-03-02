@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->selectionButton, SIGNAL(released()), this, SLOT(switchMode()));
     connect(_ui->contoursButton, SIGNAL(released()), this, SLOT(switchContours()));
 
-    connect(_ui->spinBoxMaxSpx, SIGNAL(valueChanged(int)), this, SLOT(updateMaxSpxSlider()));
+    connect(_ui->spinBoxMaxSpx, SIGNAL(editingFinished()), this, SLOT(updateMaxSpxSlider()));
     connect(_ui->spinBoxMaxWeight, SIGNAL(valueChanged(int)), this, SLOT(updateMaxWeightSlider()));
 
     connect(_cl, SIGNAL(pixelValue(QPoint, QColor, int)), this, SLOT(displayPixelValues(QPoint, QColor, int)));
@@ -226,6 +226,11 @@ void MainWindow::updateMaxSpxSlider()
 {
     _cl->setMaximumLevel(_ui->spinBoxMaxSpx->value());
     _ui->nbSpxSlider->setMaximum(_ui->spinBoxMaxSpx->value());
+    _ui->nbSpxSlider->setValue(_ui->spinBoxMaxSpx->value());
+    _ui->valueNbSpxSlider->setNum(_ui->spinBoxMaxSpx->value());
+
+    initSuperpixelsLevel();
+    updateSuperpixelsLevel();
 }
 
 void MainWindow::updateMaxWeightSlider()
@@ -320,6 +325,6 @@ void MainWindow::updateDisplay(int type)
     _currentDisplayType = type;
     _cl->clear();
     _cl->setImgRef(_img);
-    // initSuperpixelsLevel();
+    initSuperpixelsLevel();
     updateSuperpixelsLevel();
 }

@@ -20,9 +20,9 @@ using namespace cv;
 
 #define MAX_WIDTH 2100.0
 #define MAX_HEIGHT 800.0
-#define INITIAL_NB_SPX 1000
+#define INITIAL_NB_SPX 800
 #define INITIAL_WEIGHT 20
-#define MAX_LEVEL 1000
+#define MAX_LEVEL 800
 #define MAX_WEIGHT 20
 
 namespace Ui
