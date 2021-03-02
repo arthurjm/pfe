@@ -62,13 +62,12 @@ void Slic::initData(const cv::Mat &pImage)
     }
     _clusters = cv::Mat_<int>(pImage.rows, pImage.cols, -1);
     _distances = cv::Mat_<float>(pImage.rows, pImage.cols, FLT_MAX);
-    cout << _step << endl;
+
     /* Initialize the centers and counters. */
-    for (int col = _step/2; col <= pImage.cols - _step / 2; col += _step)
+    for (int col = _step / 2; col <= pImage.cols - _step / 2; col += _step)
     {
-        for (int row = _step/2; row <= pImage.rows - _step / 2; row += _step)
+        for (int row = _step / 2; row <= pImage.rows - _step / 2; row += _step)
         {
-            cout << row << " " << col << endl;
             /* Find the local minimum (gradient-wise). */
             cv::Point nc = findLocalMinimum(pImage, cv::Point(row, col));
             cv::Vec3b colour = pImage.at<cv::Vec3b>(nc.x, nc.y);
@@ -77,7 +76,6 @@ void Slic::initData(const cv::Mat &pImage)
             /* Append to vector of centers. */
             _centers.push_back(center);
             _centerCounts.push_back(0);
-            cout << _centerCounts.size() << endl;
         }
     }
 }
@@ -103,9 +101,7 @@ float Slic::computeDist(int pCi, cv::Point pPixel, cv::Vec3b pColour)
     float dc4 = cen[4] - pPixel.y;
     float ds = sqrt(dc3 * dc3 + dc4 * dc4);
 
-    if (_nc == INT_MAX)
-        return ds / _ns;
-    return sqrt((dc * dc / (_nc * _nc)) + (ds * ds / (_ns * _ns)));
+    return dc + (_nc / _step) * ds;
 
     //float w = 1.0 / (pow(ns / nc, 2));
     //return sqrt(dc) + sqrt(ds * w);
@@ -356,7 +352,6 @@ void Slic::createConnectivity(const cv::Mat &pImage)
         }
     }
 
-    cout << "label : " << label << endl;
     _nbLabels = label;
     _clusters = new_clusters;
     initCls(pImage.rows, pImage.cols);
@@ -988,6 +983,55 @@ void Slic::getAndDisplaySelection(cv::Mat &pImage, const cv::Mat pImageRef)
     }
 }
 
+cv::Mat Slic::displaySelection(cv::Mat backgroundImage, cv::Mat selectionImage)
+{
+    cv::Mat output = backgroundImage.clone();
+    for (unsigned int index = 0; index < _selectedClusters.size(); ++index)
+    {
+        int label = _selectedClusters[index];
+        for (unsigned int i = 0; i < _nbLabels; i++)
+        {
+            if (tree(treeLevel, i) == label)
+            {
+                for (unsigned int p = 0; p < _cls[i].size(); ++p)
+                {
+                    int row = _cls[i][p].first;
+                    int col = _cls[i][p].second;
+                    output.at<cv::Vec3b>(row, col) = selectionImage.at<cv::Vec3b>(row, col);
+                }
+            }
+        }
+    }
+    return output;
+}
+
+cv::Mat Slic::displayGraySelection(cv::Mat pImage)
+{
+    cv::Mat output = pImage.clone();
+    for (unsigned int index = 0; index < _selectedClusters.size(); ++index)
+    {
+        int label = _selectedClusters[index];
+        for (unsigned int i = 0; i < _nbLabels; i++)
+        {
+            if (tree(treeLevel, i) == label)
+            {
+                for (unsigned int p = 0; p < _cls[i].size(); ++p)
+                {
+                    int row = _cls[i][p].first;
+                    int col = _cls[i][p].second;
+                    if (output.at<cv::Vec3b>(row, col) != colorContours)
+                        output.at<cv::Vec3b>(row, col) = output.at<cv::Vec3b>(row, col) / 2.0f;
+                    else
+                    {
+                        output.at<cv::Vec3b>(row, col) = colorSelection;
+                    }
+                }
+            }
+        }
+    }
+    return output;
+}
+
 /*
  * Add the superpixel containing the pixel pPos to the list of selected clusters if not yet done.
  *
@@ -1253,25 +1297,32 @@ int Slic::getTreeLevel()
 
 void Slic::setTreeLevel(int pLevel)
 {
-    if(_nbLabels >= pLevel)
+    if (_nbLabels >= pLevel)
         treeLevel = _nbLabels - pLevel;
+    else
+        treeLevel = 0;
 }
 
 void Slic::zoomInTree()
 {
-    int spxLevel = _nbLabels - treeLevel;
-    if (spxLevel < _nbLabels / 2)
-    {
-        treeLevel = _nbLabels - (spxLevel * 2);
-    }
-    else if (spxLevel < _nbLabels)
-    {
-        treeLevel = 0;
-    }
+    // int spxLevel = _nbLabels - treeLevel;
+    // if (spxLevel < _nbLabels / 2)
+    // {
+    //     treeLevel = _nbLabels - (spxLevel * 2);
+    // }
+    // else if (spxLevel < _nbLabels)
+    // {
+    //     treeLevel = 0;
+    // }
+    _zoomHist.push_back(treeLevel);
+    treeLevel = max(0, treeLevel / 2);
 }
 
 void Slic::zoomOutTree()
 {
-    int spxLevel = _nbLabels - treeLevel;
-    treeLevel = _nbLabels - (spxLevel / 2);
+    // int spxLevel = _nbLabels - treeLevel;
+    // treeLevel = _nbLabels - (spxLevel / 2);
+
+    treeLevel = _zoomHist.back();
+    _zoomHist.pop_back();
 }

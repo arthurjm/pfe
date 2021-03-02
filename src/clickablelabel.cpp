@@ -182,16 +182,11 @@ void ClickableLabel::updateDisplay()
  */
 void ClickableLabel::updateClusters()
 {
-    // _leftImgClusters = _sh->displayContours(_leftImgContours);
-    _slic->displayClusters(_leftImgContours);
-
+    _leftImgClusters = _slic->displayGraySelection(_leftImgContours);
     _zoomLeftImg = applyZoom(_leftImgClusters.clone());
 
-    // _rightImgClusters = _sh->displaySelection(_rightImgContours, _leftImgContours);
-    // _rightImgNoContours = _sh->displaySelection(cv::Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255)), _imgRef);
-
-    _slic->getAndDisplaySelection(_rightImgContours, _leftImgContours);
-    _rightImgNoContours = _slic->getRoiSelection(_imgRef);
+    _rightImgClusters = _slic->displaySelection(_rightImgContours, _leftImgContours);
+    _rightImgNoContours = _slic->displaySelection(cv::Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255)), _imgRef);
 }
 
 /*
@@ -227,8 +222,7 @@ void ClickableLabel::deleteSelection()
  */
 void ClickableLabel::saveSelection()
 {
-    // cv::Mat imgToSave = _sh->displaySelection(cv::Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255)), _imgRef);
-    cv::Mat imgToSave = _slic->getRoiSelection(_imgRef);
+    cv::Mat imgToSave = _slic->displaySelection(cv::Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255)), _imgRef);
     // cv::imwrite("../../images/save.png", imgToSave);
     cv::imwrite("./save.png", imgToSave);
 }

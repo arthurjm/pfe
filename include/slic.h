@@ -70,6 +70,11 @@ public:
     void displaySaliency(cv::Mat &pImage);
     void displayMultipleSaliency(cv::Mat &pImage);
     void displayClusters(cv::Mat &pImage);
+
+    /* JL, ZY */
+    cv::Mat displaySelection(cv::Mat backgroundImage, cv::Mat selectionImage);
+    cv::Mat displayGraySelection(cv::Mat pImage);
+
     void getAndDisplaySelection(cv::Mat &pImage, const cv::Mat pImageRef);
 
     /* Functions relative to the selection/deselection of superpixels */
@@ -144,6 +149,11 @@ private:
     vector<int> bg;
 
     int treeLevel;
+
+    cv::Vec3b colorContours = cv::Vec3b(255, 0, 255); // default ; pink 255,0,255
+    cv::Vec3b colorSelection = cv::Vec3b(0, 0, 255);  // default ; red 0,0,255
+
+    vector<int> _zoomHist;
 };
 
 #endif

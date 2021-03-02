@@ -92,8 +92,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _cl->setRangeImage(ri);
     _cl->setMaximumLevel(MAX_LEVEL);
     _ui->nbSpxSlider->setMaximum(MAX_LEVEL);
-    _ui->spinBoxMaxSpx->setValue(MAX_LEVEL);
     _ui->weightSlider->setMaximum(MAX_WEIGHT);
+    _ui->spinBoxMaxSpx->setValue(MAX_LEVEL);
     _ui->spinBoxMaxWeight->setValue(MAX_WEIGHT);
 
     _ui->spinBoxMaxWeight->setVisible(false); //remove to enable changing max values of weight
@@ -196,7 +196,7 @@ void MainWindow::openRangeImage()
 
 void MainWindow::initSuperpixelsLevel()
 {
-    _cl->initSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value());
+    _cl->initSuperpixels(_ui->nbSpxSlider->maximum(), _ui->weightSlider->value());
     // _cl->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), true);
 }
 
