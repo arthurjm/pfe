@@ -60,9 +60,29 @@ void RangeImage::loadRangeImage(string fileName)
         _maxValue[2] = max(_maxValue[2], _data[i].z);
         _maxValue[3] = max(_maxValue[3], _data[i].depth);
     }
-    // cout << "min x : " << _minValue[0] << " | max x : " << _maxValue[0] << endl;
-    // cout << "min y : " << _minValue[1] << " | max y : " << _maxValue[2] << endl;
-    // cout << "min z : " << _minValue[2] << " | max z : " << _maxValue[2] << endl;
+    separateInvalideComposant();
+}
+
+void RangeImage::separateInvalideComposant()
+{
+    int size = _height * _width;
+    vector<uchar> tmpImg;
+    tmpImg.reserve(size);
+    for (int i = 0; i < size; ++i)
+    {
+        if (_data[i].remission == -1)
+            tmpImg.push_back(255);
+        else
+            tmpImg.push_back(0);
+    }
+    cv::Mat m = morphOpen(createCvMat(tmpImg, CV_8UC1));
+    cv::cvtColor(m, m, cv::COLOR_BGR2GRAY);
+    uchar *mask = m.data;
+    for (int i = 0; i < size; ++i)
+    {
+        if (mask[i] == 255)
+            _data[i].label = -2;
+    }
 }
 
 void RangeImage::pointCloudProjection(PointCloud cp, float proj_fov_up, float proj_fov_down)
@@ -75,7 +95,6 @@ void RangeImage::pointCloudProjection(PointCloud cp, float proj_fov_up, float pr
     float fov_up = proj_fov_up / 180.0 * M_PI;     // field of view up in rad
     float fov_down = proj_fov_down / 180.0 * M_PI; // field of view down in rad
     float fov = abs(fov_down) + abs(fov_up);       // get field of view total in rad
-    // std::cout << "points:" << cp.getPoints().shape() << std::endl;
 
     // get depth of all points
     nc::NdArray<double> d_depth = nc::norm(cp.getPoints(), nc::Axis::COL);
@@ -196,15 +215,12 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
     for (int i = 0; i < size; i++)
     {
         remission = *((float *)(_data) + i * DIM + 4);
-        //cout << i / _width << " |" << i % _width<< endl;
-
         for (size_t j = 0; j < idx.size(); j++)
         {
             if (remission != -1.f)
             {
                 val = *((float *)(_data) + i * DIM + idx.at(j));
                 val = roundf((val - min.at(j)) / (max.at(j) - min.at(j)) * 255);
-                //val *= remission;
                 normVal.push_back((uchar)val);
             }
             else
@@ -214,56 +230,53 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
     return normVal;
 }
 
-void RangeImage::interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter, bool BGR)
+void RangeImage::interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, bool BGR)
 {
     int nbChannel = 1;
     if (BGR)
         nbChannel = 3;
-    for (int iter = 0; iter < nbIter; iter++)
+    for (int i = 0; i < _height; i++)
     {
-        for (int i = 0; i < _height; i++)
+        for (int j = 0; j < _width; j++)
         {
-            for (int j = 0; j < _width; j++)
+            bool validLabel = _data[i * _width + j].label == -1;
+            bool validRemission = _data[i * _width + j].remission == -1;
+            if (validLabel && validRemission)
             {
-                if (dataColor.at(i * _width * nbChannel + j * nbChannel) == 0 &&
-                    (!BGR || (dataColor.at(i * _width * nbChannel + j * nbChannel + 1) == 0 && dataColor.at(i * _width * nbChannel + j * nbChannel + 2) == 0)))
+                int sumB = 0;
+                int sumG = 0;
+                int sumR = 0;
+                int sum = 0;
+                for (int y = i - halfsizeY; y <= i + halfsizeY; y++)
                 {
-                    int sumB = 0;
-                    int sumG = 0;
-                    int sumR = 0;
-                    int sum = 0;
-                    for (int y = i - halfsizeY; y <= i + halfsizeY; y++)
+                    for (int x = j - halfsizeX; x <= j + halfsizeX; x++)
                     {
-                        for (int x = j - halfsizeX; x <= j + halfsizeX; x++)
+                        if (x < _width && y < _height && x >= 0 && y >= 0)
                         {
-                            if (x < _width && y < _height && x >= 0 && y >= 0)
+                            if (x != j || y != i)
                             {
-                                if (x != j || y != i)
+                                if (_data[y * _width + x].remission != -1)
                                 {
-                                    if (dataColor.at(y * _width * nbChannel + x * nbChannel) != 0 || (BGR && (dataColor.at(y * _width * nbChannel + x * nbChannel + 1) != 0 || dataColor.at(y * _width * nbChannel + x * nbChannel + 2) != 0)))
+                                    sumB += dataColor.at(y * _width * nbChannel + x * nbChannel);
+                                    if (BGR)
                                     {
-                                        sumB += dataColor.at(y * _width * nbChannel + x * nbChannel);
-
-                                        if (BGR)
-                                        {
-                                            sumG += dataColor.at(y * _width * nbChannel + x * nbChannel + 1);
-                                            sumR += dataColor.at(y * _width * nbChannel + x * nbChannel + 2);
-                                        }
-                                        sum++;
+                                        sumG += dataColor.at(y * _width * nbChannel + x * nbChannel + 1);
+                                        sumR += dataColor.at(y * _width * nbChannel + x * nbChannel + 2);
                                     }
+                                    sum++;
                                 }
                             }
                         }
                     }
-                    if (sum != 0)
-                    {
-                        dataColor.at(i * _width * nbChannel + j * nbChannel) = sumB / sum;
+                }
+                if (sum != 0)
+                {
+                    dataColor.at(i * _width * nbChannel + j * nbChannel) = sumB / sum;
 
-                        if (BGR)
-                        {
-                            dataColor.at(i * _width * nbChannel + j * nbChannel + 1) = sumG / sum;
-                            dataColor.at(i * _width * nbChannel + j * nbChannel + 2) = sumR / sum;
-                        }
+                    if (BGR)
+                    {
+                        dataColor.at(i * _width * nbChannel + j * nbChannel + 1) = sumG / sum;
+                        dataColor.at(i * _width * nbChannel + j * nbChannel + 2) = sumR / sum;
                     }
                 }
             }
@@ -271,30 +284,84 @@ void RangeImage::interpolation(vector<uchar> &dataColor, int halfsizeX, int half
     }
 }
 
-cv::Mat RangeImage::createBGRFromColorMap(int idx, bool interpolate, bool closing)
+cv::Mat RangeImage::createColorMat(vector<int> idx, bool isGray, bool interpolate, bool closing, bool equalHist)
 {
-    vector<uchar> dataColor = normalizedValue({idx});
+    vector<uchar> dataColor = normalizedValue(idx);
+
+    bool isBGR = false;
+    int cvType = CV_8UC1;
+    if (idx.size() == 3)
+    {
+        cvType = CV_8UC3;
+        isBGR = true;
+    }
+
     if (interpolate)
-        interpolation(dataColor, 0, 2, 4, false);
-    cv::Mat img = createCvMat(dataColor, CV_8UC1);
-    cv::Mat img2;
-    cv::applyColorMap(img, img2, cv::COLORMAP_HSV);
+        interpolation(dataColor, 0, 2, isBGR);
+
+    cv::Mat img = createCvMat(dataColor, cvType);
+
+    if (equalHist)
+    {
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+        cv::Mat tmp;
+        cv::equalizeHist(img, tmp);
+        img = tmp;
+        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+    }
+
+    if (isGray)
+    {
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+    }
+    else
+    {
+        cv::Mat img2;
+        cv::applyColorMap(img, img2, cv::COLORMAP_JET);
+        img = img2;
+    }
 
     if (closing)
-        img2 = morphClose(img2);
-    return img2;
+        img = morphClose(img);
+    return img;
 }
 
 cv::Mat RangeImage::createImageFromXYZ()
 {
-    vector<int> idx = {0, 1, 2};
-    vector<uchar> dataColor = normalizedValue(idx);
-    interpolation(dataColor, 0, 2, 4, true);
+    vector<uchar> dataX = normalizedValue({RI_X});
+    vector<uchar> dataY = normalizedValue({RI_Y});
+    vector<uchar> dataZ = normalizedValue({RI_Z});
+
+    cv::Mat imgX = createCvMat(dataX, CV_8UC1);
+    cv::Mat imgY = createCvMat(dataY, CV_8UC1);
+    cv::Mat imgZ = createCvMat(dataZ, CV_8UC1);
+
+    cv::cvtColor(imgX, imgX, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(imgY, imgY, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(imgZ, imgZ, cv::COLOR_BGR2GRAY);
+
+    cv::Mat tmp;
+    cv::equalizeHist(imgX, tmp);
+    imgX = tmp;
+    cv::equalizeHist(imgY, tmp);
+    imgY = tmp;
+    cv::equalizeHist(imgZ, tmp);
+    imgZ = tmp;
+
+    vector<uchar> dataColor;
+    int size = _width * _height;
+    dataColor.reserve(size * 3);
+    for (int i = 0; i < size; ++i)
+    {
+        float re = _data[i].remission != -1 ? _data[i].remission : 1;
+        dataColor.push_back(imgX.data[i] * re);
+        dataColor.push_back(imgY.data[i] * re);
+        dataColor.push_back(imgZ.data[i] * re);
+    }
+    interpolation(dataColor, 0, 2, false);
     cv::Mat img = createCvMat(dataColor);
-    cv::Mat img2;
-    cv::applyColorMap(img, img2, cv::COLORMAP_HSV);
-    //img2 = morphClose(img2);
-    return img2;
+    return img;
 }
 
 cv::Mat RangeImage::createCvMat(vector<uchar> dataColor, int type)
@@ -333,6 +400,16 @@ cv::Mat RangeImage::morphClose(cv::Mat img)
     return img_close;
 }
 
+cv::Mat RangeImage::morphOpen(cv::Mat img)
+{
+    // Test : Apply dilation
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+                                                cv::Size(1, 3));
+    cv::Mat img_open;
+    cv::morphologyEx(img, img_open, cv::MORPH_OPEN, element);
+    return img_open;
+}
+
 cv::Mat RangeImage::morphDilate(cv::Mat img)
 {
     // Test : Apply dilation
@@ -343,9 +420,39 @@ cv::Mat RangeImage::morphDilate(cv::Mat img)
     return img_dilate;
 }
 
+cv::Mat RangeImage::morphErode(cv::Mat img)
+{
+    // Test : Apply dilation
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+                                                cv::Size(1, 5));
+    cv::Mat img_erode;
+    cv::erode(img, img_erode, element);
+    return img_erode;
+}
+
 const riVertex *RangeImage::getData()
 {
     return _data;
+}
+
+cv::Mat RangeImage::getRawDataFromIndex(int index)
+{
+    int size = _height * _width;
+    vector<float> rawData;
+    rawData.reserve(size);
+    for (int i = 0; i < size; ++i)
+    {
+        float val = *((float *)(_data) + i * DIM + index);
+        rawData.push_back(val);
+    }
+    cv::Mat m = cv::Mat(_height, _width, CV_32FC1);
+    memcpy(m.data, rawData.data(), size * sizeof(float));
+    return m;
+}
+
+void RangeImage::setLabel(int index, int label)
+{
+    _data[index].label = label;
 }
 
 int RangeImage::getHeight()
@@ -356,4 +463,21 @@ int RangeImage::getHeight()
 int RangeImage::getWidth()
 {
     return _width;
+}
+
+void RangeImage::save(string filename)
+{
+    int size = _height * _width;
+    nc::NdArray<float> riNdArr(1, size * DIM);
+    for (int i = 0; i < size; ++i)
+    {
+        int n_index = i * DIM;
+        riNdArr[n_index + 0] = _data[i].x;
+        riNdArr[n_index + 1] = _data[i].y;
+        riNdArr[n_index + 2] = _data[i].z;
+        riNdArr[n_index + 3] = _data[i].remission;
+        riNdArr[n_index + 4] = _data[i].depth;
+        riNdArr[n_index + 5] = _data[i].label;
+    }
+    riNdArr.tofile(filename);
 }

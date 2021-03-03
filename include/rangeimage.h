@@ -15,6 +15,7 @@
 #define RI_DEPTH 3
 #define RI_REMISSION 4
 #define RI_LABEL 5
+#define RI_XYZ 6
 #define HEIGHT 64
 #define WIDTH 1024
 #define FOV_UP 3.0
@@ -58,17 +59,33 @@ public:
      * Create a gray image according to the associate attribut at idx index,
      * use opencv to apply color map and return the cv::Mat corresponding.
      * @param idx indicate the attribut
-     * @param  interpolation boolean to activate interpolation
+     * @param isGray boolean to indicate which color to generate (Gray/BGR)
+     * @param interpolation boolean to activate interpolation
      * @param closing boolean to activate closing morphologie
+     * @param equalHist boolean to activate equalize histogram
      * @return an uchar array
      * */
-    cv::Mat createBGRFromColorMap(int idx, bool interpolate = false, bool closing = false);
+    cv::Mat createColorMat(vector<int> idx, bool isGray = false, bool interpolate = false, bool closing = false, bool equalHist = false);
 
     /** 
      * Access _data with read only permission
      * @return an const pointer of _data
      * */
     const riVertex *getData();
+
+    /**
+    * return a cv::Mat of raw data corresponding at the index information  
+    * @param index index of the data (RI_X, RI_Y, ...)
+    * @return a cv::Mat with raw data 
+    * */
+    cv::Mat getRawDataFromIndex(int index);
+
+    /** 
+     * change the label at the index in the range image data
+     * @param index in range image 
+     * @param label new label for the range image 
+     * */
+    void setLabel(int index, int label);
 
     /** 
      * Access the height of the range image
@@ -78,6 +95,11 @@ public:
 
     int getWidth();
 
+    /**
+     * Save the current range image as binary file
+     * */
+    void save(string filename);
+
 private:
     /**
      * Save data of the range image in _data structure and update min/max values of different attributes
@@ -86,6 +108,10 @@ private:
     void loadRangeImage(string fileName);
 
     /**
+     * Set label to -2 for unwanted components (ex : dead pixels on the bottom)
+     * */
+    void separateInvalideComposant();
+    /**
      * According to idx, normalize the associated data and assign it to an vector
      * @param idx an verctor helps to indicate the attribute of riVertex
      * @return an vector of normalized data
@@ -93,14 +119,13 @@ private:
     vector<uchar> normalizedValue(vector<int> idx);
 
     /**
-     * Apply interpolation on dead pixels (remission == -1).
+     * Apply interpolation on dead pixels (remission == -1 and label != -2).
      * @param dataColor an array contains image information 
      * @param haflsizeX halfsize X of the kernel 
      * @param halfsizeY halfsize Y of the kernel 
-     * @param nbIter number of iteration
      * @param BGR boolean indicate if dataColor is a gray or color image
      * */
-    void interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, int nbIter, bool BGR);
+    void interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, bool BGR);
 
     /**
      * Transform a range image to openCV matrice 
@@ -118,6 +143,7 @@ private:
      * */
     cv::Mat morphClose(cv::Mat img);
 
+    cv::Mat morphOpen(cv::Mat img);
     /**
      * Apply dilation morphology to input image
      * 
@@ -125,6 +151,8 @@ private:
      * @return an opencv Mat
      * */
     cv::Mat morphDilate(cv::Mat img);
+
+    cv::Mat morphErode(cv::Mat img);
 
     void pointCloudProjection(PointCloud cp, float proj_fov_up, float proj_fov_down);
 
