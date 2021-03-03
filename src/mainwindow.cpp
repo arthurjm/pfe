@@ -175,7 +175,7 @@ void MainWindow::openImage()
 
 void MainWindow::openRangeImage()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../../../data/range_image"), "Binary file (*.bin)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
     if (fileName == nullptr)
         return;
 
@@ -279,7 +279,7 @@ void MainWindow::resetSelection()
 
 void MainWindow::save()
 {
-    QString filename = QFileDialog::getSaveFileName(this, "Save a range image", QString("../../../data/range_image_labeled/save"), "Binary file (*.bin)");
+    QString filename = QFileDialog::getSaveFileName(this, "Save a range image", QString("../data/range_image_labeled/save.bin"), "Binary file (*.bin)");
     _cl->saveSelection(filename.toStdString());
 }
 
