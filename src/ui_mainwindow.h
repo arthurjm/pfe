@@ -73,11 +73,13 @@ public:
     QRadioButton *display_Remission;
     QWidget *widgetSidebar_2;
     QVBoxLayout *verticalLayout;
-    QCheckBox *SHWeight_X;
-    QCheckBox *SHWeight_Y;
-    QCheckBox *SHWeight_Z;
-    QCheckBox *SHWeight_Depth;
-    QCheckBox *SHWeight_Remission;
+    QRadioButton *label_Ground;
+    QRadioButton *label_Structure;
+    QRadioButton *label_Vehicle;
+    QRadioButton *label_Nature;
+    QRadioButton *label_Human;
+    QRadioButton *label_Object;
+    QRadioButton *label_Outlier;
     QHBoxLayout *horizontalLayout_5;
     QLabel *label;
     QLabel *label_2;
@@ -339,30 +341,58 @@ public:
         verticalLayout->setContentsMargins(11, 11, 11, 11);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
-        SHWeight_X = new QCheckBox(widgetSidebar_2);
-        SHWeight_X->setObjectName(QString::fromUtf8("SHWeight_X"));
+        label_Ground = new QRadioButton(widgetSidebar_2);
+        label_Ground->setObjectName(QString::fromUtf8("label_Ground"));
+        QFont font;
+        font.setBold(true);
+        font.setWeight(75);
+        label_Ground->setFont(font);
+        label_Ground->setAutoFillBackground(false);
+        label_Ground->setStyleSheet(QString::fromUtf8("color:purple"));
 
-        verticalLayout->addWidget(SHWeight_X);
+        verticalLayout->addWidget(label_Ground);
 
-        SHWeight_Y = new QCheckBox(widgetSidebar_2);
-        SHWeight_Y->setObjectName(QString::fromUtf8("SHWeight_Y"));
+        label_Structure = new QRadioButton(widgetSidebar_2);
+        label_Structure->setObjectName(QString::fromUtf8("label_Structure"));
+        label_Structure->setFont(font);
+        label_Structure->setStyleSheet(QString::fromUtf8("color:rgb(113,108,44)"));
 
-        verticalLayout->addWidget(SHWeight_Y);
+        verticalLayout->addWidget(label_Structure);
 
-        SHWeight_Z = new QCheckBox(widgetSidebar_2);
-        SHWeight_Z->setObjectName(QString::fromUtf8("SHWeight_Z"));
+        label_Vehicle = new QRadioButton(widgetSidebar_2);
+        label_Vehicle->setObjectName(QString::fromUtf8("label_Vehicle"));
+        label_Vehicle->setFont(font);
+        label_Vehicle->setStyleSheet(QString::fromUtf8("color:rgb(98,178,205)"));
 
-        verticalLayout->addWidget(SHWeight_Z);
+        verticalLayout->addWidget(label_Vehicle);
 
-        SHWeight_Depth = new QCheckBox(widgetSidebar_2);
-        SHWeight_Depth->setObjectName(QString::fromUtf8("SHWeight_Depth"));
+        label_Nature = new QRadioButton(widgetSidebar_2);
+        label_Nature->setObjectName(QString::fromUtf8("label_Nature"));
+        label_Nature->setFont(font);
+        label_Nature->setStyleSheet(QString::fromUtf8("color:green"));
 
-        verticalLayout->addWidget(SHWeight_Depth);
+        verticalLayout->addWidget(label_Nature);
 
-        SHWeight_Remission = new QCheckBox(widgetSidebar_2);
-        SHWeight_Remission->setObjectName(QString::fromUtf8("SHWeight_Remission"));
+        label_Human = new QRadioButton(widgetSidebar_2);
+        label_Human->setObjectName(QString::fromUtf8("label_Human"));
+        label_Human->setFont(font);
+        label_Human->setStyleSheet(QString::fromUtf8("color:red"));
 
-        verticalLayout->addWidget(SHWeight_Remission);
+        verticalLayout->addWidget(label_Human);
+
+        label_Object = new QRadioButton(widgetSidebar_2);
+        label_Object->setObjectName(QString::fromUtf8("label_Object"));
+        label_Object->setFont(font);
+        label_Object->setStyleSheet(QString::fromUtf8("color:brown"));
+
+        verticalLayout->addWidget(label_Object);
+
+        label_Outlier = new QRadioButton(widgetSidebar_2);
+        label_Outlier->setObjectName(QString::fromUtf8("label_Outlier"));
+        label_Outlier->setFont(font);
+        label_Outlier->setStyleSheet(QString::fromUtf8("color:gray"));
+
+        verticalLayout->addWidget(label_Outlier);
 
 
         horizontalLayout_2->addWidget(widgetSidebar_2);
@@ -576,13 +606,15 @@ public:
         display_Z->setText(QCoreApplication::translate("MainWindow", "Z", nullptr));
         display_Depth->setText(QCoreApplication::translate("MainWindow", "Depth", nullptr));
         display_Remission->setText(QCoreApplication::translate("MainWindow", "Remission", nullptr));
-        SHWeight_X->setText(QCoreApplication::translate("MainWindow", "X", nullptr));
-        SHWeight_Y->setText(QCoreApplication::translate("MainWindow", "Y", nullptr));
-        SHWeight_Z->setText(QCoreApplication::translate("MainWindow", "Z", nullptr));
-        SHWeight_Depth->setText(QCoreApplication::translate("MainWindow", "Depth", nullptr));
-        SHWeight_Remission->setText(QCoreApplication::translate("MainWindow", "Remission", nullptr));
+        label_Ground->setText(QCoreApplication::translate("MainWindow", "Ground", nullptr));
+        label_Structure->setText(QCoreApplication::translate("MainWindow", "Structure", nullptr));
+        label_Vehicle->setText(QCoreApplication::translate("MainWindow", "Vehicle", nullptr));
+        label_Nature->setText(QCoreApplication::translate("MainWindow", "Nature", nullptr));
+        label_Human->setText(QCoreApplication::translate("MainWindow", "Human", nullptr));
+        label_Object->setText(QCoreApplication::translate("MainWindow", "Object", nullptr));
+        label_Outlier->setText(QCoreApplication::translate("MainWindow", "Outlier", nullptr));
         label->setText(QCoreApplication::translate("MainWindow", "Display", nullptr));
-        label_2->setText(QCoreApplication::translate("MainWindow", "SHWeight", nullptr));
+        label_2->setText(QCoreApplication::translate("MainWindow", "Labels", nullptr));
         cursor->setText(QString());
         pixelValuesLabel->setText(QString());
         pixelColorLabel->setText(QString());

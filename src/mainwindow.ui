@@ -527,37 +527,117 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QCheckBox" name="SHWeight_X">
+             <widget class="QRadioButton" name="label_Ground">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="autoFillBackground">
+               <bool>false</bool>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color:purple</string>
+              </property>
               <property name="text">
-               <string>X</string>
+               <string>Ground</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="SHWeight_Y">
+             <widget class="QRadioButton" name="label_Structure">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color:rgb(113,108,44)</string>
+              </property>
               <property name="text">
-               <string>Y</string>
+               <string>Structure</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="SHWeight_Z">
+             <widget class="QRadioButton" name="label_Vehicle">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color:rgb(98,178,205)</string>
+              </property>
               <property name="text">
-               <string>Z</string>
+               <string>Vehicle</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="SHWeight_Depth">
+             <widget class="QRadioButton" name="label_Nature">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color:green</string>
+              </property>
               <property name="text">
-               <string>Depth</string>
+               <string>Nature</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="SHWeight_Remission">
+             <widget class="QRadioButton" name="label_Human">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color:red</string>
+              </property>
               <property name="text">
-               <string>Remission</string>
+               <string>Human</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="label_Object">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color:brown</string>
+              </property>
+              <property name="text">
+               <string>Object</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="label_Outlier">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color:gray</string>
+              </property>
+              <property name="text">
+               <string>Outlier</string>
               </property>
              </widget>
             </item>
@@ -614,7 +694,7 @@
             </size>
            </property>
            <property name="text">
-            <string>SHWeight</string>
+            <string>Labels</string>
            </property>
            <property name="textFormat">
             <enum>Qt::AutoText</enum>

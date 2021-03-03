@@ -17,6 +17,14 @@ class MainWindow;
 
 #define ZOOM_MAX 8
 
+#define CL_LABEL_GROUND 0
+#define CL_LABEL_STUCTURE 1
+#define CL_LABEL_VEHICLE 2
+#define CL_LABEL_NATURE 3
+#define CL_LABEL_HUMAN 4
+#define CL_LABEL_OBJECT 5
+#define CL_LABEL_OUTLIER 6
+
 class ClickableLabel : public QLabel
 {
     Q_OBJECT
@@ -59,6 +67,8 @@ public:
      * @param closing boolean to activate closing morphologie
      * */
     cv::Mat getDisplayMat(int type, bool isGray, bool interpolate, bool closing, bool equalHist);
+
+    void setCurrentLabel(int label);
 
 signals:
     void mousePos(int pX, int pY);
@@ -106,6 +116,9 @@ private:
     bool _showContours;
     int labelisationMode;
     int penWidth = 10;
+
+    // Indicate which label will be associated to the next selected superpixels
+    int _currentLabel = CL_LABEL_GROUND; // Default : Ground
 };
 
 #endif // CLICKABLELABEL_H

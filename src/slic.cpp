@@ -1046,7 +1046,7 @@ void Slic::selectCluster(cv::Point2i pPos)
     for (int i = 0; i < _nbLabels; i++)
     {
         if (tree(treeLevel, i) == indexCluster)
-        {
+        { 
             if (find(_selectedClusters.begin(), _selectedClusters.end(), i) == _selectedClusters.end())
             {
                 _selectedClusters.push_back(i);

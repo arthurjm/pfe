@@ -589,3 +589,13 @@ cv::Mat ClickableLabel::getDisplayMat(int type, bool isGray, bool interpolate, b
     }
     return m;
 }
+
+void ClickableLabel::setCurrentLabel(int label)
+{
+    if (label < CL_LABEL_GROUND || label > CL_LABEL_OUTLIER)
+    {
+        cerr << "Invalide label in ClickableLabel::setCurrentLabel." << endl;
+        exit(EXIT_FAILURE);
+    }
+    _currentLabel = label;
+}

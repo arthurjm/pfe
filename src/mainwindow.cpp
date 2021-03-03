@@ -57,7 +57,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_cl, SIGNAL(mousePos(int, int)), this, SLOT(displayCursor(int, int)));
     connect(_cl, SIGNAL(updateSlider(int)), this, SLOT(setNbSpxSlider(int)));
 
-    // Connect to range image display Radiobox
+    // Connect to range image display RadioButton
     connect(_ui->display_XYZ, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_XYZ); });
     connect(_ui->display_X, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_X); });
     connect(_ui->display_Y, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_Y); });
@@ -69,6 +69,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->display_Interpolation, &QCheckBox::clicked, this, [this]() { _interpolate = !_interpolate; updateDisplay(_currentDisplayType); });
     connect(_ui->display_Closing, &QCheckBox::clicked, this, [this]() { _closing = !_closing; updateDisplay(_currentDisplayType); });
     connect(_ui->display_Hist, &QCheckBox::clicked, this, [this]() { _equalHist = !_equalHist; updateDisplay(_currentDisplayType); });
+
+    // Connect label RadioButton
+    connect(_ui->label_Ground, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_GROUND); });
+    connect(_ui->label_Structure, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_STUCTURE); });
+    connect(_ui->label_Vehicle, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_VEHICLE); });
+    connect(_ui->label_Nature, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_NATURE); });
+    connect(_ui->label_Human, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_HUMAN); });
+    connect(_ui->label_Object, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_OBJECT); });
+    connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_OUTLIER); });
 
     //_img = imread("../../data/images/banana1.bmp");
     //if(_img.cols==0) _img = imread("../../data/range_images/000045.bin");
@@ -84,6 +93,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     _ui->display_Y->setChecked(true);
     _ui->display_Interpolation->setChecked(true);
+    _ui->label_Ground->setChecked(true);
+
     float scale = MAX_WIDTH / (_img.cols);
     if (scale < 1.0)
         cv::resize(_img, _img, cv::Size(0, 0), scale, scale);
@@ -146,6 +157,7 @@ void MainWindow::openImage()
 
     _cl->clear();
     _cl->setImgRef(_img);
+
     initSuperpixelsLevel();
 
     int w_width = min(2 * _img.cols, (int)MAX_WIDTH);
@@ -179,7 +191,18 @@ void MainWindow::openRangeImage()
     _cl->clear();
     _cl->setImgRef(_img);
     _cl->setRangeImage(ri);
-    initSuperpixelsLevel();
+
+    _cl->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
+    updateSuperpixelsLevel();
+
+    _ui->nbSpxSlider->setMaximum(MAX_LEVEL);
+    _ui->spinBoxMaxSpx->setValue(MAX_LEVEL);
+
+    _ui->valueWeightSlider->setNum(INITIAL_WEIGHT);
+    _ui->weightSlider->setValue(INITIAL_WEIGHT);
+
+    _ui->valueNbSpxSlider->setNum(INITIAL_NB_SPX);
+    _ui->nbSpxSlider->setValue(INITIAL_NB_SPX);
 
     int w_width = min(_img.cols, (int)MAX_WIDTH);
     int w_height = min(2 * _img.rows, (int)MAX_HEIGHT);
