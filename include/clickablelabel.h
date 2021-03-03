@@ -17,13 +17,7 @@ class MainWindow;
 
 #define ZOOM_MAX 8
 
-#define CL_LABEL_GROUND 0
-#define CL_LABEL_STUCTURE 1
-#define CL_LABEL_VEHICLE 2
-#define CL_LABEL_NATURE 3
-#define CL_LABEL_HUMAN 4
-#define CL_LABEL_OBJECT 5
-#define CL_LABEL_OUTLIER 6
+
 
 class ClickableLabel : public QLabel
 {

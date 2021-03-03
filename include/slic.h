@@ -26,6 +26,14 @@ using namespace std;
 /* The number of iterations run by the clustering algorithm. */
 #define NR_ITERATIONS 10
 
+#define CL_LABEL_GROUND 0
+#define CL_LABEL_STUCTURE 1
+#define CL_LABEL_VEHICLE 2
+#define CL_LABEL_NATURE 3
+#define CL_LABEL_HUMAN 4
+#define CL_LABEL_OBJECT 5
+#define CL_LABEL_OUTLIER 6
+
 typedef cv::Vec<float, 5> Vec5f;
 
 /*
@@ -78,7 +86,7 @@ public:
     void getAndDisplaySelection(cv::Mat &pImage, const cv::Mat pImageRef);
 
     /* Functions relative to the selection/deselection of superpixels */
-    void selectCluster(cv::Point2i pPos);
+    void selectCluster(cv::Point2i pPos, int label);
     void deselectCluster(cv::Point2i pPos);
 
     void addObjectCluster(cv::Point2i pPos);
@@ -109,6 +117,7 @@ public:
     void setTreeLevel(int pZoom);
     void zoomInTree();
     void zoomOutTree();
+    cv::Vec3b getColorFromLabel(int label);
 
 private:
     /* Compute the distance between a center and an individual pixel. */
@@ -154,6 +163,7 @@ private:
     cv::Vec3b colorSelection = cv::Vec3b(0, 0, 255);  // default ; red 0,0,255
 
     vector<int> _zoomHist;
+    vector<int> _labelColorVec;
 };
 
 #endif

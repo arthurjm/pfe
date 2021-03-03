@@ -303,7 +303,7 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
         else
         {
             // _sh->selectCluster(cv::Point2i(x, y));
-            _slic->selectCluster(cv::Point2i(x, y));
+            _slic->selectCluster(cv::Point2i(x, y), _currentLabel);
         }
     }
     else if (event->type() == QEvent::MouseButtonRelease && event->button() == Qt::RightButton)
@@ -368,7 +368,7 @@ void ClickableLabel::mouseMoveEvent(QMouseEvent *event)
         else
         {
             // _sh->selectCluster(Point2i(x, y));
-            _slic->selectCluster(Point2i(x, y));
+            _slic->selectCluster(Point2i(x, y), _currentLabel);
         }
     }
     else if (event->buttons() & Qt::RightButton)

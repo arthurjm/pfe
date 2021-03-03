@@ -62,7 +62,7 @@ void Slic::initData(const cv::Mat &pImage)
     }
     _clusters = cv::Mat_<int>(pImage.rows, pImage.cols, -1);
     _distances = cv::Mat_<float>(pImage.rows, pImage.cols, FLT_MAX);
-
+    _labelColorVec.assign(pImage.rows * pImage.cols, -1);
     /* Initialize the centers and counters. */
     for (int col = _step / 2; col <= pImage.cols - _step / 2; col += _step)
     {
@@ -993,11 +993,14 @@ cv::Mat Slic::displaySelection(cv::Mat backgroundImage, cv::Mat selectionImage)
         {
             if (tree(treeLevel, i) == label)
             {
+                cout << "display i" << _labelColorVec.at(i) << endl;
+                cv::Vec3b color = getColorFromLabel(i);
                 for (unsigned int p = 0; p < _cls[i].size(); ++p)
                 {
                     int row = _cls[i][p].first;
                     int col = _cls[i][p].second;
-                    output.at<cv::Vec3b>(row, col) = selectionImage.at<cv::Vec3b>(row, col);
+                    // output.at<cv::Vec3b>(row, col) = selectionImage.at<cv::Vec3b>(row, col);
+                    output.at<cv::Vec3b>(row, col) = color;
                 }
             }
         }
@@ -1038,7 +1041,7 @@ cv::Mat Slic::displayGraySelection(cv::Mat pImage)
  * Input : The pixel (cv::Point2i) clicked.
  * Output: 0 if the superpixel has been already selected, 1 if not.
  */
-void Slic::selectCluster(cv::Point2i pPos)
+void Slic::selectCluster(cv::Point2i pPos, int label)
 {
     int indexCluster = labelOfPixel(pPos.y, pPos.x);
     if (indexCluster == -1)
@@ -1046,7 +1049,9 @@ void Slic::selectCluster(cv::Point2i pPos)
     for (int i = 0; i < _nbLabels; i++)
     {
         if (tree(treeLevel, i) == indexCluster)
-        { 
+        {
+            _labelColorVec.at(i) = label;
+            cout << "selected i" << i << endl;
             if (find(_selectedClusters.begin(), _selectedClusters.end(), i) == _selectedClusters.end())
             {
                 _selectedClusters.push_back(i);
@@ -1305,24 +1310,45 @@ void Slic::setTreeLevel(int pLevel)
 
 void Slic::zoomInTree()
 {
-    // int spxLevel = _nbLabels - treeLevel;
-    // if (spxLevel < _nbLabels / 2)
-    // {
-    //     treeLevel = _nbLabels - (spxLevel * 2);
-    // }
-    // else if (spxLevel < _nbLabels)
-    // {
-    //     treeLevel = 0;
-    // }
     _zoomHist.push_back(treeLevel);
     treeLevel = max(0, treeLevel / 2);
 }
 
 void Slic::zoomOutTree()
 {
-    // int spxLevel = _nbLabels - treeLevel;
-    // treeLevel = _nbLabels - (spxLevel / 2);
-
     treeLevel = _zoomHist.back();
     _zoomHist.pop_back();
+}
+
+cv::Vec3b Slic::getColorFromLabel(int index)
+{
+    cv::Vec3b color;
+    int label = _labelColorVec.at(index);
+    switch (label)
+    {
+    case CL_LABEL_GROUND:
+        color = cv::Vec3b(168, 127, 173);
+        break;
+    case CL_LABEL_STUCTURE:
+        color = cv::Vec3b(78, 178, 185);
+        break;
+    case CL_LABEL_VEHICLE:
+        color = cv::Vec3b(205, 178, 98);
+        break;
+    case CL_LABEL_NATURE:
+        color = cv::Vec3b(109, 167, 96);
+        break;
+    case CL_LABEL_HUMAN:
+        color = cv::Vec3b(0, 0, 255);
+        break;
+    case CL_LABEL_OBJECT:
+        color = cv::Vec3b(50, 88, 140);
+        break;
+    case CL_LABEL_OUTLIER:
+        color = cv::Vec3b(128, 128, 128);
+        break;
+    default:
+        break;
+    }
+    return color;
 }
