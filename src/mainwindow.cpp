@@ -279,7 +279,8 @@ void MainWindow::resetSelection()
 
 void MainWindow::save()
 {
-    _cl->saveSelection();
+    QString filename = QFileDialog::getSaveFileName(this, "Save a range image", QString("../../../data/range_image_labeled/save"), "Binary file (*.bin)");
+    _cl->saveSelection(filename.toStdString());
 }
 
 void MainWindow::displayPixelValues(QPoint pos, QColor col, int label_spx)

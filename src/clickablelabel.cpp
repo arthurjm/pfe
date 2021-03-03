@@ -220,11 +220,32 @@ void ClickableLabel::deleteSelection()
  * Input : -
  * Output: -
  */
-void ClickableLabel::saveSelection()
+void ClickableLabel::saveSelection(string filename)
 {
-    cv::Mat imgToSave = _slic->displaySelection(cv::Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255)), _imgRef);
-    // cv::imwrite("../../images/save.png", imgToSave);
-    cv::imwrite("./save.png", imgToSave);
+    // get labelized labels from slic and compare with labels in range image
+    // only update on valide index where label on range image != -2
+
+    const riVertex *riData = _rangeImage.getData();
+    unsigned int nbCluster = _slic->nbLabels();
+    vector<int> labels = _slic->getLabelVec();
+    for (int i = 0; i < nbCluster; i++)
+    {
+        int label = labels.at(i);
+        vector<pair<int, int>> pixels = _slic->getPixelFromCluster(i);
+        unsigned int size = pixels.size();
+        for (unsigned int j = 0; j < size; j++)
+        {
+            int index = pixels.at(j).first * _imgRef.cols + pixels.at(j).second;
+            if (riData[index].remission != -1)
+                _rangeImage.setLabel(index, label);
+        }
+    }
+
+    _rangeImage.save(filename);
+
+    // cv::Mat imgToSave = _slic->displaySelection(cv::Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255)), _imgRef);
+    // // cv::imwrite("../../images/save.png", imgToSave);
+    // cv::imwrite("./save.png", imgToSave);
 }
 
 /*

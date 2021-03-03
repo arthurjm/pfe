@@ -310,10 +310,13 @@ cv::Mat RangeImage::createColorMat(vector<int> idx, bool isGray, bool interpolat
         cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
     }
 
-    if(isGray){
+    if (isGray)
+    {
         cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
         cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
-    } else {
+    }
+    else
+    {
         cv::Mat img2;
         cv::applyColorMap(img, img2, cv::COLORMAP_JET);
         img = img2;
@@ -447,6 +450,11 @@ cv::Mat RangeImage::getRawDataFromIndex(int index)
     return m;
 }
 
+void RangeImage::setLabel(int index, int label)
+{
+    _data[index].label = label;
+}
+
 int RangeImage::getHeight()
 {
     return _height;
@@ -455,4 +463,21 @@ int RangeImage::getHeight()
 int RangeImage::getWidth()
 {
     return _width;
+}
+
+void RangeImage::save(string filename)
+{
+    int size = _height * _width;
+    nc::NdArray<float> riNdArr(1, size * DIM);
+    for (int i = 0; i < size; ++i)
+    {
+        int n_index = i * DIM;
+        riNdArr[n_index + 0] = _data[i].x;
+        riNdArr[n_index + 1] = _data[i].y;
+        riNdArr[n_index + 2] = _data[i].z;
+        riNdArr[n_index + 3] = _data[i].remission;
+        riNdArr[n_index + 4] = _data[i].depth;
+        riNdArr[n_index + 5] = _data[i].label;
+    }
+    riNdArr.tofile(filename);
 }

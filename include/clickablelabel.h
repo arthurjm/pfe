@@ -33,7 +33,7 @@ public:
     // void updateSuperpixels(int pNbSpx, int pWeight, bool buildScribbleLevels);
     void updateSuperpixels(int pNbSpx);
     void generateSuperpixelsZoom(int pNbSpx, int pWeight);
-    void saveSelection();
+    void saveSelection(string filename);
 
     void updateDisplay();
     void updateClusters();

@@ -119,6 +119,9 @@ public:
     void zoomOutTree();
     cv::Vec3b getColorFromLabel(int label);
 
+    vector<pair<int, int>> getPixelFromCluster(int clusterIndex);
+    const vector<int> getLabelVec() { return _labelVec; };
+
 private:
     /* Compute the distance between a center and an individual pixel. */
     float computeDist(int pCi, cv::Point pPixel, cv::Vec3b pColour);
@@ -163,7 +166,7 @@ private:
     cv::Vec3b colorSelection = cv::Vec3b(0, 0, 255);  // default ; red 0,0,255
 
     vector<int> _zoomHist;
-    vector<int> _labelColorVec;
+    vector<int> _labelVec; // Classes
 };
 
 #endif

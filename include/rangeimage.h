@@ -81,12 +81,24 @@ public:
     cv::Mat getRawDataFromIndex(int index);
 
     /** 
+     * change the label at the index in the range image data
+     * @param index in range image 
+     * @param label new label for the range image 
+     * */
+    void setLabel(int index, int label);
+
+    /** 
      * Access the height of the range image
      * @return
      * */
     int getHeight();
 
     int getWidth();
+
+    /**
+     * Save the current range image as binary file
+     * */
+    void save(string filename);
 
 private:
     /**

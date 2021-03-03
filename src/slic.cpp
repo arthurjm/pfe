@@ -62,7 +62,7 @@ void Slic::initData(const cv::Mat &pImage)
     }
     _clusters = cv::Mat_<int>(pImage.rows, pImage.cols, -1);
     _distances = cv::Mat_<float>(pImage.rows, pImage.cols, FLT_MAX);
-    _labelColorVec.assign(pImage.rows * pImage.cols, -1);
+    _labelVec.assign(pImage.rows * pImage.cols, -1);
     /* Initialize the centers and counters. */
     for (int col = _step / 2; col <= pImage.cols - _step / 2; col += _step)
     {
@@ -993,7 +993,6 @@ cv::Mat Slic::displaySelection(cv::Mat backgroundImage, cv::Mat selectionImage)
         {
             if (tree(treeLevel, i) == label)
             {
-                cout << "display i" << _labelColorVec.at(i) << endl;
                 cv::Vec3b color = getColorFromLabel(i);
                 for (unsigned int p = 0; p < _cls[i].size(); ++p)
                 {
@@ -1050,8 +1049,7 @@ void Slic::selectCluster(cv::Point2i pPos, int label)
     {
         if (tree(treeLevel, i) == indexCluster)
         {
-            _labelColorVec.at(i) = label;
-            cout << "selected i" << i << endl;
+            _labelVec.at(i) = label;
             if (find(_selectedClusters.begin(), _selectedClusters.end(), i) == _selectedClusters.end())
             {
                 _selectedClusters.push_back(i);
@@ -1323,7 +1321,7 @@ void Slic::zoomOutTree()
 cv::Vec3b Slic::getColorFromLabel(int index)
 {
     cv::Vec3b color;
-    int label = _labelColorVec.at(index);
+    int label = _labelVec.at(index);
     switch (label)
     {
     case CL_LABEL_GROUND:
@@ -1351,4 +1349,16 @@ cv::Vec3b Slic::getColorFromLabel(int index)
         break;
     }
     return color;
+}
+
+vector<pair<int, int>> Slic::getPixelFromCluster(int clusterIndex)
+{
+    vector<pair<int, int>> res;
+    unsigned int size = _cls[clusterIndex].size();
+    res.reserve(size);
+    for (unsigned int p = 0; p < size; ++p)
+    {
+        res.push_back(_cls[clusterIndex][p]);
+    }
+    return res;
 }
