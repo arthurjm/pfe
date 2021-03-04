@@ -37,7 +37,7 @@
 .vscode
 /src/images
 /src/ext
-/data
+# /data
 /docs/*
 .vscode/c_cpp_properties.json
 .vscode/settings.json

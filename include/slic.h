@@ -119,7 +119,6 @@ public:
     void zoomOutTree();
     cv::Vec3b getColorFromLabel(int label);
 
-    vector<pair<int, int>> getPixelFromCluster(int clusterIndex);
     const vector<int> getLabelVec() { return _labelVec; };
 
 private:

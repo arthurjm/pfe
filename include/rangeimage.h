@@ -49,6 +49,7 @@ public:
 
     RangeImage(PointCloud cp, int height = HEIGHT, int width = WIDTH,
                float proj_fov_up = FOV_UP, float proj_fov_down = FOV_DOWN);
+    RangeImage(string pcFile, string labelFile,int width = WIDTH, int height = HEIGHT);
     /**
      * Create BGR image from XYZ coordinates 
      * @return an opencv Mat
@@ -155,7 +156,9 @@ private:
     cv::Mat morphErode(cv::Mat img);
 
     void pointCloudProjection(PointCloud cp, float proj_fov_up, float proj_fov_down);
-
+    
+    std::vector<uint16_t> _labels;
+ 
     riVertex *_data;
     int _width;
     int _height;

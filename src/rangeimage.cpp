@@ -25,9 +25,44 @@ RangeImage::RangeImage(PointCloud cp, int height, int width, float proj_fov_up, 
         _data[i].depth = -1;
         _data[i].label = -1;
     }
-    pointCloudProjection(cp, proj_fov_up, proj_fov_down);
+    pointCloudProjection(cp, FOV_UP, FOV_DOWN);
 }
 
+RangeImage::RangeImage(string pc, string labelFile, int height, int width) : _data(nullptr), _height(height), _width(width)
+{
+    PointCloud cp(pc);
+    _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
+    assert(_data);
+
+    for (int i = 0; i < _height * _width; ++i)
+    {
+        _data[i].x = -1;
+        _data[i].y = -1;
+        _data[i].z = -1;
+        _data[i].remission = -1;
+        _data[i].depth = -1;
+        _data[i].label = -1;
+    }
+
+    fstream file(labelFile.c_str(), ios::in | ios::binary);
+
+    if (file.good())
+    {
+        file.seekg(0, std::ios::beg);
+        int i;
+
+        for (i = 0; file.good() && !file.eof(); i++)
+        {
+            uint32_t label;
+            file.read((char *)&label, sizeof(uint32_t));
+            // if((uint16_t)label == 1)
+            //     std::cout << i << std::endl;
+            _labels.push_back((uint16_t)label);
+        }
+        file.close();
+    }
+    pointCloudProjection(cp, FOV_UP, FOV_DOWN);
+}
 void RangeImage::loadRangeImage(string fileName)
 {
     // (height*width * DIM) => height & width & DIM data for each element (pixel)
@@ -157,6 +192,11 @@ void RangeImage::pointCloudProjection(PointCloud cp, float proj_fov_up, float pr
     nc::NdArray<float> points_x_sorted = nc::empty_like(points_x);
     nc::NdArray<float> points_y_sorted = nc::empty_like(points_y);
     nc::NdArray<float> points_z_sorted = nc::empty_like(points_z);
+    if (_labels.size() == 0)
+    {
+        _labels.assign(points.size(), -1);
+    }
+    nc::NdArray<uint16_t> label_sorted = nc::empty<uint16_t>((int)_labels.size(), 1);
 
     for (uint i = 0; i < depth.size(); i++)
     {
@@ -167,7 +207,11 @@ void RangeImage::pointCloudProjection(PointCloud cp, float proj_fov_up, float pr
         points_x_sorted[i] = points_x[idx];
         points_y_sorted[i] = points_y[idx];
         points_z_sorted[i] = points_z[idx];
-
+        label_sorted[i] = _labels[idx];
+        // if (label_sorted[i] == 1){
+        // std::cout << "i: " << i << " idx: " << idx << std::endl;
+        // std::cout << "sorted: " << label_sorted[i] << " label: " << _labels[idx] << std::endl;
+        // }
         remissions_sorted[i] = remissions[idx];
         depth_sorted[i] = depth[idx];
     }
@@ -182,7 +226,9 @@ void RangeImage::pointCloudProjection(PointCloud cp, float proj_fov_up, float pr
         _data[idx].z = points_z_sorted[i];
         _data[idx].remission = remissions_sorted[i];
         _data[idx].depth = depth_sorted[i];
-        _data[idx].label = -1;
+        // if(label_sorted[i] == 1)
+        //     std::cout << "idx: " << idx << " label: " << label_sorted[i] << std::endl;
+        _data[idx].label = label_sorted[i];
     }
 }
 
@@ -384,7 +430,7 @@ cv::Mat RangeImage::createCvMat(vector<uchar> dataColor, int type)
     if (type == CV_8UC1)
     {
         cv::Mat tmp = cv::Mat(_height, _width, CV_8UC3);
-        cv::cvtColor(m, tmp, CV_GRAY2BGR);
+        cv::cvtColor(m, tmp, cv::COLOR_GRAY2BGR);
         m = tmp;
     }
     return m;

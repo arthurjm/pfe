@@ -1267,15 +1267,21 @@ const vector<pair<int, int>> Slic::pixelsOfSuperpixel(int pLabel) const
     {
         throw out_of_range("There is not that much superpixels");
     }
-    vector<pair<int, int>> pixels;
-    if (_cls[pLabel].size() > 0)
+    vector<pair<int, int>> pixels;    
+    for (unsigned int i = 0; i < _nbLabels; i++)
     {
-        for (size_t i = 0; i < _cls[pLabel].size(); ++i)
+        if (tree(treeLevel, i) == pLabel)
         {
-            pixels.push_back(_cls[pLabel][i]);
+            for (unsigned int p = 0; p < _cls[i].size(); ++p)
+            {
+                pixels.push_back(_cls[i][p]);
+            }
         }
     }
     return pixels;
+
+
+
 }
 
 const vector<vector<pair<int, int>>> Slic::getCls() const
@@ -1349,16 +1355,4 @@ cv::Vec3b Slic::getColorFromLabel(int index)
         break;
     }
     return color;
-}
-
-vector<pair<int, int>> Slic::getPixelFromCluster(int clusterIndex)
-{
-    vector<pair<int, int>> res;
-    unsigned int size = _cls[clusterIndex].size();
-    res.reserve(size);
-    for (unsigned int p = 0; p < size; ++p)
-    {
-        res.push_back(_cls[clusterIndex][p]);
-    }
-    return res;
 }

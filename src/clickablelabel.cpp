@@ -216,7 +216,7 @@ void ClickableLabel::saveSelection(string filename)
     for (int i = 0; i < nbCluster; i++)
     {
         int label = labels.at(i);
-        vector<pair<int, int>> pixels = _slic->getPixelFromCluster(i);
+        vector<pair<int, int>> pixels = _slic->pixelsOfSuperpixel(i);
         unsigned int size = pixels.size();
         for (unsigned int j = 0; j < size; j++)
         {
