@@ -57,7 +57,7 @@ float computeAccuracy(Slic slic, const riVertex *riData, int nbSpx, int width)
     return accuracy;
 }
 
-void benchmark(string pathPointCloud, string pathLabel)
+void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> nbSpxVec)
 {
     // The range image contains the ground truth data on label.
     RangeImage ri(pathPointCloud, pathLabel);
@@ -73,7 +73,6 @@ void benchmark(string pathPointCloud, string pathLabel)
 
     int width = img.cols;
 
-    vector<int> nbSpxVec({800});
     // Make sure that first element is the largest
     std::sort(nbSpxVec.begin(), nbSpxVec.end(), std::greater<int>());
     vector<int> weightVec({20, 10, 5});
@@ -81,17 +80,25 @@ void benchmark(string pathPointCloud, string pathLabel)
     for (int i = 0; i < weightVec.size(); i++)
     {
         // Generation of SLIC Super Pixel
-        slic.generateSuperpixels(labImage, nbSpxVec[0], weightVec[i]);
-        slic.createConnectivity(labImage);
-        slic.createHierarchy(labImage);
+        if (mode)
+        {
+            slic.generateSuperpixels(labImage, nbSpxVec[0], weightVec[i]);
+            slic.createConnectivity(labImage);
+            slic.createHierarchy(labImage);
+        }
 
         for (int j = 0; j < nbSpxVec.size(); j++)
         {
+            if (!mode)
+            {
+                slic.generateSuperpixels(labImage, nbSpxVec[j], weightVec[i]);
+                slic.createConnectivity(labImage);
+                slic.createHierarchy(labImage);
+            }
             pair<int, int> key(nbSpxVec.at(j), weightVec.at(i));
             slic.setTreeLevel(nbSpxVec[j]);
             float accuracy = computeAccuracy(slic, riData, nbSpxVec[j], width);
             _result[key].push_back(accuracy);
-            // cout << "NbSpx : " << nbSpxVec[j] << ", Weight : " << weightVec[i] << ", Accuracy : " << accuracy << endl;
         }
     }
 }
@@ -106,9 +113,55 @@ string getFileName(string path)
     return fileName;
 }
 
+/**
+ * First input parameter indicates which mode to use :
+ * - 0 : mode hierarchy where number of superpixels is reduced by SLIC Hierarchy Tree
+ * - 1 or other integer : mode re-segmentation where number of superpixels is regenerate by SLIC 
+ * 
+ * Rest parameters are the number of superpixels to be tested.
+ * 
+ * Ex : ./benchmark 0 800 400 200
+ * */
 int main(int argc, char **argv)
 {
-    // verif param
+    // Verification on input parameters
+    bool modeHierarchy = true; // true for reducing by hierarchy, false for reducing by re-segmentation
+    vector<int> nbSpxVec;
+    if (argc < 2)
+    {
+        cout << "default settings : Mode hierarchy : reduce the nbSpx using SLIC hierarchy, number of super pixel = 800 400 200" << endl;
+    }
+    else if (argc < 3)
+    {
+        cout << "default settings : number of super pixel = 800 400 200" << endl;
+        modeHierarchy = atoi(argv[1]) == 0;
+        if (modeHierarchy)
+            cout << "using mode hierarchy" << endl;
+        else
+            cout << "using mode re-segmentation" << endl;
+    }
+    else
+    {
+        modeHierarchy = atoi(argv[1]) == 0;
+        if (modeHierarchy)
+            cout << "using mode hierarchy" << endl;
+        else
+            cout << "using mode re-segmentation" << endl;
+
+        cout << "number of super pixel =";
+        for (int i = 2; i < argc; i++)
+        {
+            int spx = atoi(argv[i]);
+            if (spx <= 0)
+            {
+                cerr << "number of super pixel invalid, need to be strict positive (nbsp>0)" << endl;
+                exit(EXIT_FAILURE);
+            }
+            nbSpxVec.push_back(spx);
+            cout << " " << spx;
+        }
+        cout << endl;
+    }
 
     QApplication a(argc, argv);
     cout << "Please select a PointCloud (.bin) file you want to benchmark with." << endl;
@@ -141,12 +194,13 @@ int main(int argc, char **argv)
             string label = getFileName(labels.at(j));
             if (pointCloud == label)
             {
-                benchmark(pointClouds.at(i), labels.at(j));
+                benchmark(pointClouds.at(i), labels.at(j), modeHierarchy, nbSpxVec);
             }
         }
     }
-    // Compute the benchmark average accuracy 
-    for(map<pair<int,int>,vector<float>>::iterator it = _result.begin(); it != _result.end(); it++){
+    // Compute the benchmark average accuracy
+    for (map<pair<int, int>, vector<float>>::iterator it = _result.begin(); it != _result.end(); it++)
+    {
         int vecSize = it->second.size();
         float sum = 0;
         for (int i = 0; i < vecSize; i++)
@@ -154,8 +208,8 @@ int main(int argc, char **argv)
             sum += it->second.at(i);
         }
         sum /= vecSize;
-        cout << "nbspx = " << it->first.first << " | weight = " << it->first.second << " | accuracy = " << sum*100 << "%" << endl;
+        cout << "nbspx = " << it->first.first << " | weight = " << it->first.second << " | accuracy = " << sum * 100 << "%" << endl;
     }
-    
+
     return 0;
 }
