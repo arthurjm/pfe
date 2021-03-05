@@ -68,8 +68,8 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
     const riVertex *riData = ri.getData();
 
     cv::Mat imgTmp = img.clone();
-    cv::Mat labImage;
-    cvtColor(imgTmp, labImage, cv::COLOR_BGR2Lab);
+    cv::Mat labImage = imgTmp;
+    // cvtColor(imgTmp, labImage, cv::COLOR_BGR2Lab);
 
     int width = img.cols;
 
@@ -82,7 +82,7 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
         // Generation of SLIC Super Pixel
         if (mode)
         {
-            slic.generateSuperpixels(labImage, nbSpxVec[0], weightVec[i]);
+            slic.generateSuperpixels(labImage, nbSpxVec[0], weightVec[i], ri);
             slic.createConnectivity(labImage);
             slic.createHierarchy(labImage);
         }
@@ -91,7 +91,7 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
         {
             if (!mode)
             {
-                slic.generateSuperpixels(labImage, nbSpxVec[j], weightVec[i]);
+                slic.generateSuperpixels(labImage, nbSpxVec[j], weightVec[i], ri);
                 slic.createConnectivity(labImage);
                 slic.createHierarchy(labImage);
             }
@@ -120,7 +120,7 @@ string getFileName(string path)
  * 
  * Rest parameters are the number of superpixels to be tested.
  * 
- * Ex : ./benchmark 0 800 400 200
+ * Ex : ./benchmark 0 1200 800
  * */
 int main(int argc, char **argv)
 {
@@ -161,6 +161,11 @@ int main(int argc, char **argv)
             cout << " " << spx;
         }
         cout << endl;
+    }
+    if (nbSpxVec.size() == 0)
+    {
+        nbSpxVec.push_back(1200);
+        nbSpxVec.push_back(800);
     }
 
     QApplication a(argc, argv);

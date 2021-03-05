@@ -19,6 +19,7 @@
 #include <vector>
 #include <float.h>
 #include <QColor>
+#include "rangeimage.h"
 using namespace std;
 
 #include <opencv2/opencv.hpp>
@@ -35,6 +36,7 @@ using namespace std;
 #define CL_LABEL_OUTLIER 6
 
 typedef cv::Vec<float, 5> Vec5f;
+typedef cv::Vec<float, 4> Vec4f;
 
 /*
  * class Slic.
@@ -52,7 +54,7 @@ public:
     ~Slic();
 
     /* Generate an over-segmentation for an image. */
-    void generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc);
+    void generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, RangeImage &ri);
     /* Enforce connectivity for an image. */
     void createConnectivity(const cv::Mat &pImage);
     void createHierarchy(const cv::Mat &pImage);
@@ -144,6 +146,7 @@ private:
 
     /* The LAB and xy values of the centers. */
     cv::Mat_<Vec5f> _centers;
+    cv::Mat_<Vec4f> _centers4D;
 
     /* The number of occurences of each center. */
     vector<int> _centerCounts;
@@ -161,11 +164,13 @@ private:
 
     int treeLevel;
 
-    cv::Vec3b colorContours = cv::Vec3b(255, 0, 255); // default ; pink 255,0,255
-    cv::Vec3b colorSelection = cv::Vec3b(0, 0, 255);  // default ; red 0,0,255
+    cv::Vec3b colorContours = cv::Vec3b(0, 0, 0);    // default ; black
+    cv::Vec3b colorSelection = cv::Vec3b(0, 0, 255); // default ; red 0,0,255
 
     vector<int> _zoomHist;
     vector<int> _labelVec; // Classes
+
+    RangeImage _rangeImage;
 };
 
 #endif

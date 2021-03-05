@@ -96,7 +96,7 @@ void ClickableLabel::initSuperpixels(int pNbSpx, int pWeight)
     Mat imgTmp = _imgRef.clone();
     Mat labImage;
     cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
-    _slic->generateSuperpixels(labImage, pNbSpx, pWeight);
+    _slic->generateSuperpixels(labImage, pNbSpx, pWeight, _rangeImage);
     _slic->createConnectivity(labImage);
     _slic->createHierarchy(labImage);
 
@@ -120,7 +120,7 @@ void ClickableLabel::updateSuperpixels(int pNbSpx)
     cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
 
     imgTmp = _imgRef.clone();
-    _slic->displayContours(imgTmp, Vec3b(255, 0, 255));
+    _slic->displayContours(imgTmp, Vec3b(0, 0, 0));
 
     _leftImgContours = imgTmp.clone();
 
