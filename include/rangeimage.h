@@ -164,10 +164,6 @@ private:
     // x, y, z, depth
     float _minValue[4];
     float _maxValue[4];
-
-    // projection stuff
-    // nc::NdArray<float> _points;
-    // nc::NdArray<float> _remissions;
 };
 
 #endif

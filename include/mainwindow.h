@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "clickablelabel.h"
+// #include "clickablelabel.h"
 #include "rangeimage.h"
 
 // QT
@@ -23,7 +23,7 @@
 
 // VTK
 #include <vtkRenderWindow.h>
-#include <QVTKWidget.h>
+// #include <QVTKWidget.h>
 
 using namespace cv;
 
@@ -81,7 +81,7 @@ public:
 
 private:
     Ui::MainWindow *_ui;
-    ClickableLabel *_cl;
+    // ClickableLabel *_cl;
     QPalette _palColorPixel;
     QPalette _palCursor;
     QBrush _brushColorPixel;

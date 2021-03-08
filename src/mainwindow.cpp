@@ -15,9 +15,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 {
     _ui->setupUi(this);
 
-    _cl = new ClickableLabel(nullptr);
+    // _cl = new ClickableLabel(nullptr);
 
-    _ui->layoutImages->addWidget(_cl, 0, 0);
+    // _ui->layoutImages->addWidget(_cl, 0, 0);
+
+    // Pointcloud temporary
+    // QVTKWidget *VTKwidget = new QVTKWidget();
+    // _ui->pointCloudLayout->addWidget(VTKwidget);
+
+    _ui->statusBar->addWidget(_ui->pixelValuesLabel);
+    _ui->statusBar->addWidget(_ui->pixelColorLabel);
+    _ui->statusBar->addWidget(_ui->pixelSpxLabel);
+
+    _ui->vtkWidget->SetRenderWindow(_pclVisualizer->getRenderWindow());
 
     _ui->valueWeightSlider->setNum(INITIAL_WEIGHT);
     _ui->weightSlider->setValue(INITIAL_WEIGHT);
@@ -38,9 +48,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->spinBoxMaxSpx, SIGNAL(editingFinished()), this, SLOT(updateMaxSpxSlider()));
     connect(_ui->spinBoxMaxWeight, SIGNAL(valueChanged(int)), this, SLOT(updateMaxWeightSlider()));
 
-    connect(_cl, SIGNAL(pixelValue(QPoint, QColor, int)), this, SLOT(displayPixelValues(QPoint, QColor, int)));
-    connect(_cl, SIGNAL(mousePos(int, int)), this, SLOT(displayCursor(int, int)));
-    connect(_cl, SIGNAL(updateSlider(int)), this, SLOT(setNbSpxSlider(int)));
+    connect(_ui->clWidget, SIGNAL(pixelValue(QPoint, QColor, int)), this, SLOT(displayPixelValues(QPoint, QColor, int)));
+    connect(_ui->clWidget, SIGNAL(mousePos(int, int)), this, SLOT(displayCursor(int, int)));
+    connect(_ui->clWidget, SIGNAL(updateSlider(int)), this, SLOT(setNbSpxSlider(int)));
 
     // Connect to range image display RadioButton
     connect(_ui->display_XYZ, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_XYZ); });
@@ -56,17 +66,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->display_Hist, &QCheckBox::clicked, this, [this]() { _equalHist = !_equalHist; updateDisplay(_currentDisplayType); });
 
     // Connect label RadioButton
-    connect(_ui->label_Ground, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_GROUND); });
-    connect(_ui->label_Structure, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_STUCTURE); });
-    connect(_ui->label_Vehicle, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_VEHICLE); });
-    connect(_ui->label_Nature, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_NATURE); });
-    connect(_ui->label_Human, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_HUMAN); });
-    connect(_ui->label_Object, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_OBJECT); });
-    connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_OUTLIER); });
-
+    connect(_ui->label_Ground, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_GROUND); });
+    connect(_ui->label_Structure, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_STUCTURE); });
+    connect(_ui->label_Vehicle, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_VEHICLE); });
+    connect(_ui->label_Nature, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_NATURE); });
+    connect(_ui->label_Human, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_HUMAN); });
+    connect(_ui->label_Object, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OBJECT); });
+    connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OUTLIER); });
+    
     QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
-
     RangeImage ri(fileName.toStdString());
+    // RangeImage ri("../data/range_image/000045.bin");
+    openPointCloud("../data/velodyne/000000.bin");
+
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
 
@@ -83,9 +95,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     if (scale < 1.0)
         cv::resize(_img, _img, cv::Size(0, 0), scale, scale);
 
-    _cl->setImgRef(_img);
-    _cl->setRangeImage(ri);
-    _cl->setMaximumLevel(MAX_LEVEL);
+    _ui->clWidget->setImgRef(_img);
+    _ui->clWidget->setRangeImage(ri);
+    _ui->clWidget->setMaximumLevel(MAX_LEVEL);
     _ui->nbSpxSlider->setMaximum(MAX_LEVEL);
     _ui->weightSlider->setMaximum(MAX_WEIGHT);
     _ui->spinBoxMaxSpx->setValue(MAX_LEVEL);
@@ -93,7 +105,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     _ui->spinBoxMaxWeight->setVisible(false); //remove to enable changing max values of weight
 
-    _cl->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
+    _ui->clWidget->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
     updateSuperpixelsLevel();
 
     int w_width = min(_img.cols, (int)MAX_WIDTH);
@@ -103,32 +115,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     // height : 20 = image height (64) + selection button (25) + slider (70) + 100?
     this->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 170);
 
-    _ui->horizontalWidget->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 120 + 200);
-    _ui->widgetSliders->resize(w_width, 70);
-    _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
-    _ui->selectionButton->setMaximumWidth((w_width - 10) / 2.0);
+    // _ui->horizontalWidget->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 120 + 200);
+    // _ui->widgetSliders->resize(w_width, 70);
+    // _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
+    // _ui->selectionButton->setMaximumWidth((w_width - 10) / 2.0);
 
-    _ui->statusBar->addWidget(_ui->pixelValuesLabel);
-    _ui->statusBar->addWidget(_ui->pixelColorLabel);
-    _ui->statusBar->addWidget(_ui->pixelSpxLabel);
+    // _ui->vtkWidget->resize(w_width, 200);
 
     _brushCursor.setColor(QColor(0, 0, 0));
     _brushCursor.setStyle(Qt::SolidPattern);
     _palCursor.setBrush(QPalette::Active, QPalette::Window, _brushCursor);
     _ui->widgetCursor->setPalette(_palCursor);
-
-    // Pointcloud temporary
-    QVTKWidget *VTKwidget = new QVTKWidget();
-    _ui->pointCloudLayout->addWidget(VTKwidget);
-    VTKwidget->SetRenderWindow(_pclVisualizer->getRenderWindow());
-    VTKwidget->resize(w_width, 200);
-    openPointCloud("../data/velodyne/000000.bin");
 }
 
 MainWindow::~MainWindow()
 {
     delete _ui;
-    delete _cl;
+    // delete _cl;
 }
 
 void MainWindow::openImage()
@@ -143,19 +146,19 @@ void MainWindow::openImage()
     if (scale < 1.0)
         cv::resize(_img, _img, cv::Size(0, 0), scale, scale);
 
-    _cl->clear();
-    _cl->setImgRef(_img);
+    _ui->clWidget->clear();
+    _ui->clWidget->setImgRef(_img);
 
     initSuperpixelsLevel();
 
-    int w_width = min(2 * _img.cols, (int)MAX_WIDTH);
-    int w_height = min(_img.rows, (int)MAX_HEIGHT);
+    // int w_width = min(2 * _img.cols, (int)MAX_WIDTH);
+    // int w_height = min(_img.rows, (int)MAX_HEIGHT);
 
-    this->resize(w_width + 50, w_height + 2.0 * _ui->widgetSliders->height() + _ui->selectionButton->height());
+    // // this->resize(w_width + 50, w_height + 2.0 * _ui->slidersWidget->height() + _ui->selectionButton->height());
 
-    _ui->widgetSliders->resize(w_width, _ui->widgetSliders->height());
-    _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
-    _ui->selectionButton->setMaximumWidth(w_width / 2.0);
+    // _ui->slidersWidget->resize(w_width, _ui->slidersWidget->height());
+    // _ui->slidersWidget->resize(w_width, w_height + _ui->selectionButton->height());
+    // _ui->selectionButton->setMaximumWidth(w_width / 2.0);
 
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
@@ -176,11 +179,11 @@ void MainWindow::openRangeImage()
     if (scale < 1.0)
         cv::resize(_img, _img, cv::Size(0, 0), scale, scale);
 
-    _cl->clear();
-    _cl->setImgRef(_img);
-    _cl->setRangeImage(ri);
+    _ui->clWidget->clear();
+    _ui->clWidget->setImgRef(_img);
+    _ui->clWidget->setRangeImage(ri);
 
-    _cl->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
+    _ui->clWidget->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
     updateSuperpixelsLevel();
 
     _ui->nbSpxSlider->setMaximum(MAX_LEVEL);
@@ -192,17 +195,17 @@ void MainWindow::openRangeImage()
     _ui->valueNbSpxSlider->setNum(INITIAL_NB_SPX);
     _ui->nbSpxSlider->setValue(INITIAL_NB_SPX);
 
-    int w_width = min(_img.cols, (int)MAX_WIDTH);
-    int w_height = min(2 * _img.rows, (int)MAX_HEIGHT);
+    // int w_width = min(_img.cols, (int)MAX_WIDTH);
+    // int w_height = min(2 * _img.rows, (int)MAX_HEIGHT);
 
-    // width : 20 = left padding (10) + layout spacing(10)
-    // height : 20 = image height (64) + selection button (25) + slider (70) + 100?
-    this->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 170);
+    // // width : 20 = left padding (10) + layout spacing(10)
+    // // height : 20 = image height (64) + selection button (25) + slider (70) + 100?
+    // this->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 170);
 
-    _ui->horizontalWidget->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 120);
-    _ui->widgetSliders->resize(w_width, 70);
-    _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
-    _ui->selectionButton->setMaximumWidth((w_width - 10) / 2.0);
+    // _ui->horizontalWidget->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 120);
+    // _ui->widgetSliders->resize(w_width, 70);
+    // _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
+    // _ui->selectionButton->setMaximumWidth((w_width - 10) / 2.0);
 
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
@@ -210,20 +213,20 @@ void MainWindow::openRangeImage()
 
 void MainWindow::initSuperpixelsLevel()
 {
-    _cl->initSuperpixels(_ui->nbSpxSlider->maximum(), _ui->weightSlider->value());
-    // _cl->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), true);
+    _ui->clWidget->initSuperpixels(_ui->nbSpxSlider->maximum(), _ui->weightSlider->value());
+    // _ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), true);
 }
 
 void MainWindow::updateSuperpixelsLevel()
 {
-    //_cl->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), false);
-    _cl->updateSuperpixels(_ui->nbSpxSlider->value());
+    //_ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), false);
+    _ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value());
 }
 
 void MainWindow::updateSuperpixelsWeight()
 {
     initSuperpixelsLevel();
-    _cl->clear();
+    _ui->clWidget->clear();
 }
 
 void MainWindow::updateSliderValues()
@@ -240,7 +243,7 @@ void MainWindow::updateMaxSpxSlider()
 {
     int value = max(_minSpx, _ui->spinBoxMaxSpx->value());
     _ui->spinBoxMaxSpx->setValue(value);
-    _cl->setMaximumLevel(value);
+    _ui->clWidget->setMaximumLevel(value);
     _ui->nbSpxSlider->setMaximum(value);
     _ui->nbSpxSlider->setValue(value);
     _ui->valueNbSpxSlider->setNum(value);
@@ -262,13 +265,13 @@ void MainWindow::setNbSpxSlider(int treeLevel)
 
 void MainWindow::resetSelection()
 {
-    _cl->deleteSelection();
+    _ui->clWidget->deleteSelection();
 }
 
 void MainWindow::save()
 {
     QString filename = QFileDialog::getSaveFileName(this, "Save a range image", QString("../data/range_image_labeled/save.bin"), "Binary file (*.bin)");
-    _cl->saveSelection(filename.toStdString());
+    _ui->clWidget->saveSelection(filename.toStdString());
 }
 
 void MainWindow::displayPixelValues(QPoint pos, QColor col, int label_spx)
@@ -291,9 +294,10 @@ void MainWindow::displayPixelValues(QPoint pos, QColor col, int label_spx)
     _ui->pixelSpxLabel->setText("    spx:" + QString::number(label_spx));
 }
 
-void MainWindow::displayCursor(int pX, int pY)
+void MainWindow::displayCursor(int x, int y)
 {
-    _ui->widgetCursor->move(pX + 4, pY + _img.rows + 104);
+    int offset = _ui->vtkWidget->height() + _ui->clWidget->height() / 2;
+    _ui->widgetCursor->move(x, y + offset);
 }
 
 void MainWindow::switchMode()
@@ -301,7 +305,7 @@ void MainWindow::switchMode()
     if (_isScribble)
     {
         _isScribble = false;
-        _cl->setScribble(false);
+        _ui->clWidget->setScribble(false);
         _ui->selectionButton->setText("Sélection");
         this->setCursor(Qt::ArrowCursor);
         _ui->nbSpxSlider->setVisible(true);
@@ -309,14 +313,14 @@ void MainWindow::switchMode()
     else
     {
         _isScribble = true;
-        _cl->setScribble(true);
+        _ui->clWidget->setScribble(true);
         _ui->selectionButton->setText("Scribble");
         this->setCursor(Qt::PointingHandCursor);
 
         //set nb spx on max level and disable it :
-        // _ui->valueNbSpxSlider->setNum(_cl->nbSpx());
-        // _ui->nbSpxSlider->setValue(_cl->nbSpx());
-        // _cl->updateSuperpixels(_ui->nbSpxSlider->value());
+        // _ui->valueNbSpxSlider->setNum(_ui->clWidget->nbSpx());
+        // _ui->nbSpxSlider->setValue(_ui->clWidget->nbSpx());
+        // _ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value());
         // _ui->nbSpxSlider->setVisible(false);
     }
 }
@@ -326,22 +330,22 @@ void MainWindow::switchContours()
     if (_showContours)
     {
         _showContours = false;
-        _cl->setContours(false);
+        _ui->clWidget->setContours(false);
         _ui->contoursButton->setText("Objet");
     }
     else
     {
         _showContours = true;
-        _cl->setContours(true);
+        _ui->clWidget->setContours(true);
         _ui->contoursButton->setText("Objet + contours");
     }
 }
 void MainWindow::updateDisplay(int type)
 {
-    _img = _cl->getDisplayMat(type, _isGray, _interpolate, _closing, _equalHist);
+    _img = _ui->clWidget->getDisplayMat(type, _isGray, _interpolate, _closing, _equalHist);
     _currentDisplayType = type;
-    _cl->clear();
-    _cl->setImgRef(_img);
+    _ui->clWidget->clear();
+    _ui->clWidget->setImgRef(_img);
     initSuperpixelsLevel();
     updateSuperpixelsLevel();
 }

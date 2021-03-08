@@ -1,24 +1,22 @@
 #ifndef CLICKABLELABEL_H
 #define CLICKABLELABEL_H
 
+#include "superpixelhierarchy.h"
+#include "slic.h"
+#include "rangeimage.h"
+
+// QT
 #include <QLabel>
 #include <QMouseEvent>
 #include <QtDebug>
 #include <QPainter>
 
+// OpenCV
 #include <opencv2/opencv.hpp>
-
-#include "superpixelhierarchy.h"
-#include "slic.h"
-#include "rangeimage.h"
-
-// using namespace cv;
 
 class MainWindow;
 
 #define ZOOM_MAX 8
-
-
 
 class ClickableLabel : public QLabel
 {
