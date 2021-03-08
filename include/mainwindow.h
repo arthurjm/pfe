@@ -1,6 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "clickablelabel.h"
+#include "rangeimage.h"
+
+// QT
 #include <QMainWindow>
 #include <QImage>
 #include <QLabel>
@@ -9,12 +13,17 @@
 #include <QFileDialog>
 #include <QMouseEvent>
 
+// OpenCV
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 
-#include "clickablelabel.h"
+// PCL
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/point_cloud_color_handlers.h>
 
-#include "rangeimage.h"
+// VTK
+#include <vtkRenderWindow.h>
+#include <QVTKWidget.h>
 
 using namespace cv;
 
@@ -25,6 +34,10 @@ using namespace cv;
 #define MAX_LEVEL 500
 #define MAX_WEIGHT 20
 
+typedef pcl::PointXYZRGBA KittiPoint;
+// typedef pcl::PointXYZI KittiPoint;
+typedef pcl::PointCloud<KittiPoint> KittiPointCloud;
+typedef pcl::visualization::PointCloudColorHandlerCustom<KittiPoint> KittiPointCloudColorHandlerCustom;
 
 namespace Ui
 {
@@ -53,6 +66,8 @@ public slots:
     void switchMode();
     void switchContours();
 
+    void openPointCloud(string filename);
+
     /**
      * Update the range image according to type
      * @param type must belongs 0 to 6
@@ -61,6 +76,7 @@ public slots:
 
 public:
     explicit MainWindow(QWidget *parent = 0);
+    KittiPointCloud::Ptr getPointCloud(string filename);
     ~MainWindow();
 
 private:
@@ -81,6 +97,10 @@ private:
     bool _equalHist = false;
 
     int _minSpx;
+
+    // Pointcloud
+    pcl::visualization::PCLVisualizer::Ptr _pclVisualizer;
+    KittiPointCloud::Ptr _pointCloud;
 };
 
 #endif // MAINWINDOW_H

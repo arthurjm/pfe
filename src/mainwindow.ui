@@ -380,6 +380,9 @@
              </item>
             </layout>
            </item>
+           <item row="1" column="0">
+            <layout class="QHBoxLayout" name="pointCloudLayout"/>
+           </item>
           </layout>
          </widget>
         </item>
@@ -463,7 +466,7 @@
             <item>
              <widget class="QRadioButton" name="display_XYZ">
               <property name="text">
-               <string>XYZ</string>
+               <string>&amp;XYZ</string>
               </property>
              </widget>
             </item>
@@ -477,14 +480,14 @@
             <item>
              <widget class="QRadioButton" name="display_Y">
               <property name="text">
-               <string>Y</string>
+               <string>&amp;Y</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QRadioButton" name="display_Z">
               <property name="text">
-               <string>Z</string>
+               <string>&amp;Z</string>
               </property>
              </widget>
             </item>
@@ -498,7 +501,7 @@
             <item>
              <widget class="QRadioButton" name="display_Remission">
               <property name="text">
-               <string>Remission</string>
+               <string>&amp;Remission</string>
               </property>
              </widget>
             </item>
@@ -541,7 +544,7 @@
                <string notr="true">color:purple</string>
               </property>
               <property name="text">
-               <string>Ground</string>
+               <string>&amp;Ground</string>
               </property>
              </widget>
             </item>
@@ -573,7 +576,7 @@
                <string notr="true">color:rgb(98,178,205)</string>
               </property>
               <property name="text">
-               <string>Vehicle</string>
+               <string>&amp;Vehicle</string>
               </property>
              </widget>
             </item>
@@ -605,7 +608,7 @@
                <string notr="true">color:red</string>
               </property>
               <property name="text">
-               <string>Human</string>
+               <string>&amp;Human</string>
               </property>
              </widget>
             </item>
@@ -621,7 +624,7 @@
                <string notr="true">color:brown</string>
               </property>
               <property name="text">
-               <string>Object</string>
+               <string>O&amp;bject</string>
               </property>
              </widget>
             </item>
@@ -718,7 +721,7 @@
      <rect>
       <x>1310</x>
       <y>0</y>
-      <width>21</width>
+      <width>30</width>
       <height>23</height>
      </rect>
     </property>
@@ -875,15 +878,6 @@
             </color>
            </brush>
           </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>0</red>
-             <green>0</green>
-             <blue>0</blue>
-            </color>
-           </brush>
-          </colorrole>
          </active>
          <inactive>
           <colorrole role="WindowText">
@@ -1015,15 +1009,6 @@
           <colorrole role="ToolTipText">
            <brush brushstyle="SolidPattern">
             <color alpha="255">
-             <red>0</red>
-             <green>0</green>
-             <blue>0</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
              <red>0</red>
              <green>0</green>
              <blue>0</blue>
@@ -1167,15 +1152,6 @@
             </color>
            </brush>
           </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>0</red>
-             <green>0</green>
-             <blue>0</blue>
-            </color>
-           </brush>
-          </colorrole>
          </disabled>
         </palette>
        </property>
@@ -1268,7 +1244,7 @@
      <x>0</x>
      <y>0</y>
      <width>1334</width>
-     <height>22</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

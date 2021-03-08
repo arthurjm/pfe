@@ -9,24 +9,9 @@
 #include <QDebug>
 using namespace cv;
 
-const QString displayNbOnConstSpace(int num)
-{
-    if (num < 10)
-    {
-        return "   " + QString::number(num);
-    }
-    else if (num < 100)
-    {
-        return "  " + QString::number(num);
-    }
-    else
-    {
-        return QString::number(num);
-    }
-}
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
-                                          _ui(new Ui::MainWindow)
+                                          _ui(new Ui::MainWindow),
+                                          _pclVisualizer(new pcl::visualization::PCLVisualizer("PCL Visualizer", false))
 {
     _ui->setupUi(this);
 
@@ -79,7 +64,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->label_Object, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_OBJECT); });
     connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _cl->setCurrentLabel(CL_LABEL_OUTLIER); });
 
-
     QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
 
     RangeImage ri(fileName.toStdString());
@@ -119,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     // height : 20 = image height (64) + selection button (25) + slider (70) + 100?
     this->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 170);
 
-    _ui->horizontalWidget->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 120);
+    _ui->horizontalWidget->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 120 + 200);
     _ui->widgetSliders->resize(w_width, 70);
     _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
     _ui->selectionButton->setMaximumWidth((w_width - 10) / 2.0);
@@ -132,6 +116,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _brushCursor.setStyle(Qt::SolidPattern);
     _palCursor.setBrush(QPalette::Active, QPalette::Window, _brushCursor);
     _ui->widgetCursor->setPalette(_palCursor);
+
+    // Pointcloud temporary
+    QVTKWidget *VTKwidget = new QVTKWidget();
+    _ui->pointCloudLayout->addWidget(VTKwidget);
+    VTKwidget->SetRenderWindow(_pclVisualizer->getRenderWindow());
+    VTKwidget->resize(w_width, 200);
+    openPointCloud("../data/velodyne/000000.bin");
 }
 
 MainWindow::~MainWindow()
@@ -282,11 +273,11 @@ void MainWindow::save()
 
 void MainWindow::displayPixelValues(QPoint pos, QColor col, int label_spx)
 {
-    QString x_value = displayNbOnConstSpace(pos.x());
-    QString y_value = displayNbOnConstSpace(pos.y());
-    QString r_value = displayNbOnConstSpace(col.red());
-    QString g_value = displayNbOnConstSpace(col.green());
-    QString b_value = displayNbOnConstSpace(col.blue());
+    QString x_value = QString::number(pos.x());
+    QString y_value = QString::number(pos.y());
+    QString r_value = QString::number(col.red());
+    QString g_value = QString::number(col.green());
+    QString b_value = QString::number(col.blue());
     QString status = "(x:" + x_value + "    y:" + y_value + ")    ";
     status += "(r:" + r_value + "    g:" +
               g_value + "    b:" +
@@ -353,4 +344,41 @@ void MainWindow::updateDisplay(int type)
     _cl->setImgRef(_img);
     initSuperpixelsLevel();
     updateSuperpixelsLevel();
+}
+
+void MainWindow::openPointCloud(string filename)
+{
+    // _pclVisualizer->removeAllPointClouds();
+    _pointCloud = getPointCloud(filename);
+    _pclVisualizer->addPointCloud<KittiPoint>(_pointCloud, "point_cloud");
+}
+
+KittiPointCloud::Ptr MainWindow::getPointCloud(string filename)
+{
+    KittiPointCloud::Ptr pointcloud(new KittiPointCloud);
+
+    fstream file(filename.c_str(), ios::in | ios::binary);
+
+    if (file.good())
+    {
+        file.seekg(0, std::ios::beg);
+        int i;
+        for (i = 0; file.good() && !file.eof(); i++)
+        {
+            KittiPoint point;
+            file.read((char *)&point.x, 3 * sizeof(float));
+            // file.read((char *)&point.intensity, sizeof(float));
+            float poubelle;
+            file.read((char *)&poubelle, sizeof(float)); // Arthur
+            point.r = 255;
+            point.g = 255;
+            point.b = 255;
+            point.a = 1;
+
+            pointcloud->push_back(point);
+        }
+    }
+    file.close();
+
+    return pointcloud;
 }

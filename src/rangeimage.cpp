@@ -3,34 +3,42 @@
 
 using namespace std;
 
-RangeImage::RangeImage(string fileName, int width, int height)
+RangeImage::RangeImage(string fileName, int mode, int width, int height)
     : _data(nullptr), _width(width), _height(height)
 {
-    _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
-    assert(_data);
-    loadRangeImage(fileName);
-}
 
-RangeImage::RangeImage(PointCloud cp, int height, int width, float proj_fov_up, float proj_fov_down)
-    : _data(nullptr), _height(height), _width(width)
-{
     _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
     assert(_data);
-    for (int i = 0; i < _height * _width; ++i)
+
+    if (mode == 0)
+        loadRangeImage(fileName);
+    if (mode == 1)
     {
-        _data[i].x = -1;
-        _data[i].y = -1;
-        _data[i].z = -1;
-        _data[i].remission = -1;
-        _data[i].depth = -1;
-        _data[i].label = -1;
+        nc::NdArray<float> scan = nc::fromfile<float>(fileName, "");
+        scan.reshape(-1, 4);
+        nc::NdArray<float> points = scan(scan.rSlice(), nc::Slice(0, 3));
+        nc::NdArray<float> remissions = scan(scan.rSlice(), 3);
+
+        for (int i = 0; i < _height * _width; ++i)
+        {
+            _data[i].x = -1;
+            _data[i].y = -1;
+            _data[i].z = -1;
+            _data[i].remission = -1;
+            _data[i].depth = -1;
+            _data[i].label = -1;
+        }
+        pointCloudProjection(points, remissions, FOV_UP, FOV_DOWN);
     }
-    pointCloudProjection(cp, FOV_UP, FOV_DOWN);
 }
 
 RangeImage::RangeImage(string pc, string labelFile, int height, int width) : _data(nullptr), _height(height), _width(width)
 {
-    PointCloud cp(pc);
+    nc::NdArray<float> scan = nc::fromfile<float>(pc, "");
+    scan.reshape(-1, 4);
+    nc::NdArray<float> points = scan(scan.rSlice(), nc::Slice(0, 3));
+    nc::NdArray<float> remissions = scan(scan.rSlice(), 3);
+
     _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
     assert(_data);
 
@@ -43,26 +51,9 @@ RangeImage::RangeImage(string pc, string labelFile, int height, int width) : _da
         _data[i].depth = -1;
         _data[i].label = -1;
     }
-
-    fstream file(labelFile.c_str(), ios::in | ios::binary);
-
-    if (file.good())
-    {
-        file.seekg(0, std::ios::beg);
-        int i;
-
-        for (i = 0; file.good() && !file.eof(); i++)
-        {
-            uint32_t label;
-            file.read((char *)&label, sizeof(uint32_t));
-            // if((uint16_t)label == 1)
-            //     std::cout << i << std::endl;
-            _labels.push_back((uint16_t)label);
-        }
-        file.close();
-    }
-    pointCloudProjection(cp, FOV_UP, FOV_DOWN);
+    pointCloudProjection(points, remissions, FOV_UP, FOV_DOWN);
 }
+
 void RangeImage::loadRangeImage(string fileName)
 {
     // (height*width * DIM) => height & width & DIM data for each element (pixel)
@@ -120,19 +111,17 @@ void RangeImage::separateInvalideComposant()
     }
 }
 
-void RangeImage::pointCloudProjection(PointCloud cp, float proj_fov_up, float proj_fov_down)
+void RangeImage::pointCloudProjection(const nc::NdArray<float> points, const nc::NdArray<float> remissions, float proj_fov_up, float proj_fov_down)
+
 {
-
-    nc::NdArray<float> points = cp.getPoints();
-    nc::NdArray<float> remissions = cp.getRemissions();
-
+    std::cout << "pointCloudProjection start" << std::endl;
     // laser parameters
     float fov_up = proj_fov_up / 180.0 * M_PI;     // field of view up in rad
     float fov_down = proj_fov_down / 180.0 * M_PI; // field of view down in rad
     float fov = abs(fov_down) + abs(fov_up);       // get field of view total in rad
 
     // get depth of all points
-    nc::NdArray<double> d_depth = nc::norm(cp.getPoints(), nc::Axis::COL);
+    nc::NdArray<double> d_depth = nc::norm(points, nc::Axis::COL);
     nc::NdArray<float> depth = d_depth.astype<float>().transpose();
 
     // get scan components

@@ -11,7 +11,8 @@
 #include "superpixelhierarchy.h"
 #include "slic.h"
 #include "rangeimage.h"
-using namespace cv;
+
+// using namespace cv;
 
 class MainWindow;
 
@@ -26,9 +27,9 @@ class ClickableLabel : public QLabel
 public:
     ClickableLabel(QWidget *parent = nullptr);
     virtual ~ClickableLabel();
-    QImage cvToQt(Mat &pSrc);
-    Mat qtToCv(const QImage &pSrc);
-    void setImgRef(Mat pImg);
+    QImage cvToQt(cv::Mat &pSrc);
+    cv::Mat qtToCv(const QImage &pSrc);
+    void setImgRef(cv::Mat pImg);
     void initSuperpixels(int pNbSpx, int pWeight);
     // void updateSuperpixels(int pNbSpx, int pWeight, bool buildScribbleLevels);
     void updateSuperpixels(int pNbSpx);
@@ -77,7 +78,7 @@ private:
     void wheelEvent(QWheelEvent *ev);
     void zoomIn(int pX, int pY);
     void zoomOut(int pX, int pY);
-    Mat applyZoom(Mat pImg);
+    cv::Mat applyZoom(cv::Mat pImg);
     int getGlobalCoord(int pCoord, int pRoi);
     void drawPointTo(const QPoint &pPoint, QColor pColor);
     void drawLineTo(const QPoint &endPoint, QColor pColor);
@@ -87,14 +88,14 @@ private:
 
     int _maxLevel;
 
-    Mat _imgRef, _imgContours;
-    Mat _leftImgContours;
-    Mat _leftImgClusters;
-    Mat _rightImgContours;
-    Mat _rightImgClusters;
-    Mat _zoomLeftImg;
-    Mat _coloredImg;
-    Mat _rightImgNoContours;
+    cv::Mat _imgRef, _imgContours;
+    cv::Mat _leftImgContours;
+    cv::Mat _leftImgClusters;
+    cv::Mat _rightImgContours;
+    cv::Mat _rightImgClusters;
+    cv::Mat _zoomLeftImg;
+    cv::Mat _coloredImg;
+    cv::Mat _rightImgNoContours;
 
     RangeImage _rangeImage;
 
