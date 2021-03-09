@@ -83,7 +83,6 @@ public:
 
 private:
     Ui::MainWindow *_ui;
-    // ClickableLabel *_cl;
     QPalette _palColorPixel;
     QPalette _palCursor;
     QBrush _brushColorPixel;

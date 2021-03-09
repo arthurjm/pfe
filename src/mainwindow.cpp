@@ -10,6 +10,18 @@
 
 using namespace cv;
 
+string getLabelFileName(QString fileName)
+{
+    QFileInfo fi(fileName);
+    QString base = fi.baseName().append(".label");
+    QString path = fi.path();
+    QString labelFileName(path);
+    labelFileName.append("/../labels/");
+    labelFileName.append(base);
+    std::cout << "label file : " << labelFileName.toStdString() << std::endl;
+    return labelFileName.toStdString();
+}
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
                                           _ui(new Ui::MainWindow),
                                           _pclVisualizer(new pcl::visualization::PCLVisualizer("PCL Visualizer", false))
@@ -408,14 +420,3 @@ vector<uint32_t> MainWindow::getLabels(string fileName)
     return labels;
 }
 
-string getLabelFileName(QString fileName)
-{
-    QFileInfo fi(fileName);
-    QString base = fi.baseName().append(".label");
-    QString path = fi.path();
-    QString labelFileName(path);
-    labelFileName.append("/../labels/");
-    labelFileName.append(base);
-    std::cout << "label file:" << labelFileName.toStdString() << std::endl;
-    return labelFileName.toStdString();
-}
