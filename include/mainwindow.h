@@ -67,7 +67,7 @@ public slots:
     void openPointCloud(string fileName);
     void openPointCloud(string fileName, string labelFileName);
 
-    void changeColor(int i = 0);
+    void changeColor(int colorMode = 0);
 
     /**
      * Update the range image according to type
@@ -77,7 +77,7 @@ public slots:
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-    KittiPointCloud::Ptr getPointCloud(string fileName);
+    void getPointCloud(string fileName);
     vector<uint32_t> getLabels(string fileName);
     ~MainWindow();
 
