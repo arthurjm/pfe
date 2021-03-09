@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>720</height>
+   </rect>
+  </property>
   <property name="minimumSize">
    <size>
     <width>1280</width>
@@ -49,7 +57,7 @@
            <number>10</number>
           </property>
           <property name="rightMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="bottomMargin">
            <number>0</number>
@@ -265,14 +273,46 @@
       </layout>
      </item>
      <item>
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="1" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <layout class="QGridLayout" name="buttonsLayout">
+       <item row="0" column="1">
+        <layout class="QVBoxLayout" name="vtkButtons">
+         <item>
+          <widget class="QRadioButton" name="whitePointcloudButton">
+           <property name="text">
+            <string>Blanc</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_2">
+           <property name="text">
+            <string>Projection</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="vtPointcloudButton">
+           <property name="text">
+            <string>Vérité Terrain</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_4">
+           <property name="text">
+            <string>Prediction</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="3" column="1">
+        <layout class="QHBoxLayout" name="clButtons">
          <property name="spacing">
           <number>10</number>
          </property>
          <item>
-          <widget class="QWidget" name="widgetSidebar_1" native="true">
+          <widget class="QWidget" name="displayButtons" native="true">
            <property name="enabled">
             <bool>true</bool>
            </property>
@@ -384,14 +424,11 @@
           </widget>
          </item>
          <item>
-          <widget class="QWidget" name="widgetSidebar_2" native="true">
+          <widget class="QWidget" name="labelsButtons" native="true">
            <property name="enabled">
             <bool>true</bool>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
-            <property name="spacing">
-             <number>5</number>
-            </property>
             <property name="leftMargin">
              <number>0</number>
             </property>
@@ -524,13 +561,10 @@
          </item>
         </layout>
        </item>
-       <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_5">
-         <property name="spacing">
-          <number>10</number>
-         </property>
+       <item row="1" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="displayLabel">
            <property name="minimumSize">
             <size>
              <width>50</width>
@@ -558,7 +592,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_2">
+          <widget class="QLabel" name="label_label">
            <property name="minimumSize">
             <size>
              <width>50</width>

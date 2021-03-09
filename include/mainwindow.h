@@ -25,8 +25,6 @@
 #include <vtkRenderWindow.h>
 // #include <QVTKWidget.h>
 
-using namespace cv;
-
 #define MAX_WIDTH 2100.0
 #define MAX_HEIGHT 800.0
 #define INITIAL_NB_SPX 500
@@ -66,7 +64,10 @@ public slots:
     void switchMode();
     void switchContours();
 
-    void openPointCloud(string filename);
+    void openPointCloud(string fileName);
+    void openPointCloud(string fileName, string labelFileName);
+
+    void changeColor(int i = 0);
 
     /**
      * Update the range image according to type
@@ -76,7 +77,8 @@ public slots:
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-    KittiPointCloud::Ptr getPointCloud(string filename);
+    KittiPointCloud::Ptr getPointCloud(string fileName);
+    vector<uint32_t> getLabels(string fileName);
     ~MainWindow();
 
 private:
@@ -86,7 +88,7 @@ private:
     QPalette _palCursor;
     QBrush _brushColorPixel;
     QBrush _brushCursor;
-    Mat _img;
+    cv::Mat _img;
     bool _isScribble = false;
     bool _showContours = true;
 
@@ -101,6 +103,7 @@ private:
     // Pointcloud
     pcl::visualization::PCLVisualizer::Ptr _pclVisualizer;
     KittiPointCloud::Ptr _pointCloud;
+    std::vector<uint32_t> _labels;
 };
 
 #endif // MAINWINDOW_H

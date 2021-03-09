@@ -7,6 +7,7 @@
 
 #include <QColorDialog>
 #include <QDebug>
+
 using namespace cv;
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
@@ -15,19 +16,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 {
     _ui->setupUi(this);
 
-    // _cl = new ClickableLabel(nullptr);
-
-    // _ui->layoutImages->addWidget(_cl, 0, 0);
-
-    // Pointcloud temporary
-    // QVTKWidget *VTKwidget = new QVTKWidget();
-    // _ui->pointCloudLayout->addWidget(VTKwidget);
-
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
     _ui->statusBar->addWidget(_ui->pixelSpxLabel);
 
     _ui->vtkWidget->SetRenderWindow(_pclVisualizer->getRenderWindow());
+    _pclVisualizer->setShowFPS(false);
 
     _ui->valueWeightSlider->setNum(INITIAL_WEIGHT);
     _ui->weightSlider->setValue(INITIAL_WEIGHT);
@@ -52,6 +46,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->clWidget, SIGNAL(mousePos(int, int)), this, SLOT(displayCursor(int, int)));
     connect(_ui->clWidget, SIGNAL(updateSlider(int)), this, SLOT(setNbSpxSlider(int)));
 
+    // Pointcloud buttons
+    connect(_ui->vtPointcloudButton, &QRadioButton::clicked, this, [this]() { changeColor(); });
+
     // Connect to range image display RadioButton
     connect(_ui->display_XYZ, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_XYZ); });
     connect(_ui->display_X, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_X); });
@@ -73,11 +70,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->label_Human, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_HUMAN); });
     connect(_ui->label_Object, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OBJECT); });
     connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OUTLIER); });
-    
+
     QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
     RangeImage ri(fileName.toStdString());
     // RangeImage ri("../data/range_image/000045.bin");
+
     openPointCloud("../data/velodyne/000000.bin");
+    // openPointCloud(fileName.toStdString(), getLabelFileName(fileName));
 
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
@@ -87,6 +86,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _ui->display_Y->setChecked(true);
     _ui->display_Interpolation->setChecked(true);
     _ui->label_Ground->setChecked(true);
+    _ui->whitePointcloudButton->setChecked(true);
 
     float scale = MAX_WIDTH / (_img.cols);
     if (scale < 1.0)
@@ -111,17 +111,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     int w_width = min(_img.cols, (int)MAX_WIDTH);
     int w_height = min(2 * _img.rows, (int)MAX_HEIGHT);
 
-    // width : 20 = left padding (10) + layout spacing(10)
-    // height : 20 = image height (64) + selection button (25) + slider (70) + 100?
-    this->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 170);
-
-    // _ui->horizontalWidget->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 120 + 200);
-    // _ui->widgetSliders->resize(w_width, 70);
-    // _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
-    // _ui->selectionButton->setMaximumWidth((w_width - 10) / 2.0);
-
-    // _ui->vtkWidget->resize(w_width, 200);
-
     _brushCursor.setColor(QColor(0, 0, 0));
     _brushCursor.setStyle(Qt::SolidPattern);
     _palCursor.setBrush(QPalette::Active, QPalette::Window, _brushCursor);
@@ -131,7 +120,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 MainWindow::~MainWindow()
 {
     delete _ui;
-    // delete _cl;
 }
 
 void MainWindow::openImage()
@@ -150,15 +138,6 @@ void MainWindow::openImage()
     _ui->clWidget->setImgRef(_img);
 
     initSuperpixelsLevel();
-
-    // int w_width = min(2 * _img.cols, (int)MAX_WIDTH);
-    // int w_height = min(_img.rows, (int)MAX_HEIGHT);
-
-    // // this->resize(w_width + 50, w_height + 2.0 * _ui->slidersWidget->height() + _ui->selectionButton->height());
-
-    // _ui->slidersWidget->resize(w_width, _ui->slidersWidget->height());
-    // _ui->slidersWidget->resize(w_width, w_height + _ui->selectionButton->height());
-    // _ui->selectionButton->setMaximumWidth(w_width / 2.0);
 
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
@@ -195,26 +174,14 @@ void MainWindow::openRangeImage()
     _ui->valueNbSpxSlider->setNum(INITIAL_NB_SPX);
     _ui->nbSpxSlider->setValue(INITIAL_NB_SPX);
 
-    // int w_width = min(_img.cols, (int)MAX_WIDTH);
-    // int w_height = min(2 * _img.rows, (int)MAX_HEIGHT);
-
-    // // width : 20 = left padding (10) + layout spacing(10)
-    // // height : 20 = image height (64) + selection button (25) + slider (70) + 100?
-    // this->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 170);
-
-    // _ui->horizontalWidget->resize(w_width + 30 + _ui->widgetSidebar_1->width() + _ui->widgetSidebar_2->width(), w_height + _ui->selectionButton->height() + 120);
-    // _ui->widgetSliders->resize(w_width, 70);
-    // _ui->widgetImages->resize(w_width, w_height + _ui->selectionButton->height());
-    // _ui->selectionButton->setMaximumWidth((w_width - 10) / 2.0);
-
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
 }
 
 void MainWindow::initSuperpixelsLevel()
 {
-    _ui->clWidget->initSuperpixels(_ui->nbSpxSlider->maximum(), _ui->weightSlider->value());
     // _ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), true);
+    _ui->clWidget->initSuperpixels(_ui->nbSpxSlider->maximum(), _ui->weightSlider->value());
 }
 
 void MainWindow::updateSuperpixelsLevel()
@@ -270,8 +237,8 @@ void MainWindow::resetSelection()
 
 void MainWindow::save()
 {
-    QString filename = QFileDialog::getSaveFileName(this, "Save a range image", QString("../data/range_image_labeled/save.bin"), "Binary file (*.bin)");
-    _ui->clWidget->saveSelection(filename.toStdString());
+    QString fileName = QFileDialog::getSaveFileName(this, "Save a range image", QString("../data/range_image_labeled/save.bin"), "Binary file (*.bin)");
+    _ui->clWidget->saveSelection(fileName.toStdString());
 }
 
 void MainWindow::displayPixelValues(QPoint pos, QColor col, int label_spx)
@@ -350,18 +317,24 @@ void MainWindow::updateDisplay(int type)
     updateSuperpixelsLevel();
 }
 
-void MainWindow::openPointCloud(string filename)
+void MainWindow::openPointCloud(string fileName)
 {
-    // _pclVisualizer->removeAllPointClouds();
-    _pointCloud = getPointCloud(filename);
+    _pointCloud = getPointCloud(fileName);
     _pclVisualizer->addPointCloud<KittiPoint>(_pointCloud, "point_cloud");
 }
 
-KittiPointCloud::Ptr MainWindow::getPointCloud(string filename)
+void MainWindow::openPointCloud(string fileName, string labelFileName)
+{
+    _labels = getLabels(labelFileName);
+    _pointCloud = getPointCloud(fileName);
+    _pclVisualizer->addPointCloud<KittiPoint>(_pointCloud, "point_cloud");
+}
+
+KittiPointCloud::Ptr MainWindow::getPointCloud(string fileName)
 {
     KittiPointCloud::Ptr pointcloud(new KittiPointCloud);
 
-    fstream file(filename.c_str(), ios::in | ios::binary);
+    fstream file(fileName.c_str(), ios::in | ios::binary);
 
     if (file.good())
     {
@@ -381,8 +354,68 @@ KittiPointCloud::Ptr MainWindow::getPointCloud(string filename)
 
             pointcloud->push_back(point);
         }
+        cout << "Nombre de points : " << i << endl;
     }
     file.close();
 
     return pointcloud;
+}
+
+void MainWindow::changeColor(int i)
+{
+    std::cout << "Couleur changée" << std::endl;
+    if (i == 0)
+    {
+        pcl::visualization::PointCloudColorHandlerCustom<KittiPoint> single_color(_pointCloud, 0, 255, 0);
+        // _pclVisualizer->removeAllPointClouds();
+        // _pclVisualizer->addPointCloud<KittiPoint>(_pointCloud, single_color, "point_cloud");
+        _pclVisualizer->updatePointCloud<KittiPoint>(_pointCloud, single_color, "point_cloud");
+    }
+    if (i == 1)
+    {
+        pcl::visualization::PointCloudColorHandlerCustom<KittiPoint> single_color(_pointCloud, 255, 0, 0);
+        _pclVisualizer->removeAllPointClouds();
+        _pclVisualizer->addPointCloud<KittiPoint>(_pointCloud, single_color, "point_cloud");
+    }
+}
+
+vector<uint32_t> MainWindow::getLabels(string fileName)
+{
+    KittiPointCloud::Ptr pointcloud(new KittiPointCloud);
+
+    fstream file(fileName.c_str(), ios::in | ios::binary);
+    vector<uint32_t> labels;
+
+    if (file.good())
+    {
+        file.seekg(0, std::ios::beg);
+        int i;
+        for (i = 0; file.good() && !file.eof(); i++)
+        {
+            uint32_t label;
+            file.read((char *)&label, sizeof(uint32_t));
+
+            labels.push_back(label);
+        }
+        cout << "Nombre de labels : " << i << endl;
+        file.close();
+    }
+    else
+    {
+        cout << "Pas de fichier label" << endl;
+    }
+
+    return labels;
+}
+
+string getLabelFileName(QString fileName)
+{
+    QFileInfo fi(fileName);
+    QString base = fi.baseName().append(".label");
+    QString path = fi.path();
+    QString labelFileName(path);
+    labelFileName.append("/../labels/");
+    labelFileName.append(base);
+    std::cout << "label file:" << labelFileName.toStdString() << std::endl;
+    return labelFileName.toStdString();
 }
