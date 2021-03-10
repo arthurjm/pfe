@@ -211,7 +211,7 @@ void ClickableLabel::saveSelection(string filename)
     // only update on valide index where label on range image != -2
 
     const riVertex *riData = _rangeImage.getData();
-    unsigned int nbCluster = _slic->nbLabels();
+    unsigned int nbCluster = _slic->nbLabels() - 1;
     vector<int> labels = _slic->getLabelVec();
     for (int i = 0; i < nbCluster; i++)
     {
