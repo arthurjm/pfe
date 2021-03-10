@@ -401,6 +401,7 @@ int SuperpixelHierarchy::levelOfFusion(int label1, int label2){
     for(int lvl = 0; lvl < levels.size(); lvl++){
         if(_hierarchyClusters(lvl,label1) == _hierarchyClusters(lvl,label2)) return lvl;
     }
+    return -1;
 }
 
 void SuperpixelHierarchy::addObjectCluster(cv::Point2i pPos) {

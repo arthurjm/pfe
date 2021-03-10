@@ -21,9 +21,16 @@ public:
     nc::NdArray<float> getPoints() { return _points; };
     nc::NdArray<float> getRemissions() { return _remissions; };
 
+    // propagation();
+
+    
+
 private:
     nc::NdArray<float> _points;
     nc::NdArray<float> _remissions;
+
+    // KittiPointCloud::Ptr _pointCloud;
+    // vector<uint16_t> _labels;
 };
 
 #endif // __CLOUDPOINTS_H__

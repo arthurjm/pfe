@@ -7,6 +7,8 @@
 #define INTER_AREA CV_INTER_AREA
 #endif
 
+using namespace cv;
+
 ClickableLabel::ClickableLabel(QWidget *parent)
     : QLabel(parent)
 {
@@ -462,7 +464,7 @@ void ClickableLabel::zoomIn(int pX, int pY)
     else
         imgRoiClusters = _leftImgClusters.clone()(roi);
 
-    cv::resize(imgRoiClusters, _zoomLeftImg, Size(_imgRef.cols, _imgRef.rows), 0, 0, CV_INTER_AREA);
+    cv::resize(imgRoiClusters, _zoomLeftImg, Size(_imgRef.cols, _imgRef.rows), 0, 0, INTER_AREA);
     _zoomValueLeft *= 2;
 }
 
@@ -505,7 +507,7 @@ void ClickableLabel::zoomOut(int pX, int pY)
         imgRoiClusters = _coloredImg.clone()(roi);
     else
         imgRoiClusters = _leftImgClusters.clone()(roi);
-    cv::resize(imgRoiClusters, _zoomLeftImg, Size(_imgRef.cols, _imgRef.rows), 0, 0, CV_INTER_AREA);
+    cv::resize(imgRoiClusters, _zoomLeftImg, Size(_imgRef.cols, _imgRef.rows), 0, 0, INTER_AREA);
     _zoomValueLeft /= 2;
 }
 

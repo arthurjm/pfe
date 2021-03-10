@@ -45,10 +45,8 @@ public:
      * @param width width of the range image
      * @param height height of the range image
      **/
-    RangeImage(string fileName, int width = 1024, int height = 64);
+     RangeImage(string fileName, int mode = 0, int width = WIDTH, int height = HEIGHT);
 
-    RangeImage(PointCloud cp, int height = HEIGHT, int width = WIDTH,
-               float proj_fov_up = FOV_UP, float proj_fov_down = FOV_DOWN);
     RangeImage(string pcFile, string labelFile,int width = WIDTH, int height = HEIGHT);
     /**
      * Create BGR image from XYZ coordinates 
@@ -155,7 +153,7 @@ private:
 
     cv::Mat morphErode(cv::Mat img);
 
-    void pointCloudProjection(PointCloud cp, float proj_fov_up, float proj_fov_down);
+    void pointCloudProjection(const nc::NdArray<float> points, const nc::NdArray<float> remissions, float proj_fov_up, float proj_fov_down);
     
     std::vector<uint16_t> _labels;
  
