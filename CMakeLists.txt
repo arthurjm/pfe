@@ -6,8 +6,6 @@ cmake_minimum_required(VERSION 2.8)
 
 project(pfe_lidar)
 
-####################
-# Include 
 include_directories(include/)
 include_directories(/usr/local/include)
 include_directories(/usr/include/)
@@ -16,19 +14,10 @@ if(POLICY CMP0020)
   cmake_policy(SET CMP0020 NEW)
 endif()
 
-
-####################
-# Package needed
-
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package( OpenCV REQUIRED )
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
-
-
-set(LIBS 
-      -lvtkGUISupportQt-7.1
-)
 
 message(STATUS "VTK_QT_VERSION: " ${VTK_QT_VERSION})
 
@@ -36,7 +25,7 @@ message(STATUS "VTK_QT_VERSION: " ${VTK_QT_VERSION})
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(PROJECT_BINARY_NAME fast-hierarchy)
+set(PROJECT_BINARY_NAME fast_hierarchy)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
@@ -57,10 +46,9 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-find_package(VTK 7.1 REQUIRED)
+find_package(VTK REQUIRED)
 if(VTK_FOUND)
    include (${VTK_USE_FILE})
-   message(STATUS "aoihazoidbhazoidhbazoidhazoidheazoiahzoeahiz")
 endif(VTK_FOUND)
 
 
@@ -85,8 +73,6 @@ set(HEADERS
 
 )
 
-message(STATUS "//////ICI//////\n ${VTK_LIBRARIES} \n///////////////////////\n\n\n")
-
 set (WRAP_CPP_FILES include/mainwindow.h)
 set(WRAP_UI_FILES src/mainwindow.ui)
 
@@ -101,8 +87,8 @@ qt5_use_modules(${PROJECT_BINARY_NAME} Core Gui Widgets)
 target_link_libraries(${PROJECT_BINARY_NAME}
     ${PCL_LIBRARIES}
     ${VTK_LIBRARIES}
-    ${LIBS}
     ${OPENGL_gl_LIBRARY}
     ${GLUT_Libraries}
     ${OpenCV_LIBS}
     ${Boost_COMPONENTS_LIBRARIES})
+
