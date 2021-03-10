@@ -5,8 +5,6 @@
 cmake_minimum_required(VERSION 2.8)
 
 project(pfe_lidar)
-set (CMAKE_CXX_STANDARD 11)
-
 
 ####################
 # Include 
@@ -22,20 +20,21 @@ endif()
 ####################
 # Package needed
 
-find_package(VTK 7.1 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package( OpenCV REQUIRED )
-find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 
-include(${VTK_USE_FILE})
+set(LIBS 
+      -lvtkGUISupportQt-7.1
+)
 
+message(STATUS "VTK_QT_VERSION: " ${VTK_QT_VERSION})
 
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
-find_package(Qt5Widgets REQUIRED QUIET)
-
+set(CMAKE_AUTORCC ON)
 
 set(PROJECT_BINARY_NAME fast-hierarchy)
 
@@ -54,51 +53,55 @@ link_directories(${Boost_COMPONENTS_LIBRARY_DIRS})
 add_definitions(${Boost_COMPONENTS_DEFINITIONS})
 
 find_package(PCL 1.8 REQUIRED)
-
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-find_package(NumCpp 2.1.0 REQUIRED)
-
+find_package(VTK 7.1 REQUIRED)
+if(VTK_FOUND)
+   include (${VTK_USE_FILE})
+   message(STATUS "aoihazoidbhazoidhbazoidhazoidheazoiahzoeahiz")
+endif(VTK_FOUND)
 
 
 set(CPP_FILES
     src/main.cpp
     src/mainwindow.cpp
     src/rangeimage.cpp
-    src/clickablelabel.cpp
-    # src/pointcloud.cpp
     src/shdist.cpp
     src/slic.cpp
     src/superpixelhierarchy.cpp
+    src/clickablelabel.cpp
+
 )
 set(HEADERS 
     include/mainwindow.h 
-    include/rangeimage.h
     include/clickablelabel.h
-    # include/pointcloud.h
+    include/rangeimage.h
     include/shdist.h
     include/slic.h
     include/superpixelhierarchy.h
-    include/superpixelhierarchymax.hpp
+    include/superpixelhierarchymex.hpp
+
 )
 
-set (WRAP_CPP_FILES include/mainwindow.h include/clickablelabel.h)
+message(STATUS "//////ICI//////\n ${VTK_LIBRARIES} \n///////////////////////\n\n\n")
+
+set (WRAP_CPP_FILES include/mainwindow.h)
 set(WRAP_UI_FILES src/mainwindow.ui)
 
-qt5_wrap_cpp(PROJECT_FORMS_HEADERS ${WRAP_CPP_FILES})
 qt5_wrap_ui(PROJECT_FORMS_HEADERS ${WRAP_UI_FILES} )
 # CMAKE_AUTOMOC in ON so the MOC headers will be automatically wrapped.
 add_executable(${PROJECT_BINARY_NAME}
   ${CPP_FILES}
+  ${HEADERS}
   ${PROJECT_FORMS_HEADERS}
   ${WRAP_CPP_FILES})
-qt5_use_modules(${PROJECT_BINARY_NAME} Core Gui)
+qt5_use_modules(${PROJECT_BINARY_NAME} Core Gui Widgets)
 target_link_libraries(${PROJECT_BINARY_NAME}
-    NumCpp::NumCpp
     ${PCL_LIBRARIES}
     ${VTK_LIBRARIES}
+    ${LIBS}
     ${OPENGL_gl_LIBRARY}
     ${GLUT_Libraries}
     ${OpenCV_LIBS}
