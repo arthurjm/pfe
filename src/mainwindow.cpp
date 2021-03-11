@@ -87,12 +87,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->label_Object, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OBJECT); });
     connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OUTLIER); });
 
-    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
-    RangeImage ri(fileName.toStdString());
-    // RangeImage ri("../data/range_image/000045.bin");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/velodyne"), "Binary file (*.bin)");
 
+    RangeImage ri(fileName.toStdString());
     openPointCloud(fileName.toStdString(), getLabelFileName(fileName));
-    // openPointCloud("../data/velodyne/000000.bin");
     
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
