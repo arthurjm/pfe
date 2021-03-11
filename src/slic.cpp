@@ -35,6 +35,7 @@ void Slic::clearData()
     _clusters.release();
     _distances.release();
     _centers.release();
+    _centers4D.release();
     _centerCounts.clear();
     _selectedClusters.clear();
     _cls.clear();
@@ -63,6 +64,9 @@ void Slic::initData(const cv::Mat &pImage)
     _clusters = cv::Mat_<int>(pImage.rows, pImage.cols, -1);
     _distances = cv::Mat_<float>(pImage.rows, pImage.cols, FLT_MAX);
     _labelVec.assign(pImage.rows * pImage.cols, -1);
+
+    const riVertex *data = _rangeImage.getData();
+    int width = pImage.cols;
     /* Initialize the centers and counters. */
     for (int col = _step / 2; col <= pImage.cols - _step / 2; col += _step)
     {
@@ -75,6 +79,10 @@ void Slic::initData(const cv::Mat &pImage)
             Vec5f center(colour[0], colour[1], colour[2], nc.x, nc.y);
             /* Append to vector of centers. */
             _centers.push_back(center);
+            /* Append spatial cordinates*/
+            riVertex coord = data[nc.y + nc.x * width];
+            Vec4f center4D(coord.x, coord.y, coord.z, coord.remission);
+            _centers4D.push_back(center4D);
             _centerCounts.push_back(0);
         }
     }
@@ -97,11 +105,25 @@ float Slic::computeDist(int pCi, cv::Point pPixel, cv::Vec3b pColour)
     float dc2 = cen[2] - pColour[2];
     float dc = sqrt(dc0 * dc0 + dc1 * dc1 + dc2 * dc2);
 
+    // spatial 3D distance
+    Vec4f cen4d(_centers4D(pCi));
+    const riVertex *data = _rangeImage.getData();
+    riVertex pixelData = data[pPixel.y + pPixel.x * _rangeImage.getWidth()];
+    float dr0 = cen4d[0] - pixelData.x;
+    float dr1 = cen4d[1] - pixelData.y;
+    float dr2 = cen4d[2] - pixelData.z;
+    float dr = sqrt(dr0 * dr0 + dr1 * dr1 + dr2 * dr2);
+
+    // intensity distance
+    float di = fabs(cen4d[3] - pixelData.remission);
+
+    // spatial 2D distance
     float dc3 = cen[3] - pPixel.x;
     float dc4 = cen[4] - pPixel.y;
     float ds = sqrt(dc3 * dc3 + dc4 * dc4);
 
-    return dc + (_nc / _step) * ds;
+    return dr * 2 + di * 5 + (_nc / _step) * ds;
+    // return dc + (_nc / _step) * ds;
 
     //float w = 1.0 / (pow(ns / nc, 2));
     //return sqrt(dc) + sqrt(ds * w);
@@ -160,7 +182,7 @@ cv::Point Slic::findLocalMinimum(const cv::Mat_<cv::Vec3b> &pImage, cv::Point pC
  * Input : The Lab image (cv::Mat), the stepsize (int), and the weight (int).
  * Output: -
  */
-void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc)
+void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, RangeImage &ri)
 {
     if (pImage.empty())
     {
@@ -195,6 +217,7 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc)
 
     /* Clear previous data (if any), and re-initialize it. */
     clearData();
+    _rangeImage = ri;
     initData(image);
 
     /* Run EM for 10 iterations (as prescribed by the algorithm). */
@@ -232,9 +255,12 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc)
         for (int j = 0; j < _centers.rows; j++)
         {
             _centers(j) = 0;
+            _centers4D(j) = 0;
             _centerCounts[j] = 0;
         }
 
+        const riVertex *data = _rangeImage.getData();
+        int width = image.cols;
         /* Compute the new cluster centers. */
         for (int col = 0; col < image.cols; col++)
         {
@@ -246,6 +272,9 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc)
                 {
                     cv::Vec3b colour = image(row, col);
                     _centers(c_id) += Vec5f(colour[0], colour[1], colour[2], row, col);
+
+                    riVertex coord = data[col + row * width];
+                    _centers4D(c_id) += Vec4f(coord.x, coord.y, coord.z, coord.remission);
                     _centerCounts[c_id] += 1;
                 }
             }
@@ -255,6 +284,7 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc)
         for (int j = 0; j < _centers.rows; j++)
         {
             _centers(j) /= _centerCounts[j];
+            _centers4D(j) /= _centerCounts[j];
         }
     }
 }
@@ -1267,7 +1297,7 @@ const vector<pair<int, int>> Slic::pixelsOfSuperpixel(int pLabel) const
     {
         throw out_of_range("There is not that much superpixels");
     }
-    vector<pair<int, int>> pixels;    
+    vector<pair<int, int>> pixels;
     for (unsigned int i = 0; i < _nbLabels; i++)
     {
         if (tree(treeLevel, i) == pLabel)
@@ -1279,9 +1309,6 @@ const vector<pair<int, int>> Slic::pixelsOfSuperpixel(int pLabel) const
         }
     }
     return pixels;
-
-
-
 }
 
 const vector<vector<pair<int, int>>> Slic::getCls() const

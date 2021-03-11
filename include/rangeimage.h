@@ -6,8 +6,14 @@
 
 #include "NumCpp.hpp"
 #include "pointcloud.h"
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
+
+#include <iostream>
+#include <chrono>
+#include <ctime>    
+
 #define DIM 6
 #define RI_X 0
 #define RI_Y 1
@@ -45,9 +51,9 @@ public:
      * @param width width of the range image
      * @param height height of the range image
      **/
-     RangeImage(string fileName, int mode = 0, int width = WIDTH, int height = HEIGHT);
+    RangeImage(string fileName, int width = WIDTH, int height = HEIGHT);
 
-    RangeImage(string pcFile, string labelFile,int width = WIDTH, int height = HEIGHT);
+    // RangeImage(string pcFile, string labelFile,int width = WIDTH, int height = HEIGHT);
     /**
      * Create BGR image from XYZ coordinates 
      * @return an opencv Mat
@@ -101,15 +107,10 @@ public:
 
 private:
     /**
-     * Save data of the range image in _data structure and update min/max values of different attributes
-     * @param fileName location of range image
-     **/
-    void loadRangeImage(string fileName);
-
-    /**
      * Set label to -2 for unwanted components (ex : dead pixels on the bottom)
      * */
     void separateInvalideComposant();
+    
     /**
      * According to idx, normalize the associated data and assign it to an vector
      * @param idx an verctor helps to indicate the attribute of riVertex
@@ -153,7 +154,9 @@ private:
 
     cv::Mat morphErode(cv::Mat img);
 
-    void pointCloudProjection(const nc::NdArray<float> points, const nc::NdArray<float> remissions, float proj_fov_up, float proj_fov_down);
+    void pointCloudProjection(std::vector<float> scan_x, std::vector<float> scan_y,
+                            std::vector<float> scan_z, std::vector<float> scan_remission,
+                            float proj_fov_up, float proj_fov_down);
     
     std::vector<uint16_t> _labels;
  

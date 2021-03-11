@@ -98,7 +98,7 @@ void ClickableLabel::initSuperpixels(int pNbSpx, int pWeight)
     Mat imgTmp = _imgRef.clone();
     Mat labImage;
     cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
-    _slic->generateSuperpixels(labImage, pNbSpx, pWeight);
+    _slic->generateSuperpixels(labImage, pNbSpx, pWeight, _rangeImage);
     _slic->createConnectivity(labImage);
     _slic->createHierarchy(labImage);
 
@@ -122,7 +122,7 @@ void ClickableLabel::updateSuperpixels(int pNbSpx)
     cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
 
     imgTmp = _imgRef.clone();
-    _slic->displayContours(imgTmp, Vec3b(255, 0, 255));
+    _slic->displayContours(imgTmp, Vec3b(0, 0, 0));
 
     _leftImgContours = imgTmp.clone();
 
@@ -213,7 +213,7 @@ void ClickableLabel::saveSelection(string filename)
     // only update on valide index where label on range image != -2
 
     const riVertex *riData = _rangeImage.getData();
-    unsigned int nbCluster = _slic->nbLabels();
+    unsigned int nbCluster = _slic->nbLabels() - 1;
     vector<int> labels = _slic->getLabelVec();
     for (int i = 0; i < nbCluster; i++)
     {

@@ -9,6 +9,7 @@ set (CMAKE_CXX_STANDARD 14)
 project(benchmark)
 
 include_directories(../include/)
+include_directories(/usr/local/include)
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(OpenCV REQUIRED)
