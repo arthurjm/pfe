@@ -1,13 +1,19 @@
 #ifndef __CLOUDPOINTS_H__
 #define __CLOUDPOINTS_H__
 
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/point_cloud_color_handlers.h>
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string>
 
-#include "NumCpp.hpp"
 
-using namespace std;
+
+typedef pcl::PointXYZRGBA KittiPoint;
+// typedef pcl::PointXYZI KittiPoint;
+typedef pcl::PointCloud<KittiPoint> KittiPointCloud;
+typedef pcl::visualization::PointCloudColorHandlerCustom<KittiPoint> KittiPointCloudColorHandlerCustom;
 
 class PointCloud
 {
@@ -17,20 +23,15 @@ public:
      * A cloud points is defined by its coordinates (x,y,z) and its remission r
      * @param fileName location of cloud points
      **/
-    PointCloud(string fileName);
-    nc::NdArray<float> getPoints() { return _points; };
-    nc::NdArray<float> getRemissions() { return _remissions; };
-
-    // propagation();
-
-    
-
+    PointCloud(std::string fileName);
+    PointCloud(std::string pcfileName, std::string labelfileName);
+    void ChangeColor(int colorMode);
+    const KittiPointCloud::Ptr getPointCloud();
 private:
-    nc::NdArray<float> _points;
-    nc::NdArray<float> _remissions;
-
-    // KittiPointCloud::Ptr _pointCloud;
-    // vector<uint16_t> _labels;
+    void createPointCloud(std::string fileName);
+    void getLabels(std::string labelfileName);
+    KittiPointCloud::Ptr _pointCloud;
+    std::vector<uint32_t> _labels;
 };
 
 #endif // __CLOUDPOINTS_H__

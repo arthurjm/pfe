@@ -31,7 +31,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
     _ui->statusBar->addWidget(_ui->pixelSpxLabel);
-
     _ui->vtkWidget->SetRenderWindow(_pclVisualizer->getRenderWindow());
     _pclVisualizer->setBackgroundColor(0.2, 0.2, 0.2);
     _pclVisualizer->setShowFPS(false);
@@ -60,10 +59,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->clWidget, SIGNAL(updateSlider(int)), this, SLOT(setNbSpxSlider(int)));
 
     // Pointcloud buttons
-    connect(_ui->whitePointcloudButton, &QRadioButton::clicked, this, [this]() { changeColor(); });
-    connect(_ui->projectionPointcloudButton, &QRadioButton::clicked, this, [this]() { changeColor(0); });
-    connect(_ui->vtPointcloudButton, &QRadioButton::clicked, this, [this]() { changeColor(1); });
-    connect(_ui->greenPointcloudButton, &QRadioButton::clicked, this, [this]() { changeColor(2); });
+    connect(_ui->whitePointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(); });
+    connect(_ui->projectionPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(0); });
+    connect(_ui->vtPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(1); });
+    connect(_ui->greenPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(2); });
 
     // Connect to range image display RadioButton
     connect(_ui->display_XYZ, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_XYZ); });
@@ -88,12 +87,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OUTLIER); });
 
     QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
+    if (fileName.isEmpty() || fileName.isNull())
+    {
+        return;
+    }
     RangeImage ri(fileName.toStdString());
-    // RangeImage ri("../data/range_image/000045.bin");
 
-    openPointCloud(fileName.toStdString(), getLabelFileName(fileName));
-    // openPointCloud("../data/velodyne/000000.bin");
-    
+    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
+
+    _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
+
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
 
@@ -333,216 +336,9 @@ void MainWindow::updateDisplay(int type)
     updateSuperpixelsLevel();
 }
 
-void MainWindow::openPointCloud(string fileName)
+void MainWindow::updateColor(int colorMode)
 {
-    getPointCloud(fileName);
-    // _pointCloud = getPointCloud(fileName);
-    _pclVisualizer->addPointCloud<KittiPoint>(_pointCloud, "point_cloud");
-}
-
-void MainWindow::openPointCloud(string fileName, string labelFileName)
-{
-    _labels = getLabels(labelFileName);
-    getPointCloud(fileName);
-    // _pointCloud = getPointCloud(fileName);
-    _pclVisualizer->addPointCloud<KittiPoint>(_pointCloud, "point_cloud");
-}
-
-void MainWindow::getPointCloud(string fileName)
-{
-    _pointCloud.reset(new KittiPointCloud);
-
-    fstream file(fileName.c_str(), ios::in | ios::binary);
-
-    if (file.good())
-    {
-        file.seekg(0, std::ios::beg);
-        int i;
-        for (i = 0; file.good() && !file.eof(); i++)
-        {
-            KittiPoint point;
-            file.read((char *)&point.x, 3 * sizeof(float));
-            // file.read((char *)&it->intensity, sizeof(float));
-            float poubelle;
-            file.read((char *)&poubelle, sizeof(float)); // Arthur
-            point.r = 255;
-            point.g = 255;
-            point.b = 255;
-            point.a = 255;
-
-            _pointCloud->push_back(point);
-        }
-        cout << "Nombre de points : " << i << endl;
-    }
-    file.close();
-}
-
-void MainWindow::changeColor(int colorMode)
-{
-    std::cout << "Couleur changée" << std::endl;
-    int i = 0;
-    for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
-    {
-        switch (colorMode)
-        {
-        case 0: // projection
-        {
-            it->r = 255;
-            it->g = 0;
-            it->b = 0;
-            it->a = 255;
-            break;
-        }
-
-        case 1: // VT
-        {
-            uint16_t l = (uint16_t)_labels.at(i);
-            it->a = 255;
-            if (l == 0) // truc au loin, observation aberrante ???
-            {
-                it->r = 100;
-                it->g = 100;
-                it->b = 100;
-            }
-
-            else if (l == 40) // route
-            {
-                it->r = 128;
-                it->g = 64;
-                it->b = 128;
-            }
-            else if (l == 44) // parking ???
-            {
-                it->r = 115;
-                it->g = 52;
-                it->b = 99;
-            }
-            else if (l == 48) // trottoire ???
-            {
-                it->r = 203;
-                it->g = 126;
-                it->b = 184;
-            }
-
-            else if (l == 50 || l == 51 || l == 52) // batiments
-            {
-                it->r = 205;
-                it->g = 133;
-                it->b = 63;
-            }
-
-            else if (l == 60) // écriture sol
-            {
-                it->r = 255;
-                it->g = 255;
-                it->b = 255;
-            }
-
-            // Plantes
-            else if (l == 70) // feuillage
-            {
-                it->r = 10;
-                it->g = 76;
-                it->b = 21;
-            }
-            else if (l == 71) // tronc
-            {
-                it->r = 118;
-                it->g = 55;
-                it->b = 15;
-            }
-            else if (l == 72) // herbes
-            {
-                it->r = 0;
-                it->g = 230;
-                it->b = 0;
-                it->a = 1;
-            }
-
-            else if (l == 80) // poteaux
-            {
-                it->r = 192;
-                it->g = 192;
-                it->b = 128;
-            }
-            else if (l == 81) // signalisation route
-            {
-                it->r = 192;
-                it->g = 128;
-                it->b = 128;
-            }
-
-            else if (l == 99) //
-            {
-                it->r = 0;
-                it->g = 0;
-                it->b = 192;
-            }
-
-            else if (l == 255 || l == 10) // 255 voiture roule - 10 à l'arrêt
-            {
-                it->r = 251;
-                it->g = 71;
-                it->b = 205;
-            }
-
-            else
-            {
-                it->r = 255;
-                it->g = 255;
-                it->b = 255;
-            }
-            break;
-        }
-
-        case 2: // green
-        {
-            it->r = 0;
-            it->g = 255;
-            it->b = 0;
-            it->a = 255;
-            break;
-        }
-
-        default: // white
-        {
-            it->r = 255;
-            it->g = 255;
-            it->b = 255;
-            it->a = 255;
-        }
-        }
-        ++i;
-    }
-    _pclVisualizer->updatePointCloud(_pointCloud, "point_cloud");
+    _pc->ChangeColor(colorMode);
+    _pclVisualizer->updatePointCloud(_pc->getPointCloud(), "point_cloud");
     _ui->vtkWidget->update();
-}
-
-vector<uint32_t> MainWindow::getLabels(string fileName)
-{
-    KittiPointCloud::Ptr pointcloud(new KittiPointCloud);
-
-    fstream file(fileName.c_str(), ios::in | ios::binary);
-    vector<uint32_t> labels;
-
-    if (file.good())
-    {
-        file.seekg(0, std::ios::beg);
-        int i;
-        for (i = 0; file.good() && !file.eof(); i++)
-        {
-            uint32_t label;
-            file.read((char *)&label, sizeof(uint32_t));
-
-            labels.push_back(label);
-        }
-        cout << "Nombre de labels : " << i << endl;
-        file.close();
-    }
-    else
-    {
-        cout << "Pas de fichier label" << endl;
-    }
-
-    return labels;
 }
