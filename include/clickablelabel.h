@@ -63,6 +63,8 @@ public:
 
     void setCurrentLabel(int label);
 
+    void setMetrics(int metric);
+
 signals:
     void mousePos(int pX, int pY);
     void pixelValue(QPoint pPos, QColor pCol, int pLabelSpx);
@@ -111,7 +113,8 @@ private:
     int penWidth = 10;
 
     // Indicate which label will be associated to the next selected superpixels
-    int _currentLabel = CL_LABEL_GROUND; // Default : Ground
+    int _currentLabel = SLIC_LABEL_GROUND; // Default : Ground
+    bool _metrics[4];
 };
 
 #endif // CLICKABLELABEL_H

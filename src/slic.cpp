@@ -35,7 +35,8 @@ void Slic::clearData()
     _clusters.release();
     _distances.release();
     _centers.release();
-    _centers4D.release();
+    _centersNormalized4D.release();
+    _centersInterpolated4D.release();
     _centerCounts.clear();
     _selectedClusters.clear();
     _cls.clear();
@@ -65,9 +66,9 @@ void Slic::initData(const cv::Mat &pImage)
     _distances = cv::Mat_<float>(pImage.rows, pImage.cols, FLT_MAX);
     _labelVec.assign(pImage.rows * pImage.cols, -1);
 
-    const riVertex *data = _rangeImage.getData();
     int width = pImage.cols;
     /* Initialize the centers and counters. */
+    const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
     for (int col = _step / 2; col <= pImage.cols - _step / 2; col += _step)
     {
         for (int row = _step / 2; row <= pImage.rows - _step / 2; row += _step)
@@ -80,9 +81,14 @@ void Slic::initData(const cv::Mat &pImage)
             /* Append to vector of centers. */
             _centers.push_back(center);
             /* Append spatial cordinates*/
-            riVertex coord = data[nc.y + nc.x * width];
-            Vec4f center4D(coord.x, coord.y, coord.z, coord.remission);
-            _centers4D.push_back(center4D);
+            int idx = col + row * width;
+            riVertex coord = _rangeImage.getNormalizedValue(idx);
+            Vec4f centerNormalized4D = Vec4f(coord.x, coord.y, coord.z, coord.remission);
+
+            Vec4f centerInterpolated4D = Vec4f(interpolatedData->at(idx * 4 + SLIC_METRIC_X), interpolatedData->at(idx * 4 + SLIC_METRIC_Y),
+                                               interpolatedData->at(idx * 4 + SLIC_METRIC_Z), interpolatedData->at(idx * 4 + SLIC_METRIC_REMISSION));
+            _centersNormalized4D.push_back(centerNormalized4D);
+            _centersInterpolated4D.push_back(centerInterpolated4D);
             _centerCounts.push_back(0);
         }
     }
@@ -95,34 +101,61 @@ void Slic::initData(const cv::Mat &pImage)
  *         the pixel (cv::Scalar).
  * Output: The distance (float).
  */
-float Slic::computeDist(int pCi, cv::Point pPixel, cv::Vec3b pColour)
+float Slic::computeDist(int pCi, cv::Point pPixel, bool metrics[4])
 {
-    if (pColour[0] == 255)
-        return FLT_MAX;
     Vec5f cen(_centers(pCi));
-    float dc0 = cen[0] - pColour[0];
-    float dc1 = cen[1] - pColour[1];
-    float dc2 = cen[2] - pColour[2];
-    float dc = sqrt(dc0 * dc0 + dc1 * dc1 + dc2 * dc2);
+    int idx = pPixel.y + pPixel.x * _rangeImage.getWidth();
+    riVertex normalizedData = _rangeImage.getNormalizedValue(idx);
+
+    // metrics, normalized raw data with interpolation
+    const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
+    Vec4f cenInterpolated4d(_centersInterpolated4D(pCi));
+    float distMetrics = 0;
+    if (metrics[SLIC_METRIC_X])
+    {
+        float dif = cenInterpolated4d[SLIC_METRIC_X] - interpolatedData->at(idx * 4 + SLIC_METRIC_X);
+        distMetrics += dif * dif;
+    }
+    if (metrics[SLIC_METRIC_Y])
+    {
+        float dif = cenInterpolated4d[SLIC_METRIC_Y] - interpolatedData->at(idx * 4 + SLIC_METRIC_Y);
+        distMetrics += dif * dif;
+    }
+    if (metrics[SLIC_METRIC_Z])
+    {
+        float dif = cenInterpolated4d[SLIC_METRIC_Z] - interpolatedData->at(idx * 4 + SLIC_METRIC_Z);
+        distMetrics += dif * dif;
+    }
+    if (metrics[SLIC_METRIC_REMISSION])
+    {
+        float dif = cenInterpolated4d[SLIC_METRIC_REMISSION] - interpolatedData->at(idx * 4 + SLIC_METRIC_REMISSION);
+        distMetrics += dif * dif;
+    }
+    if (distMetrics != 0)
+    {
+        distMetrics = sqrt(distMetrics);
+    }
+    // normalized raw data
 
     // spatial 3D distance
-    Vec4f cen4d(_centers4D(pCi));
-    const riVertex *data = _rangeImage.getData();
-    riVertex pixelData = data[pPixel.y + pPixel.x * _rangeImage.getWidth()];
-    float dr0 = cen4d[0] - pixelData.x;
-    float dr1 = cen4d[1] - pixelData.y;
-    float dr2 = cen4d[2] - pixelData.z;
+    Vec4f cenNormalized4d(_centersNormalized4D(pCi));
+    float dr0 = cenNormalized4d[SLIC_METRIC_X] - normalizedData.x;
+    float dr1 = cenNormalized4d[SLIC_METRIC_Y] - normalizedData.y;
+    float dr2 = cenNormalized4d[SLIC_METRIC_Z] - normalizedData.z;
     float dr = sqrt(dr0 * dr0 + dr1 * dr1 + dr2 * dr2);
 
     // intensity distance
-    float di = fabs(cen4d[3] - pixelData.remission);
+    float di = cenNormalized4d[SLIC_METRIC_REMISSION] - normalizedData.remission;
+    di = sqrt(di * di);
 
     // spatial 2D distance
     float dc3 = cen[3] - pPixel.x;
     float dc4 = cen[4] - pPixel.y;
     float ds = sqrt(dc3 * dc3 + dc4 * dc4);
 
-    return dr * 2 + di * 5 + (_nc / _step) * ds;
+    return dr + di + distMetrics;
+
+    // default slic distance
     // return dc + (_nc / _step) * ds;
 
     //float w = 1.0 / (pow(ns / nc, 2));
@@ -144,25 +177,17 @@ cv::Point Slic::findLocalMinimum(const cv::Mat_<cv::Vec3b> &pImage, cv::Point pC
     {
         for (int j = pCenter.y - 1; j < pCenter.y + 2; j++)
         {
-            cv::Vec3b c1 = pImage(i, j + 1);
-            cv::Vec3b c2 = pImage(i + 1, j);
-            cv::Vec3b c3 = pImage(i, j);
-            /* Convert colour values to grayscale values. */
-            float i1 = c1[0];
-            float i2 = c2[0];
-            float i3 = c3[0];
-            /*float i1 = c1.val[0] * 0.11 + c1.val[1] * 0.59 + c1.val[2] * 0.3;
-            float i2 = c2.val[0] * 0.11 + c2.val[1] * 0.59 + c2.val[2] * 0.3;
-            float i3 = c3.val[0] * 0.11 + c3.val[1] * 0.59 + c3.val[2] * 0.3;*/
-
-            /* Compute horizontal and vertical gradients and keep track of the
-               minimum. */
-            float i1i3 = i1 - i3;
-            if (i1i3 < 0.0)
-                i1i3 *= -1.0;
-            float i2i3 = i2 - i3;
-            if (i2i3 < 0.0)
-                i2i3 *= -1.0;
+            riVertex riv1 = _rangeImage.getNormalizedValue(i * _rangeImage.getWidth() + (j + 1));
+            riVertex riv2 = _rangeImage.getNormalizedValue((i + 1) * _rangeImage.getWidth() + j);
+            riVertex riv3 = _rangeImage.getNormalizedValue(i * _rangeImage.getWidth() + j);
+            float x = riv1.x - riv3.x;
+            float y = riv1.y - riv3.y;
+            float z = riv1.z - riv3.z;
+            float i1i3 = sqrt(x * x + y * y + z * z);
+            x = riv2.x - riv3.x;
+            y = riv2.y - riv3.y;
+            z = riv2.z - riv3.z;
+            float i2i3 = sqrt(x * x + y * y + z * z);
             float sum = i1i3 + i2i3;
             if (sum < min_grad)
             {
@@ -182,7 +207,7 @@ cv::Point Slic::findLocalMinimum(const cv::Mat_<cv::Vec3b> &pImage, cv::Point pC
  * Input : The Lab image (cv::Mat), the stepsize (int), and the weight (int).
  * Output: -
  */
-void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, RangeImage &ri)
+void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, RangeImage &ri, bool metrics[4])
 {
     if (pImage.empty())
     {
@@ -236,8 +261,7 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, Range
 
                     if (row >= 0 && row < image.rows && col >= 0 && col < image.cols)
                     {
-                        cv::Vec3b colour = image(row, col);
-                        float d = computeDist(j, cv::Point(row, col), colour);
+                        float d = computeDist(j, cv::Point(row, col), metrics);
 
                         /* Update cluster allocation if the cluster minimizes the
                            distance. */
@@ -255,13 +279,14 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, Range
         for (int j = 0; j < _centers.rows; j++)
         {
             _centers(j) = 0;
-            _centers4D(j) = 0;
+            _centersNormalized4D(j) = 0;
+            _centersInterpolated4D(j) = 0;
             _centerCounts[j] = 0;
         }
 
-        const riVertex *data = _rangeImage.getData();
         int width = image.cols;
         /* Compute the new cluster centers. */
+        const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
         for (int col = 0; col < image.cols; col++)
         {
             for (int row = 0; row < image.rows; row++)
@@ -273,8 +298,12 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, Range
                     cv::Vec3b colour = image(row, col);
                     _centers(c_id) += Vec5f(colour[0], colour[1], colour[2], row, col);
 
-                    riVertex coord = data[col + row * width];
-                    _centers4D(c_id) += Vec4f(coord.x, coord.y, coord.z, coord.remission);
+                    int idx = col + row * width;
+                    riVertex coord = _rangeImage.getNormalizedValue(idx);
+                    _centersNormalized4D(c_id) += Vec4f(coord.x, coord.y, coord.z, coord.remission);
+
+                    _centersInterpolated4D(c_id) += Vec4f(interpolatedData->at(idx * 4 + SLIC_METRIC_X), interpolatedData->at(idx * 4 + SLIC_METRIC_Y),
+                                                          interpolatedData->at(idx * 4 + SLIC_METRIC_Z), interpolatedData->at(idx * 4 + SLIC_METRIC_REMISSION));
                     _centerCounts[c_id] += 1;
                 }
             }
@@ -284,7 +313,8 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, Range
         for (int j = 0; j < _centers.rows; j++)
         {
             _centers(j) /= _centerCounts[j];
-            _centers4D(j) /= _centerCounts[j];
+            _centersNormalized4D(j) /= _centerCounts[j];
+            _centersInterpolated4D(j) /= _centerCounts[j];
         }
     }
 }
@@ -1357,25 +1387,25 @@ cv::Vec3b Slic::getColorFromLabel(int index)
     int label = _labelVec.at(index);
     switch (label)
     {
-    case CL_LABEL_GROUND:
+    case SLIC_LABEL_GROUND:
         color = cv::Vec3b(168, 127, 173);
         break;
-    case CL_LABEL_STUCTURE:
+    case SLIC_LABEL_STUCTURE:
         color = cv::Vec3b(78, 178, 185);
         break;
-    case CL_LABEL_VEHICLE:
+    case SLIC_LABEL_VEHICLE:
         color = cv::Vec3b(205, 178, 98);
         break;
-    case CL_LABEL_NATURE:
+    case SLIC_LABEL_NATURE:
         color = cv::Vec3b(109, 167, 96);
         break;
-    case CL_LABEL_HUMAN:
+    case SLIC_LABEL_HUMAN:
         color = cv::Vec3b(0, 0, 255);
         break;
-    case CL_LABEL_OBJECT:
+    case SLIC_LABEL_OBJECT:
         color = cv::Vec3b(50, 88, 140);
         break;
-    case CL_LABEL_OUTLIER:
+    case SLIC_LABEL_OUTLIER:
         color = cv::Vec3b(128, 128, 128);
         break;
     default:

@@ -27,13 +27,18 @@ using namespace std;
 /* The number of iterations run by the clustering algorithm. */
 #define NR_ITERATIONS 10
 
-#define CL_LABEL_GROUND 0
-#define CL_LABEL_STUCTURE 1
-#define CL_LABEL_VEHICLE 2
-#define CL_LABEL_NATURE 3
-#define CL_LABEL_HUMAN 4
-#define CL_LABEL_OBJECT 5
-#define CL_LABEL_OUTLIER 6
+#define SLIC_LABEL_GROUND 0
+#define SLIC_LABEL_STUCTURE 1
+#define SLIC_LABEL_VEHICLE 2
+#define SLIC_LABEL_NATURE 3
+#define SLIC_LABEL_HUMAN 4
+#define SLIC_LABEL_OBJECT 5
+#define SLIC_LABEL_OUTLIER 6
+
+#define SLIC_METRIC_X 0
+#define SLIC_METRIC_Y 1
+#define SLIC_METRIC_Z 2
+#define SLIC_METRIC_REMISSION 3
 
 typedef cv::Vec<float, 5> Vec5f;
 typedef cv::Vec<float, 4> Vec4f;
@@ -54,7 +59,7 @@ public:
     ~Slic();
 
     /* Generate an over-segmentation for an image. */
-    void generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, RangeImage &ri);
+    void generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, RangeImage &ri, bool *metrics);
     /* Enforce connectivity for an image. */
     void createConnectivity(const cv::Mat &pImage);
     void createHierarchy(const cv::Mat &pImage);
@@ -124,8 +129,12 @@ public:
     const vector<int> getLabelVec() { return _labelVec; };
 
 private:
-    /* Compute the distance between a center and an individual pixel. */
-    float computeDist(int pCi, cv::Point pPixel, cv::Vec3b pColour);
+    /** Compute the distance between a center and an individual pixel.
+    * @param pCi index of superpixel
+    * @param pPixel a point to compute distance with
+    * @param metrics a boolean array indicate which data should be taking into account for compute distance
+    * */
+    float computeDist(int pCi, cv::Point pPixel, bool *metrics);
     /* Find the pixel with the lowest gradient in a 3x3 surrounding. */
     cv::Point findLocalMinimum(const cv::Mat_<cv::Vec3b> &pImage, cv::Point pCenter);
 
@@ -146,7 +155,8 @@ private:
 
     /* The LAB and xy values of the centers. */
     cv::Mat_<Vec5f> _centers;
-    cv::Mat_<Vec4f> _centers4D;
+    cv::Mat_<Vec4f> _centersNormalized4D;
+    cv::Mat_<Vec4f> _centersInterpolated4D;
 
     /* The number of occurences of each center. */
     vector<int> _centerCounts;

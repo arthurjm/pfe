@@ -74,6 +74,11 @@ public slots:
      * @param type must belongs 0 to 6
      * */
     void updateDisplay(int type);
+    /**
+     * Update the metrics and recompute semention superpixels
+     * @param index indicate the index of metrics table to be update
+     * */
+    void updateMetrics(int index);
 
 public:
     explicit MainWindow(QWidget *parent = 0);

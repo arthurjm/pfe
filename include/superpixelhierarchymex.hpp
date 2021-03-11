@@ -163,8 +163,8 @@ public:
 
     void buildTree(unsigned char *img, RangeImage &rangeImage, unsigned char *edge = NULL)
     {
-        uchar *image = shiftBGR(rangeImage.createImageFromXYZ());
-        createVexRGB(image, m_color);
+        //uchar *image = shiftBGR(rangeImage.createImageFromXYZ());
+        createVexRGB(img, m_color);
         createVexRIData(rangeImage);
         buildGraph(edge);
         m_iter = 0;

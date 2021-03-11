@@ -17,6 +17,8 @@ ClickableLabel::ClickableLabel(QWidget *parent)
     _isScribble = false;
     _showContours = true;
     labelisationMode = 2;
+    for (int i = 0; i < 4; ++i)
+        _metrics[i] = false;
     // _sh = new SuperpixelHierarchy();
 }
 
@@ -98,7 +100,7 @@ void ClickableLabel::initSuperpixels(int pNbSpx, int pWeight)
     Mat imgTmp = _imgRef.clone();
     Mat labImage;
     cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
-    _slic->generateSuperpixels(labImage, pNbSpx, pWeight, _rangeImage);
+    _slic->generateSuperpixels(labImage, pNbSpx, pWeight, _rangeImage, _metrics);
     _slic->createConnectivity(labImage);
     _slic->createHierarchy(labImage);
 
@@ -589,10 +591,15 @@ cv::Mat ClickableLabel::getDisplayMat(int type, bool isGray, bool interpolate, b
 
 void ClickableLabel::setCurrentLabel(int label)
 {
-    if (label < CL_LABEL_GROUND || label > CL_LABEL_OUTLIER)
+    if (label < SLIC_LABEL_GROUND || label > SLIC_LABEL_OUTLIER)
     {
         cerr << "Invalide label in ClickableLabel::setCurrentLabel." << endl;
         exit(EXIT_FAILURE);
     }
     _currentLabel = label;
+}
+
+void ClickableLabel::setMetrics(int metric)
+{
+    _metrics[metric] = !_metrics[metric];
 }

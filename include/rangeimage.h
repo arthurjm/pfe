@@ -9,6 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #define DIM 6
+
 #define RI_X 0
 #define RI_Y 1
 #define RI_Z 2
@@ -16,8 +17,12 @@
 #define RI_REMISSION 4
 #define RI_LABEL 5
 #define RI_XYZ 6
+#define RI_INTERPOLATE_HS_X 0
+#define RI_INTERPOLATE_HS_Y 2
+
 #define HEIGHT 64
 #define WIDTH 1024
+
 #define FOV_UP 3.0
 #define FOV_DOWN -25.0
 
@@ -45,14 +50,9 @@ public:
      * @param width width of the range image
      * @param height height of the range image
      **/
-     RangeImage(string fileName, int mode = 0, int width = WIDTH, int height = HEIGHT);
+    RangeImage(string fileName, int mode = 0, int width = WIDTH, int height = HEIGHT);
 
-    RangeImage(string pcFile, string labelFile,int width = WIDTH, int height = HEIGHT);
-    /**
-     * Create BGR image from XYZ coordinates 
-     * @return an opencv Mat
-     * */
-    cv::Mat createImageFromXYZ();
+    RangeImage(string pcFile, string labelFile, int width = WIDTH, int height = HEIGHT);
 
     /**
      * Create a gray image according to the associate attribut at idx index,
@@ -79,6 +79,14 @@ public:
     * */
     cv::Mat getRawDataFromIndex(int index);
 
+    /**
+     * Normalize all the data associated with a pixel in range of 0 and 1
+     * ignore invalid data where remission = -1
+     * @param pixel index of pixel in range image
+     * @return a normalized riVertex
+     * */
+    riVertex getNormalizedValue(int pixelIndex);
+
     /** 
      * change the label at the index in the range image data
      * @param index in range image 
@@ -94,6 +102,8 @@ public:
 
     int getWidth();
 
+    const vector<float> *getNormalizedData();
+
     /**
      * Save the current range image as binary file
      * */
@@ -105,26 +115,27 @@ private:
      * @param fileName location of range image
      **/
     void loadRangeImage(string fileName);
-
     /**
      * Set label to -2 for unwanted components (ex : dead pixels on the bottom)
      * */
     void separateInvalideComposant();
+
     /**
-     * According to idx, normalize the associated data and assign it to an vector
+     * According to idx, normalize the associated data in range between 0 and 1 and assign it to an vector
      * @param idx an verctor helps to indicate the attribute of riVertex
      * @return an vector of normalized data
      * */
-    vector<uchar> normalizedValue(vector<int> idx);
+    vector<float> normalizedValue(vector<int> idx);
 
     /**
      * Apply interpolation on dead pixels (remission == -1 and label != -2).
+     * Allowed number of components are 1,2,3,4
      * @param dataColor an array contains image information 
      * @param haflsizeX halfsize X of the kernel 
      * @param halfsizeY halfsize Y of the kernel 
-     * @param BGR boolean indicate if dataColor is a gray or color image
+     * @param nbComponent indicate the number of components in dataColor
      * */
-    void interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, bool BGR);
+    void interpolation(vector<float> &data, int halfsizeX, int halfsizeY, int nbComponent);
 
     /**
      * Transform a range image to openCV matrice 
@@ -154,13 +165,14 @@ private:
     cv::Mat morphErode(cv::Mat img);
 
     void pointCloudProjection(const nc::NdArray<float> points, const nc::NdArray<float> remissions, float proj_fov_up, float proj_fov_down);
-    
+
     std::vector<uint16_t> _labels;
- 
+
     riVertex *_data;
+    vector<float> _normalizedData;
+
     int _width;
     int _height;
-
     // x, y, z, depth
     float _minValue[4];
     float _maxValue[4];

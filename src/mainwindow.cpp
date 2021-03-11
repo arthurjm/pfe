@@ -79,13 +79,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->display_Hist, &QCheckBox::clicked, this, [this]() { _equalHist = !_equalHist; updateDisplay(_currentDisplayType); });
 
     // Connect label RadioButton
-    connect(_ui->label_Ground, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_GROUND); });
-    connect(_ui->label_Structure, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_STUCTURE); });
-    connect(_ui->label_Vehicle, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_VEHICLE); });
-    connect(_ui->label_Nature, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_NATURE); });
-    connect(_ui->label_Human, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_HUMAN); });
-    connect(_ui->label_Object, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OBJECT); });
-    connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OUTLIER); });
+    connect(_ui->label_Ground, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(SLIC_LABEL_GROUND); });
+    connect(_ui->label_Structure, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(SLIC_LABEL_STUCTURE); });
+    connect(_ui->label_Vehicle, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(SLIC_LABEL_VEHICLE); });
+    connect(_ui->label_Nature, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(SLIC_LABEL_NATURE); });
+    connect(_ui->label_Human, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(SLIC_LABEL_HUMAN); });
+    connect(_ui->label_Object, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(SLIC_LABEL_OBJECT); });
+    connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(SLIC_LABEL_OUTLIER); });
+
+    // Connect metric CheckBox
+    connect(_ui->metric_X, &QCheckBox::clicked, this, [this]() { updateMetrics(SLIC_METRIC_X); });
+    connect(_ui->metric_Y, &QCheckBox::clicked, this, [this]() { updateMetrics(SLIC_METRIC_Y); });
+    connect(_ui->metric_Z, &QCheckBox::clicked, this, [this]() { updateMetrics(SLIC_METRIC_Z); });
+    connect(_ui->metric_remission, &QCheckBox::clicked, this, [this]() { updateMetrics(SLIC_METRIC_REMISSION); });
 
     QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
     RangeImage ri(fileName.toStdString());
@@ -93,7 +99,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     openPointCloud(fileName.toStdString(), getLabelFileName(fileName));
     // openPointCloud("../data/velodyne/000000.bin");
-    
+
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
 
@@ -327,9 +333,14 @@ void MainWindow::updateDisplay(int type)
 {
     _img = _ui->clWidget->getDisplayMat(type, _isGray, _interpolate, _closing, _equalHist);
     _currentDisplayType = type;
-    _ui->clWidget->clear();
     _ui->clWidget->setImgRef(_img);
-    initSuperpixelsLevel();
+    _ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value());
+}
+
+void MainWindow::updateMetrics(int metric)
+{
+    _ui->clWidget->setMetrics(metric);
+    _ui->clWidget->initSuperpixels(_ui->nbSpxSlider->maximum(), _ui->weightSlider->value());
     updateSuperpixelsLevel();
 }
 

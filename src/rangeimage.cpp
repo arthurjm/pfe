@@ -87,6 +87,9 @@ void RangeImage::loadRangeImage(string fileName)
         _maxValue[3] = max(_maxValue[3], _data[i].depth);
     }
     separateInvalideComposant();
+    vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
+    _normalizedData = normalizedValue(component);
+    interpolation(_normalizedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, component.size());
 }
 
 void RangeImage::separateInvalideComposant()
@@ -221,15 +224,15 @@ void RangeImage::pointCloudProjection(const nc::NdArray<float> points, const nc:
     }
 }
 
-vector<uchar> RangeImage::normalizedValue(vector<int> idx)
+vector<float> RangeImage::normalizedValue(vector<int> idx)
 {
-    vector<uchar> normVal;
+    vector<float> normVal;
     normVal.reserve(_width * _height * idx.size());
     vector<float> min(idx.size()), max(idx.size());
     for (size_t i = 0; i < idx.size(); i++)
     {
 
-        if (idx.at(i) != 4)
+        if ((idx.at(i) < 4 && idx.at(i) >= 0) || idx.at(i) == RI_XYZ)
         {
             min.at(i) = _minValue[idx.at(i)];
             max.at(i) = _maxValue[idx.at(i)];
@@ -255,21 +258,60 @@ vector<uchar> RangeImage::normalizedValue(vector<int> idx)
             if (remission != -1.f)
             {
                 val = *((float *)(_data) + i * DIM + idx.at(j));
-                val = roundf((val - min.at(j)) / (max.at(j) - min.at(j)) * 255);
-                normVal.push_back((uchar)val);
+                val = (val - min.at(j)) / (max.at(j) - min.at(j));
+                normVal.push_back(val);
             }
             else
-                normVal.push_back((uchar)0);
+                normVal.push_back(0);
         }
     }
     return normVal;
 }
 
-void RangeImage::interpolation(vector<uchar> &dataColor, int halfsizeX, int halfsizeY, bool BGR)
+riVertex RangeImage::getNormalizedValue(int pixelIndex)
 {
-    int nbChannel = 1;
-    if (BGR)
-        nbChannel = 3;
+    riVertex riv;
+
+    riv.remission = *((float *)(_data) + pixelIndex * DIM + RI_REMISSION);
+    if (riv.remission != -1)
+    {
+        float val = *((float *)(_data) + pixelIndex * DIM + RI_X);
+        val = (val - _minValue[RI_X]) / (_maxValue[RI_X] - _minValue[RI_X]);
+        riv.x = val;
+
+        val = *((float *)(_data) + pixelIndex * DIM + RI_Y);
+        val = (val - _minValue[RI_Y]) / (_maxValue[RI_Y] - _minValue[RI_Y]);
+        riv.y = val;
+
+        val = *((float *)(_data) + pixelIndex * DIM + RI_Z);
+        val = (val - _minValue[RI_Z]) / (_maxValue[RI_Z] - _minValue[RI_Z]);
+        riv.z = val;
+
+        val = *((float *)(_data) + pixelIndex * DIM + RI_DEPTH);
+        val = (val - _minValue[RI_DEPTH]) / (_maxValue[RI_DEPTH] - _minValue[RI_DEPTH]);
+        riv.depth = val;
+    }
+    else
+    {
+        riv.x = 0;
+        riv.y = 0;
+        riv.z = 0;
+        riv.depth = 0;
+        riv.remission = 0;
+    }
+    return riv;
+}
+
+void RangeImage::interpolation(vector<float> &data, int halfsizeX, int halfsizeY, int nbComponent)
+{
+
+    if (nbComponent != 1 && nbComponent != 3 && nbComponent != 4)
+    {
+        cerr << "invalid number of component in RangeImage::interpolation" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    float *componentSum = (float *)calloc(nbComponent, sizeof(float));
     for (int i = 0; i < _height; i++)
     {
         for (int j = 0; j < _width; j++)
@@ -278,61 +320,66 @@ void RangeImage::interpolation(vector<uchar> &dataColor, int halfsizeX, int half
             bool validRemission = _data[i * _width + j].remission == -1;
             if (validLabel && validRemission)
             {
-                int sumB = 0;
-                int sumG = 0;
-                int sumR = 0;
-                int sum = 0;
+                for (int p = 0; p < nbComponent; ++p)
+                    componentSum[p] = 0;
+                int pixelCount = 0;
                 for (int y = i - halfsizeY; y <= i + halfsizeY; y++)
                 {
                     for (int x = j - halfsizeX; x <= j + halfsizeX; x++)
                     {
-                        if (x < _width && y < _height && x >= 0 && y >= 0)
+                        if (x < _width && y < _height && x >= 0 && y >= 0) // inside the image
                         {
-                            if (x != j || y != i)
+                            if (x != j || y != i) // not himself
                             {
-                                if (_data[y * _width + x].remission != -1)
+                                if (_data[y * _width + x].remission != -1) // is a "dead" pixel
                                 {
-                                    sumB += dataColor.at(y * _width * nbChannel + x * nbChannel);
-                                    if (BGR)
+                                    for (int k = 0; k < nbComponent; k++)
                                     {
-                                        sumG += dataColor.at(y * _width * nbChannel + x * nbChannel + 1);
-                                        sumR += dataColor.at(y * _width * nbChannel + x * nbChannel + 2);
+                                        componentSum[k] += data.at(y * _width * nbComponent + x * nbComponent + k);
                                     }
-                                    sum++;
+                                    pixelCount++;
                                 }
                             }
                         }
                     }
                 }
-                if (sum != 0)
-                {
-                    dataColor.at(i * _width * nbChannel + j * nbChannel) = sumB / sum;
 
-                    if (BGR)
+                if (pixelCount != 0)
+                {
+                    for (int k = 0; k < nbComponent; k++)
                     {
-                        dataColor.at(i * _width * nbChannel + j * nbChannel + 1) = sumG / sum;
-                        dataColor.at(i * _width * nbChannel + j * nbChannel + 2) = sumR / sum;
+                        data.at(i * _width * nbComponent + j * nbComponent + k) = componentSum[k] / pixelCount;
                     }
                 }
             }
         }
     }
+    free(componentSum);
 }
 
 cv::Mat RangeImage::createColorMat(vector<int> idx, bool isGray, bool interpolate, bool closing, bool equalHist)
 {
-    vector<uchar> dataColor = normalizedValue(idx);
+    vector<float> normalizedData = normalizedValue(idx);
+    // convert to range between 0 and 255;
+    size_t size = normalizedData.size();
 
-    bool isBGR = false;
+    int nbComponent = 1;
     int cvType = CV_8UC1;
     if (idx.size() == 3)
     {
         cvType = CV_8UC3;
-        isBGR = true;
+        nbComponent = 3;
     }
 
     if (interpolate)
-        interpolation(dataColor, 0, 2, isBGR);
+        interpolation(normalizedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, nbComponent);
+
+    vector<uchar> dataColor;
+    dataColor.reserve(size);
+    for (size_t i = 0; i < size; i++)
+    {
+        dataColor.push_back((uchar)(normalizedData.at(i) * 255));
+    }
 
     cv::Mat img = createCvMat(dataColor, cvType);
 
@@ -359,43 +406,6 @@ cv::Mat RangeImage::createColorMat(vector<int> idx, bool isGray, bool interpolat
 
     if (closing)
         img = morphClose(img);
-    return img;
-}
-
-cv::Mat RangeImage::createImageFromXYZ()
-{
-    vector<uchar> dataX = normalizedValue({RI_X});
-    vector<uchar> dataY = normalizedValue({RI_Y});
-    vector<uchar> dataZ = normalizedValue({RI_Z});
-
-    cv::Mat imgX = createCvMat(dataX, CV_8UC1);
-    cv::Mat imgY = createCvMat(dataY, CV_8UC1);
-    cv::Mat imgZ = createCvMat(dataZ, CV_8UC1);
-
-    cv::cvtColor(imgX, imgX, cv::COLOR_BGR2GRAY);
-    cv::cvtColor(imgY, imgY, cv::COLOR_BGR2GRAY);
-    cv::cvtColor(imgZ, imgZ, cv::COLOR_BGR2GRAY);
-
-    cv::Mat tmp;
-    cv::equalizeHist(imgX, tmp);
-    imgX = tmp;
-    cv::equalizeHist(imgY, tmp);
-    imgY = tmp;
-    cv::equalizeHist(imgZ, tmp);
-    imgZ = tmp;
-
-    vector<uchar> dataColor;
-    int size = _width * _height;
-    dataColor.reserve(size * 3);
-    for (int i = 0; i < size; ++i)
-    {
-        float re = _data[i].remission != -1 ? _data[i].remission : 1;
-        dataColor.push_back(imgX.data[i] * re);
-        dataColor.push_back(imgY.data[i] * re);
-        dataColor.push_back(imgZ.data[i] * re);
-    }
-    interpolation(dataColor, 0, 2, false);
-    cv::Mat img = createCvMat(dataColor);
     return img;
 }
 
@@ -468,6 +478,11 @@ cv::Mat RangeImage::morphErode(cv::Mat img)
 const riVertex *RangeImage::getData()
 {
     return _data;
+}
+
+const vector<float> *RangeImage::getNormalizedData()
+{
+    return &_normalizedData;
 }
 
 cv::Mat RangeImage::getRawDataFromIndex(int index)

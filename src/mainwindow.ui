@@ -68,6 +68,48 @@
           <property name="verticalSpacing">
            <number>0</number>
           </property>
+          <item row="0" column="4">
+           <widget class="QPushButton" name="saveSelectionButton">
+            <property name="text">
+             <string>Save Selection</string>
+            </property>
+            <property name="autoDefault">
+             <bool>false</bool>
+            </property>
+            <property name="default">
+             <bool>false</bool>
+            </property>
+            <property name="flat">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QSpinBox" name="spinBoxMaxWeight">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="singleStep">
+             <number>10</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="weightLabel">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Weight</string>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="2">
            <widget class="QLabel" name="valueNbSpxSlider">
             <property name="minimumSize">
@@ -87,45 +129,6 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="nbSpxLabel">
-            <property name="text">
-             <string>Number of superpixels</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="4">
-           <widget class="QPushButton" name="saveSelectionButton">
-            <property name="text">
-             <string>Save Selection</string>
-            </property>
-            <property name="autoDefault">
-             <bool>false</bool>
-            </property>
-            <property name="default">
-             <bool>false</bool>
-            </property>
-            <property name="flat">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QSlider" name="weightSlider">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>20</number>
-            </property>
-            <property name="value">
-             <number>10</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
           <item row="2" column="2">
            <widget class="QLabel" name="valueWeightSlider">
             <property name="text">
@@ -133,36 +136,19 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="3">
-           <widget class="QSpinBox" name="spinBoxMaxWeight">
-            <property name="minimum">
-             <number>1</number>
+          <item row="0" column="5">
+           <widget class="QLabel" name="selectedColorLabel">
+            <property name="minimumSize">
+             <size>
+              <width>15</width>
+              <height>15</height>
+             </size>
             </property>
-            <property name="maximum">
-             <number>100</number>
+            <property name="autoFillBackground">
+             <bool>true</bool>
             </property>
-            <property name="singleStep">
-             <number>10</number>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="4">
-           <widget class="QPushButton" name="resetSelectionButton">
             <property name="text">
-             <string>Reset Selection</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QSpinBox" name="spinBoxMaxSpx">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>10000</number>
-            </property>
-            <property name="singleStep">
-             <number>100</number>
+             <string/>
             </property>
            </widget>
           </item>
@@ -182,32 +168,46 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="weightLabel">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>30</height>
-             </size>
+          <item row="0" column="3">
+           <widget class="QSpinBox" name="spinBoxMaxSpx">
+            <property name="minimum">
+             <number>1</number>
             </property>
-            <property name="text">
-             <string>Weight</string>
+            <property name="maximum">
+             <number>10000</number>
+            </property>
+            <property name="singleStep">
+             <number>100</number>
             </property>
            </widget>
           </item>
-          <item row="0" column="5">
-           <widget class="QLabel" name="selectedColorLabel">
-            <property name="minimumSize">
-             <size>
-              <width>15</width>
-              <height>15</height>
-             </size>
-            </property>
-            <property name="autoFillBackground">
-             <bool>true</bool>
-            </property>
+          <item row="2" column="4">
+           <widget class="QPushButton" name="resetSelectionButton">
             <property name="text">
-             <string/>
+             <string>Reset Selection</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSlider" name="weightSlider">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>20</number>
+            </property>
+            <property name="value">
+             <number>10</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="nbSpxLabel">
+            <property name="text">
+             <string>Number of superpixels</string>
             </property>
            </widget>
           </item>
@@ -306,314 +306,382 @@
          </item>
         </layout>
        </item>
-       <item row="2" column="1">
-        <layout class="QHBoxLayout" name="clButtons">
-         <property name="spacing">
-          <number>10</number>
-         </property>
+       <item row="1" column="1">
+        <layout class="QVBoxLayout" name="rangeImageButtons">
          <item>
-          <widget class="QWidget" name="displayButtons" native="true">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <layout class="QVBoxLayout" name="globalVerticalRight">
-            <property name="spacing">
-             <number>5</number>
-            </property>
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="displayLabel">
-              <property name="minimumSize">
-               <size>
-                <width>50</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>80</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Display</string>
-              </property>
-              <property name="textFormat">
-               <enum>Qt::AutoText</enum>
-              </property>
-              <property name="scaledContents">
-               <bool>false</bool>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="display_Hist">
-              <property name="text">
-               <string>EqualHist</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="display_Interpolation">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Interpolation</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="display_Closing">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Closing</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="display_Gray">
-              <property name="text">
-               <string>Gray</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="display_XYZ">
-              <property name="text">
-               <string>&amp;XYZ</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="display_X">
-              <property name="text">
-               <string>X</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="display_Y">
-              <property name="text">
-               <string>&amp;Y</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="display_Z">
-              <property name="text">
-               <string>&amp;Z</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="display_Depth">
-              <property name="text">
-               <string>&amp;Depth</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="display_Remission">
-              <property name="text">
-               <string>&amp;Remission</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
+          <layout class="QHBoxLayout" name="titleButtons">
+           <item>
+            <widget class="QLabel" name="displayLabel">
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>80</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Display</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::AutoText</enum>
+             </property>
+             <property name="scaledContents">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_label">
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>80</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Labels</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::AutoText</enum>
+             </property>
+             <property name="scaledContents">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="metric_metric">
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>80</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Metrics</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::AutoText</enum>
+             </property>
+             <property name="scaledContents">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
          <item>
-          <widget class="QWidget" name="labelsButtons" native="true">
-           <property name="enabled">
-            <bool>true</bool>
+          <layout class="QHBoxLayout" name="clButtons">
+           <property name="spacing">
+            <number>10</number>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="label_label">
-              <property name="minimumSize">
-               <size>
-                <width>50</width>
-                <height>30</height>
-               </size>
+           <item>
+            <widget class="QWidget" name="displayButtons" native="true">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <layout class="QVBoxLayout" name="globalVerticalRight">
+              <property name="spacing">
+               <number>5</number>
               </property>
-              <property name="maximumSize">
-               <size>
-                <width>80</width>
-                <height>30</height>
-               </size>
+              <property name="leftMargin">
+               <number>0</number>
               </property>
-              <property name="text">
-               <string>Labels</string>
+              <property name="topMargin">
+               <number>0</number>
               </property>
-              <property name="textFormat">
-               <enum>Qt::AutoText</enum>
+              <property name="rightMargin">
+               <number>0</number>
               </property>
-              <property name="scaledContents">
-               <bool>false</bool>
+              <property name="bottomMargin">
+               <number>0</number>
               </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
+              <item>
+               <widget class="QCheckBox" name="display_Hist">
+                <property name="text">
+                 <string>EqualHist</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="display_Interpolation">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Interpolation</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="display_Closing">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Closing</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="display_Gray">
+                <property name="text">
+                 <string>Gray</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="display_XYZ">
+                <property name="text">
+                 <string>&amp;XYZ</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="display_X">
+                <property name="text">
+                 <string>X</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="display_Y">
+                <property name="text">
+                 <string>&amp;Y</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="display_Z">
+                <property name="text">
+                 <string>&amp;Z</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="display_Depth">
+                <property name="text">
+                 <string>&amp;Depth</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="display_Remission">
+                <property name="text">
+                 <string>&amp;Remission</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="labelsButtons" native="true">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout">
+              <property name="leftMargin">
+               <number>0</number>
               </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="label_Ground">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
+              <property name="topMargin">
+               <number>0</number>
               </property>
-              <property name="autoFillBackground">
-               <bool>false</bool>
+              <property name="rightMargin">
+               <number>0</number>
               </property>
-              <property name="styleSheet">
-               <string notr="true">color:purple</string>
+              <property name="bottomMargin">
+               <number>0</number>
               </property>
-              <property name="text">
-               <string>&amp;Ground</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="label_Structure">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">color:rgb(113,108,44)</string>
-              </property>
-              <property name="text">
-               <string>Structure</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="label_Vehicle">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">color:rgb(98,178,205)</string>
-              </property>
-              <property name="text">
-               <string>&amp;Vehicle</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="label_Nature">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">color:green</string>
-              </property>
-              <property name="text">
-               <string>Nature</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="label_Human">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">color:red</string>
-              </property>
-              <property name="text">
-               <string>&amp;Human</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="label_Object">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">color:brown</string>
-              </property>
-              <property name="text">
-               <string>O&amp;bject</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="label_Outlier">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">color:gray</string>
-              </property>
-              <property name="text">
-               <string>Outlier</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
+              <item>
+               <widget class="QRadioButton" name="label_Ground">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="autoFillBackground">
+                 <bool>false</bool>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">color:purple</string>
+                </property>
+                <property name="text">
+                 <string>&amp;Ground</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="label_Structure">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">color:rgb(113,108,44)</string>
+                </property>
+                <property name="text">
+                 <string>Structure</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="label_Vehicle">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">color:rgb(98,178,205)</string>
+                </property>
+                <property name="text">
+                 <string>&amp;Vehicle</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="label_Nature">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">color:green</string>
+                </property>
+                <property name="text">
+                 <string>Nature</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="label_Human">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">color:red</string>
+                </property>
+                <property name="text">
+                 <string>&amp;Human</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="label_Object">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">color:brown</string>
+                </property>
+                <property name="text">
+                 <string>O&amp;bject</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="label_Outlier">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">color:gray</string>
+                </property>
+                <property name="text">
+                 <string>Outlier</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="metricsButtons">
+             <item>
+              <widget class="QCheckBox" name="metric_X">
+               <property name="text">
+                <string>X</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="metric_Y">
+               <property name="text">
+                <string>Y</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="metric_Z">
+               <property name="text">
+                <string>Z</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="metric_remission">
+               <property name="text">
+                <string>Remission</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </item>
         </layout>
        </item>
@@ -783,6 +851,15 @@
             </color>
            </brush>
           </colorrole>
+          <colorrole role="PlaceholderText">
+           <brush brushstyle="NoBrush">
+            <color alpha="128">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
          </active>
          <inactive>
           <colorrole role="WindowText">
@@ -914,6 +991,15 @@
           <colorrole role="ToolTipText">
            <brush brushstyle="SolidPattern">
             <color alpha="255">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="PlaceholderText">
+           <brush brushstyle="NoBrush">
+            <color alpha="128">
              <red>0</red>
              <green>0</green>
              <blue>0</blue>
@@ -1057,6 +1143,15 @@
             </color>
            </brush>
           </colorrole>
+          <colorrole role="PlaceholderText">
+           <brush brushstyle="NoBrush">
+            <color alpha="128">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
          </disabled>
         </palette>
        </property>
@@ -1149,7 +1244,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>30</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
