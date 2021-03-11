@@ -59,6 +59,7 @@ set(CPP_FILES
     src/shdist.cpp
     src/slic.cpp
     src/superpixelhierarchy.cpp
+    src/pointcloud.cpp
     src/clickablelabel.cpp
 
 )
@@ -68,6 +69,7 @@ set(HEADERS
     include/rangeimage.h
     include/shdist.h
     include/slic.h
+    include/pointcloud.h
     include/superpixelhierarchy.h
     include/superpixelhierarchymex.hpp
 

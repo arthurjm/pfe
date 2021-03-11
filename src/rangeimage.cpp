@@ -3,42 +3,9 @@
 
 using namespace std;
 
-RangeImage::RangeImage(string fileName, int mode, int width, int height)
+RangeImage::RangeImage(string fileName, int width, int height)
     : _data(nullptr), _width(width), _height(height)
 {
-
-    _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
-    assert(_data);
-
-    if (mode == 0)
-        loadRangeImage(fileName);
-    if (mode == 1)
-    {
-        nc::NdArray<float> scan = nc::fromfile<float>(fileName, "");
-        scan.reshape(-1, 4);
-        nc::NdArray<float> points = scan(scan.rSlice(), nc::Slice(0, 3));
-        nc::NdArray<float> remissions = scan(scan.rSlice(), 3);
-
-        for (int i = 0; i < _height * _width; ++i)
-        {
-            _data[i].x = -1;
-            _data[i].y = -1;
-            _data[i].z = -1;
-            _data[i].remission = -1;
-            _data[i].depth = -1;
-            _data[i].label = -1;
-        }
-        pointCloudProjection(points, remissions, FOV_UP, FOV_DOWN);
-    }
-}
-
-RangeImage::RangeImage(string pc, string labelFile, int height, int width) : _data(nullptr), _height(height), _width(width)
-{
-    nc::NdArray<float> scan = nc::fromfile<float>(pc, "");
-    scan.reshape(-1, 4);
-    nc::NdArray<float> points = scan(scan.rSlice(), nc::Slice(0, 3));
-    nc::NdArray<float> remissions = scan(scan.rSlice(), 3);
-
     _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
     assert(_data);
 
@@ -51,13 +18,37 @@ RangeImage::RangeImage(string pc, string labelFile, int height, int width) : _da
         _data[i].depth = -1;
         _data[i].label = -1;
     }
-    pointCloudProjection(points, remissions, FOV_UP, FOV_DOWN);
-}
 
-void RangeImage::loadRangeImage(string fileName)
-{
-    // (height*width * DIM) => height & width & DIM data for each element (pixel)
-    nc::NdArray<float> ncArray = nc::fromfile<float>(fileName);
+    vector<float> x;
+    vector<float> y;
+    vector<float> z;
+    vector<float> remission;
+    fstream file(fileName.c_str(), ios::in | ios::binary);
+
+    if (file.good())
+    {
+        file.seekg(0, std::ios::beg);
+        int i;
+        float tmp;
+        for (i = 0; file.good() && !file.eof(); i++)
+        {
+            if (i != 0)
+            {
+                file.read((char *)&tmp, sizeof(float));
+                x.push_back(tmp);
+
+                file.read((char *)&tmp, sizeof(float));
+                y.push_back(tmp);
+
+                file.read((char *)&tmp, sizeof(float));
+                z.push_back(tmp);
+
+                file.read((char *)&tmp, sizeof(float));
+                remission.push_back(tmp);
+            }
+        }
+        file.close();
+    }
 
     for (int i = 0; i < 4; i++)
     {
@@ -65,27 +56,7 @@ void RangeImage::loadRangeImage(string fileName)
         _maxValue[i] = FLT_MIN;
     }
 
-    int size = _height * _width;
-    for (int i = 0; i < size; ++i)
-    {
-        int n_index = i * DIM;
-        _data[i].x = ncArray[n_index];
-        _data[i].y = ncArray[n_index + 1];
-        _data[i].z = ncArray[n_index + 2];
-        _data[i].remission = ncArray[n_index + 3];
-        _data[i].depth = ncArray[n_index + 4];
-        _data[i].label = ncArray[n_index + 5];
-
-        _minValue[0] = min(_minValue[0], _data[i].x);
-        _minValue[1] = min(_minValue[1], _data[i].y);
-        _minValue[2] = min(_minValue[2], _data[i].z);
-        _minValue[3] = min(_minValue[3], _data[i].depth);
-
-        _maxValue[0] = max(_maxValue[0], _data[i].x);
-        _maxValue[1] = max(_maxValue[1], _data[i].y);
-        _maxValue[2] = max(_maxValue[2], _data[i].z);
-        _maxValue[3] = max(_maxValue[3], _data[i].depth);
-    }
+    pointCloudProjection(x, y, z, remission, FOV_UP, FOV_DOWN);
     separateInvalideComposant();
     vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
     _normalizedData = normalizedValue(component);
@@ -114,113 +85,78 @@ void RangeImage::separateInvalideComposant()
     }
 }
 
-void RangeImage::pointCloudProjection(const nc::NdArray<float> points, const nc::NdArray<float> remissions, float proj_fov_up, float proj_fov_down)
-
+void RangeImage::pointCloudProjection(vector<float> scan_x, vector<float> scan_y,
+                                      vector<float> scan_z, vector<float> scan_remission,
+                                      float proj_fov_up, float proj_fov_down)
 {
-    std::cout << "pointCloudProjection start" << std::endl;
-    // laser parameters
     float fov_up = proj_fov_up / 180.0 * M_PI;     // field of view up in rad
     float fov_down = proj_fov_down / 180.0 * M_PI; // field of view down in rad
     float fov = abs(fov_down) + abs(fov_up);       // get field of view total in rad
 
-    // get depth of all points
-    nc::NdArray<double> d_depth = nc::norm(points, nc::Axis::COL);
-    nc::NdArray<float> depth = d_depth.astype<float>().transpose();
+    vector<float> depth_v;
+    vector<uint32_t> indices_v;
+    vector<uint32_t> proj_x_v;
+    vector<uint32_t> proj_y_v;
 
-    // get scan components
-    nc::NdArray<float> scan_x = points(points.rSlice(), 0);
-    nc::NdArray<float> scan_y = points(points.rSlice(), 1);
-    nc::NdArray<float> scan_z = points(points.rSlice(), 2);
+    depth_v.reserve(scan_x.size());
+    indices_v.reserve(scan_x.size());
+    proj_x_v.reserve(scan_x.size());
+    proj_y_v.reserve(scan_x.size());
 
-    // get angles of all points
-    nc::NdArray<float> yaw = -nc::arctan2(scan_y, scan_x);
-    nc::NdArray<float> pitch = nc::arcsin(scan_z / depth);
-
-    // get projections in image coords
-    nc::NdArray<float> proj_x = (float)0.5 * (yaw / (float)(nc::constants::pi) + (float)1.0); // in [0.0, 1.0]
-    nc::NdArray<float> proj_y = (float)1.0 - (pitch + abs(fov_down)) / (float)fov;            // in [0.0, 1.0]
-
-    // scale to image size using angular resolution
-    proj_x *= (float)_width;  // in [0.0, W]
-    proj_y *= (float)_height; // in [0.0, H]
-
-    // create zero array for comparison
-    nc::NdArray<float> zeroes_x = nc::empty_like(proj_x);
-    nc::NdArray<float> zeroes_y = nc::empty_like(proj_y);
-    zeroes_x.zeros();
-    zeroes_y.zeros();
-
-    // round and clamp for use as index x
-    proj_x = nc::floor(proj_x);
-    nc::NdArray<float> width_1 = nc::empty_like(proj_x);
-    width_1.fill((float)(_width - 1));
-    proj_x = nc::minimum(width_1, proj_x);
-    proj_x = nc::maximum(zeroes_x, proj_x);
-    nc::NdArray<uint32_t> x = proj_x.astype<uint32_t>(); // in [0, W-1]
-
-    // round and clamp for use as index y
-    proj_y = nc::floor(proj_y);
-    nc::NdArray<float> height_1 = nc::full(proj_y.shape().rows, proj_y.shape().cols, (float)((float)_height - 1));
-    proj_y = nc::minimum(height_1, proj_y);
-    proj_y = nc::maximum(zeroes_y, proj_y);
-    nc::NdArray<uint32_t> y = proj_y.astype<uint32_t>(); // in [0,H-1]
-
-    //order in decreasing depth
-    nc::NdArray<uint32_t> indices = nc::arange<uint32_t>(depth.shape().rows);
-    nc::NdArray<uint32_t> order = nc::argsort(depth, nc::Axis::ROW);
-    order = nc::flip(order, nc::Axis::ROW);
-
-    nc::NdArray<float> depth_sorted = nc::empty_like(depth);
-    nc::NdArray<uint32_t> indices_sorted = nc::empty_like(indices);
-    nc::NdArray<float> points_sorted = nc::empty_like(points);
-    nc::NdArray<float> remissions_sorted = nc::empty_like(remissions);
-    nc::NdArray<uint32_t> proj_x_sorted = nc::empty_like(x);
-    nc::NdArray<uint32_t> proj_y_sorted = nc::empty_like(y);
-
-    nc::NdArray<float> points_x = points(points.rSlice(), 0);
-    nc::NdArray<float> points_y = points(points.rSlice(), 1);
-    nc::NdArray<float> points_z = points(points.rSlice(), 2);
-
-    nc::NdArray<float> points_x_sorted = nc::empty_like(points_x);
-    nc::NdArray<float> points_y_sorted = nc::empty_like(points_y);
-    nc::NdArray<float> points_z_sorted = nc::empty_like(points_z);
-    if (_labels.size() == 0)
+    for (int i = 0; i < scan_remission.size(); ++i)
     {
-        _labels.assign(points.size(), -1);
-    }
-    nc::NdArray<uint16_t> label_sorted = nc::empty<uint16_t>((int)_labels.size(), 1);
+        indices_v.push_back(i);
+        float x = scan_x.at(i);
+        float y = scan_y.at(i);
+        float z = scan_z.at(i);
 
-    for (uint i = 0; i < depth.size(); i++)
-    {
-        int idx = order[i];
-        proj_x_sorted[i] = proj_x[idx];
-        proj_y_sorted[i] = proj_y[idx];
-        // indices_sorted[i] = indices[idx];
-        points_x_sorted[i] = points_x[idx];
-        points_y_sorted[i] = points_y[idx];
-        points_z_sorted[i] = points_z[idx];
-        label_sorted[i] = _labels[idx];
-        // if (label_sorted[i] == 1){
-        // std::cout << "i: " << i << " idx: " << idx << std::endl;
-        // std::cout << "sorted: " << label_sorted[i] << " label: " << _labels[idx] << std::endl;
-        // }
-        remissions_sorted[i] = remissions[idx];
-        depth_sorted[i] = depth[idx];
+        float depth = sqrt(x * x + y * y + z * z);
+        depth_v.push_back(depth);
+
+        float yaw = -atan2(y, x);
+        float pitch = asin(z / depth);
+
+        float proj_x = 0.5 * (yaw / M_PI + 1.0);            // in [0.0, 1.0]
+        float proj_y = 1.0 - (pitch + abs(fov_down)) / fov; // in [0.0, 1.0]
+
+        proj_x *= _width;  // in [0.0, W]
+        proj_y *= _height; // in [0.0, H]
+
+        uint32_t proj_x_uint = (uint32_t)floor(proj_x);
+        proj_x_uint = min((uint32_t)_width - 1, proj_x_uint);
+        proj_x_uint = max((uint32_t)0, proj_x_uint);
+
+        uint32_t proj_y_uint = (uint32_t)floor(proj_y);
+        proj_y_uint = min((uint32_t)_height - 1, proj_y_uint);
+        proj_y_uint = max((uint32_t)0, proj_y_uint);
+
+        proj_x_v.push_back(proj_x_uint);
+        proj_y_v.push_back(proj_y_uint);
     }
 
-    // assign to images
-    for (uint i = 0; i < depth.size(); i++)
+    for (int i = 0; i < indices_v.size(); ++i)
     {
-        int idx = _width * proj_y_sorted[i] + proj_x_sorted[i];
+        int idx = _width * proj_y_v.at(i) + proj_x_v.at(i);
 
-        _data[idx].x = points_x_sorted[i];
-        _data[idx].y = points_y_sorted[i];
-        _data[idx].z = points_z_sorted[i];
-        _data[idx].remission = remissions_sorted[i];
-        _data[idx].depth = depth_sorted[i];
-        // if(label_sorted[i] == 1)
-        //     std::cout << "idx: " << idx << " label: " << label_sorted[i] << std::endl;
-        _data[idx].label = label_sorted[i];
+        if (_data[idx].depth >= depth_v.at(i) || _data[idx].depth < 0)
+        {
+            _data[idx].x = scan_x.at(i);
+            _data[idx].y = scan_y.at(i);
+            _data[idx].z = scan_z.at(i);
+            _data[idx].remission = scan_remission.at(i);
+            _data[idx].depth = depth_v.at(i);
+            _data[idx].label = -1;
+
+            _minValue[0] = min(_minValue[0], _data[idx].x);
+            _minValue[1] = min(_minValue[1], _data[idx].y);
+            _minValue[2] = min(_minValue[2], _data[idx].z);
+            _minValue[3] = min(_minValue[3], _data[idx].depth);
+
+            _maxValue[0] = max(_maxValue[0], _data[idx].x);
+            _maxValue[1] = max(_maxValue[1], _data[idx].y);
+            _maxValue[2] = max(_maxValue[2], _data[idx].z);
+            _maxValue[3] = max(_maxValue[3], _data[idx].depth);
+        }
     }
 }
 

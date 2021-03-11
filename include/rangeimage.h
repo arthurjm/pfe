@@ -6,8 +6,14 @@
 
 #include "NumCpp.hpp"
 #include "pointcloud.h"
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
+
+#include <iostream>
+#include <chrono>
+#include <ctime>
+
 #define DIM 6
 
 #define RI_X 0
@@ -50,7 +56,7 @@ public:
      * @param width width of the range image
      * @param height height of the range image
      **/
-    RangeImage(string fileName, int mode = 0, int width = WIDTH, int height = HEIGHT);
+    RangeImage(string fileName, int width = WIDTH, int height = HEIGHT);
 
     RangeImage(string pcFile, string labelFile, int width = WIDTH, int height = HEIGHT);
 
@@ -164,7 +170,9 @@ private:
 
     cv::Mat morphErode(cv::Mat img);
 
-    void pointCloudProjection(const nc::NdArray<float> points, const nc::NdArray<float> remissions, float proj_fov_up, float proj_fov_down);
+    void pointCloudProjection(std::vector<float> scan_x, std::vector<float> scan_y,
+                              std::vector<float> scan_z, std::vector<float> scan_remission,
+                              float proj_fov_up, float proj_fov_down);
 
     std::vector<uint16_t> _labels;
 

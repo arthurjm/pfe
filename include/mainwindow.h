@@ -3,6 +3,7 @@
 
 // #include "clickablelabel.h"
 #include "rangeimage.h"
+#include "pointcloud.h"
 
 // QT
 #include <QMainWindow>
@@ -32,11 +33,15 @@
 #define MAX_LEVEL 500
 #define MAX_WEIGHT 20
 
+
+
 typedef pcl::PointXYZRGBA KittiPoint;
 // typedef pcl::PointXYZI KittiPoint;
 typedef pcl::PointCloud<KittiPoint> KittiPointCloud;
 typedef pcl::visualization::PointCloudColorHandlerCustom<KittiPoint> KittiPointCloudColorHandlerCustom;
 
+
+using namespace std;
 namespace Ui
 {
     class MainWindow;
@@ -47,8 +52,8 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public slots:
-    void openImage();
-    void openRangeImage();
+    void openFile();
+
     void updateSuperpixelsLevel();
     void initSuperpixelsLevel();
     void updateSuperpixelsWeight();
@@ -64,10 +69,8 @@ public slots:
     void switchMode();
     void switchContours();
 
-    void openPointCloud(string fileName);
-    void openPointCloud(string fileName, string labelFileName);
 
-    void changeColor(int colorMode = 0);
+    void updateColor(int colorMode = -1);
 
     /**
      * Update the range image according to type
@@ -83,7 +86,6 @@ public slots:
 public:
     explicit MainWindow(QWidget *parent = 0);
     void getPointCloud(string fileName);
-    vector<uint32_t> getLabels(string fileName);
     ~MainWindow();
 
 private:
@@ -103,11 +105,9 @@ private:
     bool _equalHist = false;
 
     int _minSpx;
-
+    PointCloud* _pc;
     // Pointcloud
     pcl::visualization::PCLVisualizer::Ptr _pclVisualizer;
-    KittiPointCloud::Ptr _pointCloud;
-    std::vector<uint32_t> _labels;
 };
 
 #endif // MAINWINDOW_H
