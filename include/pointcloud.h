@@ -29,7 +29,7 @@ public:
     const KittiPointCloud::Ptr getPointCloud();
 private:
     void createPointCloud(std::string fileName);
-    void getLabels(std::string labelfileName);
+    bool getLabels(std::string labelfileName);
     KittiPointCloud::Ptr _pointCloud;
     std::vector<uint32_t> _labels;
 };

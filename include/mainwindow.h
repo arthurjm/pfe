@@ -52,8 +52,8 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public slots:
-    void openImage();
-    void openRangeImage();
+    void openFile();
+
     void updateSuperpixelsLevel();
     void initSuperpixelsLevel();
     void updateSuperpixelsWeight();
@@ -69,8 +69,6 @@ public slots:
     void switchMode();
     void switchContours();
 
-    // void openPointCloud(string fileName);
-    // void openPointCloud(string fileName, string labelFileName);
 
     void updateColor(int colorMode = -1);
 

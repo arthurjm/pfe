@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _ui->valueNbSpxSlider->setNum(INITIAL_NB_SPX);
     _ui->nbSpxSlider->setValue(INITIAL_NB_SPX);
 
-    connect(_ui->actionOpen_file, SIGNAL(triggered()), this, SLOT(openRangeImage()));
+    connect(_ui->actionOpen_file, SIGNAL(triggered()), this, SLOT(openFile()));
     connect(_ui->nbSpxSlider, SIGNAL(sliderReleased()), this, SLOT(updateSuperpixelsLevel()));
     connect(_ui->nbSpxSlider, SIGNAL(valueChanged(int)), this, SLOT(updateSliderValues()));
     connect(_ui->weightSlider, SIGNAL(sliderReleased()), this, SLOT(updateSuperpixelsWeight()));
@@ -86,16 +86,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->label_Object, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OBJECT); });
     connect(_ui->label_Outlier, &QRadioButton::clicked, this, [this]() { _ui->clWidget->setCurrentLabel(CL_LABEL_OUTLIER); });
 
-    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/velodyne"), "Binary file (*.bin)");
     if (fileName.isEmpty() || fileName.isNull())
     {
         return;
     }
-    RangeImage ri(fileName.toStdString());
 
     _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
 
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
+    
+    
+    RangeImage ri(fileName.toStdString());
+    
 
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
@@ -141,35 +144,24 @@ MainWindow::~MainWindow()
     delete _ui;
 }
 
-void MainWindow::openImage()
+void MainWindow::openFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open an image", QString(), "Images (*.bmp *.jpeg *.jpg *.png *.tif *.gif)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/velodyne"), "Binary file (*.bin)");
     if (fileName == nullptr)
         return;
 
-    _img = imread(fileName.toStdString());
+    if (_pc != nullptr)
+        delete _pc;
 
-    float scale = min(MAX_WIDTH / (2 * _img.cols), MAX_HEIGHT / _img.rows);
-    if (scale < 1.0)
-        cv::resize(_img, _img, cv::Size(0, 0), scale, scale);
+    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
+    _pclVisualizer->removeAllPointClouds();
+    _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
+    _ui->vtkWidget->update();
 
-    _ui->clWidget->clear();
-    _ui->clWidget->setImgRef(_img);
-
-    initSuperpixelsLevel();
-
-    _ui->statusBar->addWidget(_ui->pixelValuesLabel);
-    _ui->statusBar->addWidget(_ui->pixelColorLabel);
-}
-
-void MainWindow::openRangeImage()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/range_image"), "Binary file (*.bin)");
-    if (fileName == nullptr)
-        return;
 
     RangeImage ri(fileName.toStdString());
-    _img = ri.createColorMat({RI_Y}, true);
+
+    _img = ri.createColorMat({RI_Y}, false, true);
     _ui->display_Y->setChecked(true);
     _ui->display_Interpolation->setChecked(true);
     _interpolate = true;
@@ -196,6 +188,8 @@ void MainWindow::openRangeImage()
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
 }
+
+
 
 void MainWindow::initSuperpixelsLevel()
 {

@@ -43,7 +43,7 @@ void PointCloud::createPointCloud(string fileName)
     file.close();
 }
 
-void PointCloud::getLabels(string fileName)
+bool PointCloud::getLabels(string fileName)
 {
     fstream file(fileName.c_str(), ios::in | ios::binary);
     vector<uint32_t> labels;
@@ -61,10 +61,11 @@ void PointCloud::getLabels(string fileName)
         }
         cout << "Nombre de labels : " << i << endl;
         file.close();
+        return true;
     }
     else
     {
-        cout << "Pas de fichier label" << endl;
+        return false;
     }
 }
 
@@ -87,6 +88,8 @@ void PointCloud::ChangeColor(int colorMode)
 
         case 1: // VT
         {
+            if(_labels.size()==0)
+                break;
             uint16_t l = (uint16_t)_labels.at(i);
             it->a = 255;
             if (l == 0) // truc au loin, observation aberrante ???
