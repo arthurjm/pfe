@@ -104,10 +104,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
     
+    RangeImage ri = _pc->generateRangeImage();
     
-    RangeImage ri(fileName.toStdString());
-    
-
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
 
@@ -166,8 +164,7 @@ void MainWindow::openFile()
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
     _ui->vtkWidget->update();
 
-
-    RangeImage ri(fileName.toStdString());
+    RangeImage ri = _pc->generateRangeImage();
 
     _img = ri.createColorMat({RI_Y}, false, true);
     _ui->display_Y->setChecked(true);

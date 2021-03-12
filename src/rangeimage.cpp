@@ -3,52 +3,9 @@
 
 using namespace std;
 
-RangeImage::RangeImage(string fileName, int width, int height)
-    : _data(nullptr), _width(width), _height(height)
+RangeImage::RangeImage(riVertex *data, int width, int height)
+    : _data(data), _width(width), _height(height)
 {
-    _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
-    assert(_data);
-
-    for (int i = 0; i < _height * _width; ++i)
-    {
-        _data[i].x = -1;
-        _data[i].y = -1;
-        _data[i].z = -1;
-        _data[i].remission = -1;
-        _data[i].depth = -1;
-        _data[i].label = -1;
-    }
-
-    vector<float> x;
-    vector<float> y;
-    vector<float> z;
-    vector<float> remission;
-    fstream file(fileName.c_str(), ios::in | ios::binary);
-
-    if (file.good())
-    {
-        file.seekg(0, std::ios::beg);
-        int i;
-        float tmp;
-        for (i = 0; file.good() && !file.eof(); i++)
-        {
-            if (i != 0)
-            {
-                file.read((char *)&tmp, sizeof(float));
-                x.push_back(tmp);
-
-                file.read((char *)&tmp, sizeof(float));
-                y.push_back(tmp);
-
-                file.read((char *)&tmp, sizeof(float));
-                z.push_back(tmp);
-
-                file.read((char *)&tmp, sizeof(float));
-                remission.push_back(tmp);
-            }
-        }
-        file.close();
-    }
 
     for (int i = 0; i < 4; i++)
     {
@@ -56,7 +13,19 @@ RangeImage::RangeImage(string fileName, int width, int height)
         _maxValue[i] = FLT_MIN;
     }
 
-    pointCloudProjection(x, y, z, remission, FOV_UP, FOV_DOWN);
+    for (int i = 0; i < _width * _height; i++)
+    {
+        _minValue[0] = min(_minValue[0], _data[i].x);
+        _minValue[1] = min(_minValue[1], _data[i].y);
+        _minValue[2] = min(_minValue[2], _data[i].z);
+        _minValue[3] = min(_minValue[3], _data[i].depth);
+
+        _maxValue[0] = max(_maxValue[0], _data[i].x);
+        _maxValue[1] = max(_maxValue[1], _data[i].y);
+        _maxValue[2] = max(_maxValue[2], _data[i].z);
+        _maxValue[3] = max(_maxValue[3], _data[i].depth);
+    }
+
     separateInvalideComposant();
     vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
     _normalizedData = normalizedValue(component);
@@ -82,81 +51,6 @@ void RangeImage::separateInvalideComposant()
     {
         if (mask[i] == 255)
             _data[i].label = -2;
-    }
-}
-
-void RangeImage::pointCloudProjection(vector<float> scan_x, vector<float> scan_y,
-                                      vector<float> scan_z, vector<float> scan_remission,
-                                      float proj_fov_up, float proj_fov_down)
-{
-    float fov_up = proj_fov_up / 180.0 * M_PI;     // field of view up in rad
-    float fov_down = proj_fov_down / 180.0 * M_PI; // field of view down in rad
-    float fov = abs(fov_down) + abs(fov_up);       // get field of view total in rad
-
-    vector<float> depth_v;
-    vector<uint32_t> indices_v;
-    vector<uint32_t> proj_x_v;
-    vector<uint32_t> proj_y_v;
-
-    depth_v.reserve(scan_x.size());
-    indices_v.reserve(scan_x.size());
-    proj_x_v.reserve(scan_x.size());
-    proj_y_v.reserve(scan_x.size());
-
-    for (int i = 0; i < scan_remission.size(); ++i)
-    {
-        indices_v.push_back(i);
-        float x = scan_x.at(i);
-        float y = scan_y.at(i);
-        float z = scan_z.at(i);
-
-        float depth = sqrt(x * x + y * y + z * z);
-        depth_v.push_back(depth);
-
-        float yaw = -atan2(y, x);
-        float pitch = asin(z / depth);
-
-        float proj_x = 0.5 * (yaw / M_PI + 1.0);            // in [0.0, 1.0]
-        float proj_y = 1.0 - (pitch + abs(fov_down)) / fov; // in [0.0, 1.0]
-
-        proj_x *= _width;  // in [0.0, W]
-        proj_y *= _height; // in [0.0, H]
-
-        uint32_t proj_x_uint = (uint32_t)floor(proj_x);
-        proj_x_uint = min((uint32_t)_width - 1, proj_x_uint);
-        proj_x_uint = max((uint32_t)0, proj_x_uint);
-
-        uint32_t proj_y_uint = (uint32_t)floor(proj_y);
-        proj_y_uint = min((uint32_t)_height - 1, proj_y_uint);
-        proj_y_uint = max((uint32_t)0, proj_y_uint);
-
-        proj_x_v.push_back(proj_x_uint);
-        proj_y_v.push_back(proj_y_uint);
-    }
-
-    for (int i = 0; i < indices_v.size(); ++i)
-    {
-        int idx = _width * proj_y_v.at(i) + proj_x_v.at(i);
-
-        if (_data[idx].depth >= depth_v.at(i) || _data[idx].depth < 0)
-        {
-            _data[idx].x = scan_x.at(i);
-            _data[idx].y = scan_y.at(i);
-            _data[idx].z = scan_z.at(i);
-            _data[idx].remission = scan_remission.at(i);
-            _data[idx].depth = depth_v.at(i);
-            _data[idx].label = -1;
-
-            _minValue[0] = min(_minValue[0], _data[idx].x);
-            _minValue[1] = min(_minValue[1], _data[idx].y);
-            _minValue[2] = min(_minValue[2], _data[idx].z);
-            _minValue[3] = min(_minValue[3], _data[idx].depth);
-
-            _maxValue[0] = max(_maxValue[0], _data[idx].x);
-            _maxValue[1] = max(_maxValue[1], _data[idx].y);
-            _maxValue[2] = max(_maxValue[2], _data[idx].z);
-            _maxValue[3] = max(_maxValue[3], _data[idx].depth);
-        }
     }
 }
 

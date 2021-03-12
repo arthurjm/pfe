@@ -8,7 +8,13 @@
 #include <stdint.h>
 #include <string>
 
+#include "rangeimage.h"
 
+#define FOV_UP 3.0
+#define FOV_DOWN -25.0
+
+#define WIDTH 1024
+#define HEIGHT 64
 
 typedef pcl::PointXYZRGBA KittiPoint;
 // typedef pcl::PointXYZI KittiPoint;
@@ -27,11 +33,22 @@ public:
     PointCloud(std::string pcfileName, std::string labelfileName);
     void ChangeColor(int colorMode);
     const KittiPointCloud::Ptr getPointCloud();
+    RangeImage generateRangeImage(int width = WIDTH, int height = HEIGHT);
+
 private:
     void createPointCloud(std::string fileName);
     bool getLabels(std::string labelfileName);
+    // void generateRangeImage(std::string fileName, int width = 1024, int height = 64);
+
+    std::string _fileName;
+
     KittiPointCloud::Ptr _pointCloud;
+    std::vector<float> _remissions;
     std::vector<uint32_t> _labels;
+
+    std::map<int, std::vector<int>> _projectedPoints;
+    // std::vector<bool> _projectedPoints;
+    RangeImage _ri;
 };
 
 #endif // __CLOUDPOINTS_H__
