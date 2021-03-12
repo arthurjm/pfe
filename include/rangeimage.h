@@ -25,8 +25,8 @@
 #define RI_INTERPOLATE_HS_X 0
 #define RI_INTERPOLATE_HS_Y 2
 
-#define HEIGHT 64
 #define WIDTH 1024
+#define HEIGHT 64
 
 #define FOV_UP 3.0
 #define FOV_DOWN -25.0
@@ -51,14 +51,12 @@ public:
 
     /**
      * Range image must be a raw binary format (.bin) with (h * w * 6) as dimension
-     * @param fileName location of range image
+     * @param data Range image values (x, y, z, depth, remission, label)
      * @param width width of the range image
      * @param height height of the range image
      **/
-    RangeImage(string fileName, int width = WIDTH, int height = HEIGHT);
-
-    RangeImage(string pcFile, string labelFile, int width = WIDTH, int height = HEIGHT);
-
+    RangeImage(riVertex *data, int width = WIDTH, int height = HEIGHT);
+    RangeImage(string pc, string labelFile, int width = WIDTH ,int height = HEIGHT );
     /**
      * Create a gray image according to the associate attribut at idx index,
      * use opencv to apply color map and return the cv::Mat corresponding.
@@ -69,8 +67,11 @@ public:
      * @param equalHist boolean to activate equalize histogram
      * @return an uchar array
      * */
-    cv::Mat createColorMat(vector<int> idx, bool isGray = false, bool interpolate = false, bool closing = false, bool equalHist = false);
+    cv::Mat createColorMat(std::vector<int> idx, bool isGray = false, bool interpolate = false, bool closing = false, bool equalHist = false);
 
+    void pointCloudProjection(vector<float> scan_x, vector<float> scan_y,
+                              vector<float> scan_z, vector<float> scan_remission,
+                              float proj_fov_up, float proj_fov_down);
     /** 
      * Access _data with read only permission
      * @return an const pointer of _data
@@ -107,19 +108,19 @@ public:
 
     int getWidth();
 
-    const vector<float> *getNormalizedData();
+    const std::vector<float> *getNormalizedData();
 
     /**
      * Save the current range image as binary file
      * */
-    void save(string filename);
+    void save(std::string filename);
 
 private:
     /**
      * Save data of the range image in _data structure and update min/max values of different attributes
      * @param fileName location of range image
      **/
-    void loadRangeImage(string fileName);
+    void loadRangeImage(std::string fileName);
     /**
      * Set label to -2 for unwanted components (ex : dead pixels on the bottom)
      * */
@@ -130,7 +131,7 @@ private:
      * @param idx an verctor helps to indicate the attribute of riVertex
      * @return an vector of normalized data
      * */
-    vector<float> normalizedValue(vector<int> idx);
+    std::vector<float> normalizedValue(std::vector<int> idx);
 
     /**
      * Apply interpolation on dead pixels (remission == -1 and label != -2).
@@ -140,7 +141,7 @@ private:
      * @param halfsizeY halfsize Y of the kernel 
      * @param nbComponent indicate the number of components in dataColor
      * */
-    void interpolation(vector<float> &data, int halfsizeX, int halfsizeY, int nbComponent);
+    void interpolation(std::vector<float> &data, int halfsizeX, int halfsizeY, int nbComponent);
 
     /**
      * Transform a range image to openCV matrice 
@@ -148,7 +149,7 @@ private:
      * @param type only CV_8UC3 and CV_8UC1 are allowed
      * @return openCV matrice
      **/
-    cv::Mat createCvMat(vector<uchar> dataColor, int type = CV_8UC3);
+    cv::Mat createCvMat(std::vector<uchar> dataColor, int type = CV_8UC3);
 
     /**
      * Apply closing morphology to input image
@@ -169,17 +170,14 @@ private:
 
     cv::Mat morphErode(cv::Mat img);
 
-    void pointCloudProjection(std::vector<float> scan_x, std::vector<float> scan_y,
-                              std::vector<float> scan_z, std::vector<float> scan_remission,
-                              float proj_fov_up, float proj_fov_down);
-
     std::vector<uint16_t> _labels;
 
     riVertex *_data;
-    vector<float> _normalizedData;
+    std::vector<float> _normalizedData;
 
     int _width = WIDTH;
     int _height = HEIGHT;
+
     // x, y, z, depth
     float _minValue[4];
     float _maxValue[4];

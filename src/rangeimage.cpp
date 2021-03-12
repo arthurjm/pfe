@@ -3,52 +3,9 @@
 
 using namespace std;
 
-RangeImage::RangeImage(string fileName, int width, int height)
-    : _data(nullptr), _width(width), _height(height)
+RangeImage::RangeImage(riVertex *data, int width, int height)
+    : _data(data), _width(width), _height(height)
 {
-    _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
-    assert(_data);
-
-    for (int i = 0; i < _height * _width; ++i)
-    {
-        _data[i].x = -1;
-        _data[i].y = -1;
-        _data[i].z = -1;
-        _data[i].remission = -1;
-        _data[i].depth = -1;
-        _data[i].label = -1;
-    }
-
-    vector<float> x;
-    vector<float> y;
-    vector<float> z;
-    vector<float> remission;
-    fstream file(fileName.c_str(), ios::in | ios::binary);
-
-    if (file.good())
-    {
-        file.seekg(0, std::ios::beg);
-        int i;
-        float tmp;
-        for (i = 0; file.good() && !file.eof(); i++)
-        {
-            if (i != 0)
-            {
-                file.read((char *)&tmp, sizeof(float));
-                x.push_back(tmp);
-
-                file.read((char *)&tmp, sizeof(float));
-                y.push_back(tmp);
-
-                file.read((char *)&tmp, sizeof(float));
-                z.push_back(tmp);
-
-                file.read((char *)&tmp, sizeof(float));
-                remission.push_back(tmp);
-            }
-        }
-        file.close();
-    }
 
     for (int i = 0; i < 4; i++)
     {
@@ -56,14 +13,26 @@ RangeImage::RangeImage(string fileName, int width, int height)
         _maxValue[i] = FLT_MIN;
     }
 
-    pointCloudProjection(x, y, z, remission, FOV_UP, FOV_DOWN);
+    for (int i = 0; i < _width * _height; i++)
+    {
+        _minValue[0] = min(_minValue[0], _data[i].x);
+        _minValue[1] = min(_minValue[1], _data[i].y);
+        _minValue[2] = min(_minValue[2], _data[i].z);
+        _minValue[3] = min(_minValue[3], _data[i].depth);
+
+        _maxValue[0] = max(_maxValue[0], _data[i].x);
+        _maxValue[1] = max(_maxValue[1], _data[i].y);
+        _maxValue[2] = max(_maxValue[2], _data[i].z);
+        _maxValue[3] = max(_maxValue[3], _data[i].depth);
+    }
+
     separateInvalideComposant();
     vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
     _normalizedData = normalizedValue(component);
     interpolation(_normalizedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, component.size());
 }
 
-RangeImage::RangeImage(string pc, string labelFile, int height, int width) : _data(nullptr), _width(width), _height(height)
+RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _data(nullptr), _width(width), _height(height)
 {
     _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
     assert(_data);
