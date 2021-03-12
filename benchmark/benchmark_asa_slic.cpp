@@ -9,12 +9,15 @@ using namespace std;
 
 map<pair<int, int>, vector<float>> _result;
 
-float computeAccuracy(Slic slic, const riVertex *riData, int nbSpx, int width)
+float computeAccuracy(Slic slic, const riVertex *riData, int width)
 {
     // nbLabels == number of clusters in the SLIC Algortithm
     unsigned int nbLabel = slic.nbLabels() - 1;
-    unsigned int nbCluster = slic.getTreeLevel() - 1;
+    unsigned int nbCluster = slic.getTreeLevel();
+    cout << "nbLabel : " << nbLabel << endl;
+    cout << "nbCluster : " << nbCluster << endl;
     float sum = 0;
+
     for (unsigned int i = 0; i < nbLabel; i++)
     {
         // pixels from one superpixel
@@ -27,7 +30,7 @@ float computeAccuracy(Slic slic, const riVertex *riData, int nbSpx, int width)
             int index = pixels.at(j).first * width + pixels.at(j).second;
             // get the label from ground truth
             int label = riData[index].label;
-            int k;
+            long unsigned int k;
             // if label was present in label increment the count for the label
             for (k = 0; k < labelCount.size(); k++)
             {
@@ -44,7 +47,7 @@ float computeAccuracy(Slic slic, const riVertex *riData, int nbSpx, int width)
 
         // research of the label with the maximum apparitions and save the number it appears
         int max = -1;
-        for (int k = 0; k < labelCount.size(); k++)
+        for (long unsigned int k = 0; k < labelCount.size(); k++)
         {
             if (labelCount.at(k).second > max)
                 max = labelCount.at(k).second;
@@ -57,7 +60,7 @@ float computeAccuracy(Slic slic, const riVertex *riData, int nbSpx, int width)
     return accuracy;
 }
 
-void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> nbSpxVec)
+void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> nbSpxVec, bool metrics[4])
 {
     // The range image contains the ground truth data on label.
     RangeImage ri(pathPointCloud, pathLabel);
@@ -75,31 +78,25 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
 
     // Make sure that first element is the largest
     std::sort(nbSpxVec.begin(), nbSpxVec.end(), std::greater<int>());
-    vector<int> weightVec({20, 10, 5});
+    vector<int> weightVec({20});
     cout << "Benchmark on : " << pathPointCloud << endl;
-    for (int i = 0; i < weightVec.size(); i++)
+
+    for (long unsigned int j = 0; j < nbSpxVec.size(); j++)
     {
-        // Generation of SLIC Super Pixel
-        if (mode)
+        if (!mode || j == 0) // re-segmentation or first segmentation
         {
-            slic.generateSuperpixels(labImage, nbSpxVec[0], weightVec[i], ri);
+            slic.generateSuperpixels(labImage, nbSpxVec[j], weightVec[0], ri, metrics);
             slic.createConnectivity(labImage);
             slic.createHierarchy(labImage);
         }
-
-        for (int j = 0; j < nbSpxVec.size(); j++)
+        else // hierarchy
         {
-            if (!mode)
-            {
-                slic.generateSuperpixels(labImage, nbSpxVec[j], weightVec[i], ri);
-                slic.createConnectivity(labImage);
-                slic.createHierarchy(labImage);
-            }
-            pair<int, int> key(nbSpxVec.at(j), weightVec.at(i));
             slic.setTreeLevel(nbSpxVec[j]);
-            float accuracy = computeAccuracy(slic, riData, nbSpxVec[j], width);
-            _result[key].push_back(accuracy);
         }
+        pair<int, int> key(nbSpxVec.at(j), weightVec.at(0));
+        float accuracy = computeAccuracy(slic, riData, width);
+        cout << "accuracy : " << accuracy << endl;
+        _result[key].push_back(accuracy);
     }
 }
 
@@ -127,18 +124,53 @@ int main(int argc, char **argv)
     // Verification on input parameters
     bool modeHierarchy = true; // true for reducing by hierarchy, false for reducing by re-segmentation
     vector<int> nbSpxVec;
+    bool metrics[4];
+    for (int i = 0; i < 4; i++)
+    {
+        metrics[i] = false;
+    }
+
     if (argc < 2)
     {
-        cout << "default settings : Mode hierarchy : reduce the nbSpx using SLIC hierarchy, number of super pixel = 800 400 200" << endl;
+        cout << "Default settings : " << endl;
+        cout << "Mode hierarchy : reduce the nbSpx using SLIC hierarchy" << endl;
+        cout << "Metrics : 0 0 0 0" << endl;
+        cout << "Number of super pixel : 1200 800" << endl;
     }
     else if (argc < 3)
     {
-        cout << "default settings : number of super pixel = 800 400 200" << endl;
+        cout << "Default settings : " << endl;
+        cout << "Metrics : 0 0 0 0" << endl;
+        cout << "Number of super pixel : 1200 800" << endl;
         modeHierarchy = atoi(argv[1]) == 0;
         if (modeHierarchy)
             cout << "using mode hierarchy" << endl;
         else
             cout << "using mode re-segmentation" << endl;
+    }
+    else if (argc < 7)
+    {
+        cout << "Default settings : " << endl;
+        cout << "Number of super pixel : 1200 800" << endl;
+
+        modeHierarchy = atoi(argv[1]) == 0;
+        if (modeHierarchy)
+            cout << "using mode hierarchy" << endl;
+        else
+            cout << "using mode re-segmentation" << endl;
+
+        metrics[SLIC_METRIC_X] = atoi(argv[2]) != 0;
+        if (metrics[SLIC_METRIC_X])
+            cout << "using metric X" << endl;
+        metrics[SLIC_METRIC_Y] = atoi(argv[3]) != 0;
+        if (metrics[SLIC_METRIC_Y])
+            cout << "using metric Y" << endl;
+        metrics[SLIC_METRIC_Z] = atoi(argv[4]) != 0;
+        if (metrics[SLIC_METRIC_Z])
+            cout << "using metric Z" << endl;
+        metrics[SLIC_METRIC_REMISSION] = atoi(argv[5]) != 0;
+        if (metrics[SLIC_METRIC_REMISSION])
+            cout << "using metric Remission" << endl;
     }
     else
     {
@@ -147,6 +179,19 @@ int main(int argc, char **argv)
             cout << "using mode hierarchy" << endl;
         else
             cout << "using mode re-segmentation" << endl;
+
+        metrics[SLIC_METRIC_X] = atoi(argv[2]) != 0;
+        if (metrics[SLIC_METRIC_X])
+            cout << "using metric X" << endl;
+        metrics[SLIC_METRIC_Y] = atoi(argv[3]) != 0;
+        if (metrics[SLIC_METRIC_Y])
+            cout << "using metric Y" << endl;
+        metrics[SLIC_METRIC_Z] = atoi(argv[4]) != 0;
+        if (metrics[SLIC_METRIC_Z])
+            cout << "using metric Z" << endl;
+        metrics[SLIC_METRIC_REMISSION] = atoi(argv[5]) != 0;
+        if (metrics[SLIC_METRIC_REMISSION])
+            cout << "using metric Remission" << endl;
 
         cout << "number of super pixel =";
         for (int i = 2; i < argc; i++)
@@ -170,9 +215,9 @@ int main(int argc, char **argv)
 
     QApplication a(argc, argv);
     cout << "Please select a PointCloud (.bin) file you want to benchmark with." << endl;
-    QStringList listOfFileNamePointCloud = QFileDialog::getOpenFileNames(nullptr, "Open a point cloud file", QString("../data/pointclouds_kitti"), "Binary file (*.bin)");
+    QStringList listOfFileNamePointCloud = QFileDialog::getOpenFileNames(nullptr, "Open a point cloud file", QString("../../data/velodyne"), "Binary file (*.bin)");
     cout << "Please select the Label (.label) file that match the previous PointCloud." << endl;
-    QStringList listOfFileNameLabel = QFileDialog::getOpenFileNames(nullptr, "Open a label file", QString("../data/label"), "Binary file (*.label)");
+    QStringList listOfFileNameLabel = QFileDialog::getOpenFileNames(nullptr, "Open a label file", QString("../../data/labels"), "Binary file (*.label)");
 
     vector<string> pointClouds;
     pointClouds.reserve(listOfFileNamePointCloud.size());
@@ -199,7 +244,7 @@ int main(int argc, char **argv)
             string label = getFileName(labels.at(j));
             if (pointCloud == label)
             {
-                benchmark(pointClouds.at(i), labels.at(j), modeHierarchy, nbSpxVec);
+                benchmark(pointClouds.at(i), labels.at(j), modeHierarchy, nbSpxVec, metrics);
             }
         }
     }

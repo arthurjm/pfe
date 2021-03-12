@@ -81,7 +81,7 @@ void Slic::initData(const cv::Mat &pImage)
             /* Append to vector of centers. */
             _centers.push_back(center);
             /* Append spatial cordinates*/
-            int idx = col + row * width;
+            int idx = nc.y + nc.x * width;
             riVertex coord = _rangeImage.getNormalizedValue(idx);
             Vec4f centerNormalized4D = Vec4f(coord.x, coord.y, coord.z, coord.remission);
 
@@ -149,9 +149,9 @@ float Slic::computeDist(int pCi, cv::Point pPixel, bool metrics[4])
     di = sqrt(di * di);
 
     // spatial 2D distance
-    float dc3 = cen[3] - pPixel.x;
-    float dc4 = cen[4] - pPixel.y;
-    float ds = sqrt(dc3 * dc3 + dc4 * dc4);
+    // float dc3 = cen[3] - pPixel.x;
+    // float dc4 = cen[4] - pPixel.y;
+    // float ds = sqrt(dc3 * dc3 + dc4 * dc4);
 
     return dr + di + distMetrics;
 
@@ -637,9 +637,9 @@ void Slic::createHierarchy(const cv::Mat &pImage)
 void Slic::createSaliencyMap()
 {
     saliency = cv::Mat::zeros(_nbLabels, _nbLabels, CV_32FC1);
-    for (int lvl = 0; lvl < _nbLabels - 10; lvl++)
+    for (unsigned int lvl = 0; lvl < _nbLabels - 10; lvl++)
     {
-        for (int spx = 0; spx < _nbLabels; spx++)
+        for (unsigned int spx = 0; spx < _nbLabels; spx++)
         {
             saliency(lvl, tree(lvl, spx)) += 1;
         }
@@ -647,9 +647,9 @@ void Slic::createSaliencyMap()
     double min, max;
     cv::minMaxLoc(saliency, &min, &max);
 
-    for (int lvl = 0; lvl < _nbLabels - 10; lvl++)
+    for (unsigned int lvl = 0; lvl < _nbLabels - 10; lvl++)
     {
-        for (int spx = 0; spx < _nbLabels; spx++)
+        for (unsigned int spx = 0; spx < _nbLabels; spx++)
         {
             if (saliency(lvl, spx) != 0)
                 saliency(lvl, spx) = (((saliency(lvl, spx) / -max) + 1) * 220);
@@ -708,17 +708,17 @@ void Slic::binaryLabelisationTree()
     _selectedClusters.clear();
 
     int lvl, min;
-    for (int i = 0; i < obj.size(); i++)
+    for (size_t i = 0; i < obj.size(); i++)
     {
         min = INT_MAX;
-        for (int j = 0; j < bg.size(); j++)
+        for (size_t j = 0; j < bg.size(); j++)
         {
             lvl = levelOfFusion(obj[i], bg[j]);
             if (lvl < min)
                 min = lvl;
         }
         int indexObject = tree(min - 1, obj[i]);
-        for (int spx = 0; spx < _nbLabels; spx++)
+        for (unsigned int spx = 0; spx < _nbLabels; spx++)
         {
             if (tree(min - 1, spx) == indexObject)
             {
@@ -736,17 +736,17 @@ void Slic::binaryLabelisationConnected()
     if (obj.empty() || bg.empty())
         return;
     int lvl, min;
-    for (int i = 0; i < obj.size(); i++)
+    for (size_t i = 0; i < obj.size(); i++)
     {
         min = INT_MAX;
-        for (int j = 0; j < bg.size(); j++)
+        for (size_t j = 0; j < bg.size(); j++)
         {
             lvl = levelOfFusion(obj[i], bg[j]);
             if (lvl < min)
                 min = lvl;
         }
         int indexObject = tree(min - 1, obj[i]);
-        for (int spx = 0; spx < _nbLabels; spx++)
+        for (unsigned int spx = 0; spx < _nbLabels; spx++)
         {
             if (tree(min - 1, spx) == indexObject)
             {
@@ -758,17 +758,17 @@ void Slic::binaryLabelisationConnected()
         }
     }
 
-    for (int i = 0; i < bg.size(); i++)
+    for (size_t i = 0; i < bg.size(); i++)
     {
         min = INT_MAX;
-        for (int j = 0; j < obj.size(); j++)
+        for (size_t j = 0; j < obj.size(); j++)
         {
             lvl = levelOfFusion(bg[i], obj[j]);
             if (lvl < min)
                 min = lvl;
         }
         int indexBackground = tree(min - 1, bg[i]);
-        for (int spx = 0; spx < _nbLabels; spx++)
+        for (unsigned int spx = 0; spx < _nbLabels; spx++)
         {
             if (tree(min - 1, spx) == indexBackground)
             {
@@ -784,7 +784,7 @@ void Slic::binaryLabelisationConnected()
 
 int Slic::levelOfFusion(int label1, int label2)
 {
-    for (int lvl = 0; lvl < _nbLabels; lvl++)
+    for (unsigned int lvl = 0; lvl < _nbLabels; lvl++)
     {
         if (tree(lvl, label1) == tree(lvl, label2))
             return lvl;
@@ -934,7 +934,7 @@ void Slic::displaySaliency(cv::Mat &pImage)
 void Slic::displayMultipleSaliency(cv::Mat &pImage)
 {
     int save = treeLevel;
-    for (int lvl = 0; lvl < _nbLabels - 5; lvl += 5)
+    for (unsigned int lvl = 0; lvl < _nbLabels - 5; lvl += 5)
     {
         treeLevel = lvl;
         displaySaliency(pImage);
@@ -1105,7 +1105,7 @@ void Slic::selectCluster(cv::Point2i pPos, int label)
     int indexCluster = labelOfPixel(pPos.y, pPos.x);
     if (indexCluster == -1)
         return;
-    for (int i = 0; i < _nbLabels; i++)
+    for (unsigned int i = 0; i < _nbLabels; i++)
     {
         if (tree(treeLevel, i) == indexCluster)
         {
@@ -1129,7 +1129,7 @@ void Slic::deselectCluster(cv::Point2i pPos)
     int indexCluster = labelOfPixel(pPos.y, pPos.x);
     if (indexCluster == -1)
         return;
-    for (int i = 0; i < _nbLabels; i++)
+    for (unsigned int i = 0; i < _nbLabels; i++)
     {
         if (tree(treeLevel, i) == indexCluster)
         {
@@ -1241,7 +1241,7 @@ void Slic::spreadSelection()
  * Input : The label (int) of the superpixel to process.
  * Output: The neighbours superpixels labels (vector<int>) of the superpixel to process.
  */
-vector<int> Slic::findLabelNeighbours(int pLabelSpx)
+vector<int> Slic::findLabelNeighbours(size_t pLabelSpx)
 {
     vector<int> neighLabels;
     const int dc4[4] = {-1, 0, 1, 0};
@@ -1268,7 +1268,7 @@ vector<int> Slic::findLabelNeighbours(int pLabelSpx)
             int c = coords.second + dc4[k];
             if (r >= 0 && r < _clusters.rows && c >= 0 && c < _clusters.cols)
             {
-                if (_clusters(r, c) != pLabelSpx && find(neighLabels.begin(), neighLabels.end(), _clusters(r, c)) == neighLabels.end())
+                if ((size_t)_clusters(r, c) != pLabelSpx && find(neighLabels.begin(), neighLabels.end(), _clusters(r, c)) == neighLabels.end())
                 {
                     neighLabels.push_back(_clusters(r, c));
                 }
@@ -1321,11 +1321,11 @@ const vector<pair<int, int>> Slic::pixelsOfSuperpixel(int pLabel) const
 {
     if (pLabel < 0)
     {
-        throw out_of_range("No superpixel has negative label");
+        throw out_of_range("No superpixel has negative label in Slic::pixelsOfSuperpixel");
     }
     if (pLabel >= (int)_cls.size())
     {
-        throw out_of_range("There is not that much superpixels");
+        throw out_of_range("There is not that much superpixels in Slic::pixelsOfSuperpixel");
     }
     vector<pair<int, int>> pixels;
     for (unsigned int i = 0; i < _nbLabels; i++)
@@ -1361,7 +1361,7 @@ int Slic::getTreeLevel()
     return _nbLabels - treeLevel;
 }
 
-void Slic::setTreeLevel(int pLevel)
+void Slic::setTreeLevel(unsigned int pLevel)
 {
     if (_nbLabels >= pLevel)
         treeLevel = _nbLabels - pLevel;

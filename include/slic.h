@@ -108,7 +108,7 @@ public:
     /* Adapt selection of new segmentation from the current one */
     void spreadSelection();
     /* Return the list of superpixels labels neighbours of a superpixel given by its label */
-    vector<int> findLabelNeighbours(int pLabelSpx);
+    vector<int> findLabelNeighbours(size_t pLabelSpx);
 
     /* Data access and attribution functions */
     unsigned int nbLabels() { return _nbLabels; }
@@ -121,7 +121,7 @@ public:
     void setCls(vector<vector<pair<int, int>>> pCls);
 
     int getTreeLevel();
-    void setTreeLevel(int pZoom);
+    void setTreeLevel(unsigned int pZoom);
     void zoomInTree();
     void zoomOutTree();
     cv::Vec3b getColorFromLabel(int label);
@@ -172,7 +172,7 @@ private:
     vector<int> obj;
     vector<int> bg;
 
-    int treeLevel;
+    int treeLevel = 0;
 
     cv::Vec3b colorContours = cv::Vec3b(0, 0, 0);    // default ; black
     cv::Vec3b colorSelection = cv::Vec3b(0, 0, 255); // default ; red 0,0,255

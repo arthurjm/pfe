@@ -5,7 +5,6 @@
 #include <string>
 
 #include "NumCpp.hpp"
-#include "pointcloud.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
@@ -179,8 +178,8 @@ private:
     riVertex *_data;
     vector<float> _normalizedData;
 
-    int _width;
-    int _height;
+    int _width = WIDTH;
+    int _height = HEIGHT;
     // x, y, z, depth
     float _minValue[4];
     float _maxValue[4];

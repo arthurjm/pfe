@@ -63,6 +63,76 @@ RangeImage::RangeImage(string fileName, int width, int height)
     interpolation(_normalizedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, component.size());
 }
 
+RangeImage::RangeImage(string pc, string labelFile, int height, int width) : _data(nullptr), _width(width), _height(height)
+{
+    _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
+    assert(_data);
+
+    for (int i = 0; i < _height * _width; ++i)
+    {
+        _data[i].x = -1;
+        _data[i].y = -1;
+        _data[i].z = -1;
+        _data[i].remission = -1;
+        _data[i].depth = -1;
+        _data[i].label = -1;
+    }
+
+    vector<float> x;
+    vector<float> y;
+    vector<float> z;
+    vector<float> remission;
+    fstream filePc(pc.c_str(), ios::in | ios::binary);
+
+    if (filePc.good())
+    {
+        filePc.seekg(0, std::ios::beg);
+        int i;
+        float tmp;
+        for (i = 0; filePc.good() && !filePc.eof(); i++)
+        {
+            if (i != 0)
+            {
+                filePc.read((char *)&tmp, sizeof(float));
+                x.push_back(tmp);
+
+                filePc.read((char *)&tmp, sizeof(float));
+                y.push_back(tmp);
+
+                filePc.read((char *)&tmp, sizeof(float));
+                z.push_back(tmp);
+
+                filePc.read((char *)&tmp, sizeof(float));
+                remission.push_back(tmp);
+            }
+        }
+        filePc.close();
+    }
+
+    fstream fileLabel(labelFile.c_str(), ios::in | ios::binary);
+
+    if (fileLabel.good())
+    {
+        fileLabel.seekg(0, std::ios::beg);
+        int i;
+
+        for (i = 0; fileLabel.good() && !fileLabel.eof(); i++)
+        {
+            uint32_t label;
+            fileLabel.read((char *)&label, sizeof(uint32_t));
+            // if((uint16_t)label == 1)
+            //     std::cout << i << std::endl;
+            _labels.push_back((uint16_t)label);
+        }
+        fileLabel.close();
+    }
+    pointCloudProjection(x, y, z, remission, FOV_UP, FOV_DOWN);
+    separateInvalideComposant();
+    vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
+    _normalizedData = normalizedValue(component);
+    interpolation(_normalizedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, component.size());
+}
+
 void RangeImage::separateInvalideComposant()
 {
     int size = _height * _width;
@@ -103,7 +173,7 @@ void RangeImage::pointCloudProjection(vector<float> scan_x, vector<float> scan_y
     proj_x_v.reserve(scan_x.size());
     proj_y_v.reserve(scan_x.size());
 
-    for (int i = 0; i < scan_remission.size(); ++i)
+    for (size_t i = 0; i < scan_remission.size(); ++i)
     {
         indices_v.push_back(i);
         float x = scan_x.at(i);
@@ -134,7 +204,7 @@ void RangeImage::pointCloudProjection(vector<float> scan_x, vector<float> scan_y
         proj_y_v.push_back(proj_y_uint);
     }
 
-    for (int i = 0; i < indices_v.size(); ++i)
+    for (size_t i = 0; i < indices_v.size(); ++i)
     {
         int idx = _width * proj_y_v.at(i) + proj_x_v.at(i);
 
