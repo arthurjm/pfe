@@ -28,6 +28,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 {
     _ui->setupUi(this);
 
+    _ui->cursor->hide();
+
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
     _ui->statusBar->addWidget(_ui->pixelSpxLabel);
@@ -284,6 +286,7 @@ void MainWindow::displayCursor(int x, int y)
 {
     int offset = _ui->vtkWidget->height() + _ui->clWidget->height() / 2;
     _ui->widgetCursor->move(x, y + offset);
+    _ui->cursor->show();
 }
 
 void MainWindow::switchMode()

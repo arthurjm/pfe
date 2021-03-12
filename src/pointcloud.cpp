@@ -38,7 +38,7 @@ void PointCloud::createPointCloud(string fileName)
 
             _pointCloud->push_back(point);
         }
-        cout << "Nombre de points : " << i << endl;
+        cout << "Nombre de points : " << _pointCloud->size() << endl;
     }
     file.close();
 }
