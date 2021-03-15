@@ -80,6 +80,7 @@ RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _da
 
     fstream fileLabel(labelFile.c_str(), ios::in | ios::binary);
 
+    std::vector<uint16_t> labels;
     if (fileLabel.good())
     {
         fileLabel.seekg(0, std::ios::beg);
@@ -91,11 +92,11 @@ RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _da
             fileLabel.read((char *)&label, sizeof(uint32_t));
             // if((uint16_t)label == 1)
             //     std::cout << i << std::endl;
-            _labels.push_back((uint16_t)label);
+            labels.push_back((uint16_t)label);
         }
         fileLabel.close();
     }
-    pointCloudProjection(x, y, z, remission, FOV_UP, FOV_DOWN);
+    pointCloudProjection(x, y, z, remission, labels, FOV_UP, FOV_DOWN);
     separateInvalideComposant();
     vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
     _normalizedData = normalizedValue(component);
@@ -125,8 +126,7 @@ void RangeImage::separateInvalideComposant()
 }
 
 void RangeImage::pointCloudProjection(vector<float> scan_x, vector<float> scan_y,
-                                      vector<float> scan_z, vector<float> scan_remission,
-                                      float proj_fov_up, float proj_fov_down)
+                                      vector<float> scan_z, vector<float> scan_remission, vector<uint16_t> labels, float proj_fov_up, float proj_fov_down)
 {
     float fov_up = proj_fov_up / 180.0 * M_PI;     // field of view up in rad
     float fov_down = proj_fov_down / 180.0 * M_PI; // field of view down in rad
@@ -184,8 +184,10 @@ void RangeImage::pointCloudProjection(vector<float> scan_x, vector<float> scan_y
             _data[idx].z = scan_z.at(i);
             _data[idx].remission = scan_remission.at(i);
             _data[idx].depth = depth_v.at(i);
-            _data[idx].label = -1;
-
+            if (labels.size() == 0)
+                _data[idx].label = -1;
+            else
+                _data[idx].label = (float)labels.at(i);
             _minValue[0] = min(_minValue[0], _data[idx].x);
             _minValue[1] = min(_minValue[1], _data[idx].y);
             _minValue[2] = min(_minValue[2], _data[idx].z);
