@@ -31,8 +31,6 @@
 #define FOV_UP 3.0
 #define FOV_DOWN -25.0
 
-using namespace std;
-
 typedef struct riVertex
 {
     float x;
@@ -57,6 +55,7 @@ public:
      **/
     RangeImage(riVertex *data, int width = WIDTH, int height = HEIGHT);
     RangeImage(string pc, string labelFile, int width = WIDTH, int height = HEIGHT);
+
     /**
      * Create a gray image according to the associate attribut at idx index,
      * use opencv to apply color map and return the cv::Mat corresponding.
@@ -69,9 +68,10 @@ public:
      * */
     cv::Mat createColorMat(std::vector<int> idx, bool isGray = false, bool interpolate = false, bool closing = false, bool equalHist = false);
 
-    void pointCloudProjection(vector<float> scan_x, vector<float> scan_y,
-                              vector<float> scan_z, vector<float> scan_remission, vector<uint16_t> labels,
+    void pointCloudProjection(std::vector<float> scan_x, std::vector<float> scan_y,
+                              std::vector<float> scan_z, std::vector<float> scan_remission, std::vector<uint16_t> labels,
                               float proj_fov_up, float proj_fov_down);
+                              
     /** 
      * Access _data with read only permission
      * @return an const pointer of _data

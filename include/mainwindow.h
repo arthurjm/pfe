@@ -24,7 +24,6 @@
 
 // VTK
 #include <vtkRenderWindow.h>
-// #include <QVTKWidget.h>
 
 #define MAX_WIDTH 2100.0
 #define MAX_HEIGHT 800.0
@@ -33,12 +32,6 @@
 #define MAX_LEVEL 500
 #define MAX_WEIGHT 20
 
-typedef pcl::PointXYZRGBA KittiPoint;
-// typedef pcl::PointXYZI KittiPoint;
-typedef pcl::PointCloud<KittiPoint> KittiPointCloud;
-typedef pcl::visualization::PointCloudColorHandlerCustom<KittiPoint> KittiPointCloudColorHandlerCustom;
-
-using namespace std;
 namespace Ui
 {
     class MainWindow;
@@ -66,7 +59,7 @@ public slots:
     void switchMode();
     void switchContours();
 
-    void updateColor(int colorMode = -1);
+    void updateColor(Color colorMode = Color::White);
 
     /**
      * Update the range image according to type
@@ -81,7 +74,7 @@ public slots:
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-    void getPointCloud(string fileName);
+    void getPointCloud(std::string fileName);
     ~MainWindow();
 
 private:

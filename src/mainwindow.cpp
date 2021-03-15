@@ -63,10 +63,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->clWidget, SIGNAL(updateSlider(int)), this, SLOT(setNbSpxSlider(int)));
 
     // Pointcloud buttons
-    connect(_ui->whitePointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(); });
-    connect(_ui->projectionPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(0); });
-    connect(_ui->vtPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(1); });
-    connect(_ui->greenPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(2); });
+    connect(_ui->whitePointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::White); });
+    connect(_ui->projectionPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Projection); });
+    connect(_ui->vtPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::GroundTruth); });
+    connect(_ui->greenPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Green); });
 
     // Connect to range image display RadioButton
     connect(_ui->display_XYZ, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_XYZ); });
@@ -343,7 +343,7 @@ void MainWindow::updateMetrics(int metric)
     updateSuperpixelsLevel();
 }
 
-void MainWindow::updateColor(int colorMode)
+void MainWindow::updateColor(Color colorMode)
 {
     _pc->ChangeColor(colorMode);
     _pclVisualizer->updatePointCloud(_pc->getPointCloud(), "point_cloud");
