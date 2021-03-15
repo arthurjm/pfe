@@ -100,7 +100,7 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
         {
             slic.generateSuperpixels(labImage, nbSpxVec[j], weightVec[0], ri, metrics);
             slic.createConnectivity(labImage);
-            slic.createHierarchy(labImage);
+            slic.createHierarchy(metrics);
         }
         else // hierarchy
         {
@@ -340,6 +340,7 @@ int main(int argc, char **argv)
     ofstream file2("tmp.txt");
 
     // Compute the benchmark average accuracy
+    cout << "Average accuracy : " << endl;
     for (map<int, vector<float>>::iterator it = _result.begin(); it != _result.end(); it++)
     {
         int vecSize = it->second.size();

@@ -424,15 +424,18 @@ void Slic::createConnectivity(const cv::Mat &pImage)
  * Output: the distance (float)
  */
 
-float distance(std::vector<float> mc, std::vector<float> ms, std::vector<float> mt, int i, int j, int spn, float compactness)
+float distance(std::vector<float> msi, std::vector<float> ms, std::vector<float> mr, std::vector<float> mt, int i, int j, int spn, float compactness)
 {
-    float dist_c = (mc[j] - mc[i]) * (mc[j] - mc[i]) +
-                   (mc[j + spn] - mc[i + spn]) * (mc[j + spn] - mc[i + spn]) +
-                   (mc[j + spn * 2] - mc[i + spn * 2]) * (mc[j + spn * 2] - mc[i + spn * 2]);
+    float dist_si = (msi[j] - msi[i]) * (msi[j] - msi[i]) +
+                    (msi[j + spn] - msi[i + spn]) * (msi[j + spn] - msi[i + spn]) +
+                    (msi[j + spn * 2] - msi[i + spn * 2]) * (msi[j + spn * 2] - msi[i + spn * 2]) +
+                    (msi[j + spn * 3] - msi[i + spn * 3]) * (msi[j + spn * 3] - msi[i + spn * 3]);
     float dist_s = (ms[j] - ms[i]) * (ms[j] - ms[i]) +
-                   (ms[j + spn] - ms[i + spn]) * (ms[j + spn] - ms[i + spn]);
+                   (ms[j + spn] - ms[i + spn]) * (ms[j + spn] - ms[i + spn]) +
+                   (ms[j + spn * 2] - ms[i + spn * 2]) * (ms[j + spn * 2] - ms[i + spn * 2]);
+    float dist_r = (mr[j] - mr[i]) * (mr[j] - mr[i]);
     float d_mt = (mt[j] * mt[i]) / (mt[j] + mt[i]);
-    return d_mt * (dist_s * compactness + dist_c);
+    return d_mt * (dist_si + dist_r + dist_s * compactness);
 }
 
 /* Fill an adjacency matrix
@@ -468,47 +471,73 @@ void adjacency(cv::Mat_<int> L, int h, int w, int spn, cv::Mat_<int> adj)
  * Input : segmentation image (cv::Mat)
  * Output: -
  */
-void Slic::createHierarchy(const cv::Mat &pImage)
+void Slic::createHierarchy(bool metrics[4])
 {
-    int h = pImage.rows;
-    int w = pImage.cols;
+    int h = _rangeImage.getHeight();
+    int w = _rangeImage.getWidth();
 
     cv::Mat_<int> L = _clusters.clone().reshape(1, h * w);
-    cv::Mat_<float> img = pImage.clone().reshape(1, h * w).t(); //.t() NEEDED, NOT SURE WHY YET
 
     _nbLabels = _nbLabels + 1;
 
-    float comp_factor = 10.0 * 10.0 / (h * w);
+    float comp_factor = 100.0 / (h * w);
     float compactness = comp_factor * _nbLabels;
 
     cv::Mat_<int> living_sp = cv::Mat(1, _nbLabels, CV_32FC1, 1);
 
-    std::vector<float> mc(_nbLabels * 3);
-    std::vector<float> ms(_nbLabels * 2);
-    std::vector<float> mt(_nbLabels * 1);
+    std::vector<float> ms(_nbLabels * 3, 0); // spatial normalized
+    std::vector<float> mt(_nbLabels * 1, 0); // count of pixel inside cluster
+    std::vector<float> mr(_nbLabels * 1, 0); // remission
+
+    std::vector<float> msi(_nbLabels * 4, 0); // spatial normalized and interpolated
+
+    // metrics, normalized raw data with interpolation
+    const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
     for (int i = 0; i < h; i++)
     {
         for (int j = 0; j < w; j++)
         {
             int pos = i * w + j;
             int lab = L(pos);
-            mc[lab] += img(pos);
-            mc[lab + _nbLabels] += img(pos + h * w);
-            mc[lab + _nbLabels * 2] += img(pos + h * w * 2);
-            ms[lab] += i;
-            ms[lab + _nbLabels] += j;
+
+            riVertex normalizedData = _rangeImage.getNormalizedValue(pos);
+            if (metrics[SLIC_METRIC_X])
+            {
+                msi[lab] += interpolatedData->at(pos * 4 + SLIC_METRIC_X);
+            }
+            if (metrics[SLIC_METRIC_Y])
+            {
+                msi[lab + _nbLabels] += interpolatedData->at(pos * 4 + SLIC_METRIC_Y);
+            }
+            if (metrics[SLIC_METRIC_Z])
+            {
+                msi[lab + _nbLabels * 2] += interpolatedData->at(pos * 4 + SLIC_METRIC_Z);
+            }
+            if (metrics[SLIC_METRIC_REMISSION])
+            {
+                msi[lab + _nbLabels * 3] += interpolatedData->at(pos * 4 + SLIC_METRIC_REMISSION);
+            }
+
+            ms[lab] += normalizedData.x;
+            ms[lab + _nbLabels] += normalizedData.y;
+            ms[lab + _nbLabels * 2] += normalizedData.z;
+            mr[lab] += normalizedData.remission;
             mt[lab] += 1;
         }
     }
+    // center of cluster
     for (unsigned int lab = 0; lab < _nbLabels; lab++)
     {
         if (mt[lab] > 0)
         {
-            mc[lab] /= mt[lab];
-            mc[lab + _nbLabels] /= mt[lab];
-            mc[lab + _nbLabels * 2] /= mt[lab];
             ms[lab] /= mt[lab];
             ms[lab + _nbLabels] /= mt[lab];
+            ms[lab + _nbLabels * 2] /= mt[lab];
+            mr[lab] /= mt[lab];
+            msi[lab] /= mt[lab];
+            msi[lab + _nbLabels] /= mt[lab];
+            msi[lab + _nbLabels * 2] /= mt[lab];
+            msi[lab + _nbLabels * 3] /= mt[lab];
         }
         else
         {
@@ -539,7 +568,7 @@ void Slic::createHierarchy(const cv::Mat &pImage)
             if (adj(i + _nbLabels * j))
             {
 
-                dist_tmp = distance(mc, ms, mt, i, j, _nbLabels, compactness);
+                dist_tmp = distance(msi, ms, mr, mt, i, j, _nbLabels, compactness);
                 dist(j + i * _nbLabels) = dist_tmp;
                 dist(j * _nbLabels + i) = dist_tmp;
 
@@ -579,18 +608,24 @@ void Slic::createHierarchy(const cv::Mat &pImage)
         }
 
         //Update mean color and spatial barycenters
-        mc[l2] = mc[l2] * mt[l2] + mc[l1] * mt[l1];
-        mc[l2 + _nbLabels] = mc[l2 + _nbLabels] * mt[l2] + mc[l1 + _nbLabels] * mt[l1];
-        mc[l2 + _nbLabels * 2] = mc[l2 + _nbLabels * 2] * mt[l2] + mc[l1 + _nbLabels * 2] * mt[l1];
         ms[l2] = ms[l2] * mt[l2] + ms[l1] * mt[l1];
         ms[l2 + _nbLabels] = ms[l2 + _nbLabels] * mt[l2] + ms[l1 + _nbLabels] * mt[l1];
+        ms[l2 + _nbLabels * 2] = ms[l2 + _nbLabels * 2] * mt[l2] + ms[l1 + _nbLabels * 2] * mt[l1];
+        mr[l2] = mr[l2] * mt[l2] + mr[l1] * mt[l1];
+        msi[l2] = msi[l2] * mt[l2] + msi[l1] * mt[l1];
+        msi[l2 + _nbLabels] = msi[l2 + _nbLabels] * mt[l2] + msi[l1 + _nbLabels] * mt[l1];
+        msi[l2 + _nbLabels * 2] = msi[l2 + _nbLabels * 2] * mt[l2] + msi[l1 + _nbLabels * 2] * mt[l1];
+        msi[l2 + _nbLabels * 3] = msi[l2 + _nbLabels * 3] * mt[l2] + msi[l1 + _nbLabels * 3] * mt[l1];
         mt[l2] += mt[l1];
         //Normalization
-        mc[l2] /= mt[l2];
-        mc[l2 + _nbLabels] /= mt[l2];
-        mc[l2 + _nbLabels * 2] /= mt[l2];
+        mr[l2] /= mt[l2];
         ms[l2] /= mt[l2];
         ms[l2 + _nbLabels] /= mt[l2];
+        ms[l2 + _nbLabels * 2] /= mt[l2];
+        msi[l2] /= mt[l2];
+        msi[l2 + _nbLabels] /= mt[l2];
+        msi[l2 + _nbLabels * 2] /= mt[l2];
+        msi[l2 + _nbLabels * 3] /= mt[l2];
 
         //Recompute dist
         for (unsigned int j = 0; j < _nbLabels; j++)
@@ -600,7 +635,7 @@ void Slic::createHierarchy(const cv::Mat &pImage)
 
                 if (living_sp(j))
                 {
-                    dist_tmp = distance(mc, ms, mt, l2, j, _nbLabels, comp_factor * (_nbLabels - i));
+                    dist_tmp = distance(msi, ms, mr, mt, l2, j, _nbLabels, comp_factor * (_nbLabels - i));
                     dist(j + l2 * _nbLabels) = dist_tmp;
                     dist(j * _nbLabels + l2) = dist_tmp;
                 }

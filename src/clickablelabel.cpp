@@ -101,7 +101,7 @@ void ClickableLabel::initSuperpixels(int pNbSpx, int pWeight)
     cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
     _slic->generateSuperpixels(labImage, pNbSpx, pWeight, _rangeImage, _metrics);
     _slic->createConnectivity(labImage);
-    _slic->createHierarchy(labImage);
+    _slic->createHierarchy(_metrics);
 
     //saliency
     _rightImgContours = Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255));

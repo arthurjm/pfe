@@ -62,7 +62,7 @@ public:
     void generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, RangeImage &ri, bool *metrics);
     /* Enforce connectivity for an image. */
     void createConnectivity(const cv::Mat &pImage);
-    void createHierarchy(const cv::Mat &pImage);
+    void createHierarchy(bool *metric);
 
     /* Draw functions. Resp. displayal of the centers, the contours and the selected clusters. */
     void displayCenterGrid(cv::Mat &pImage, cv::Scalar pColour);
