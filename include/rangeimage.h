@@ -56,7 +56,7 @@ public:
      * @param height height of the range image
      **/
     RangeImage(riVertex *data, int width = WIDTH, int height = HEIGHT);
-    RangeImage(string pc, string labelFile, int width = WIDTH ,int height = HEIGHT );
+    RangeImage(string pc, string labelFile, int width = WIDTH, int height = HEIGHT);
     /**
      * Create a gray image according to the associate attribut at idx index,
      * use opencv to apply color map and return the cv::Mat corresponding.
@@ -70,7 +70,7 @@ public:
     cv::Mat createColorMat(std::vector<int> idx, bool isGray = false, bool interpolate = false, bool closing = false, bool equalHist = false);
 
     void pointCloudProjection(vector<float> scan_x, vector<float> scan_y,
-                              vector<float> scan_z, vector<float> scan_remission,
+                              vector<float> scan_z, vector<float> scan_remission, vector<uint16_t> labels,
                               float proj_fov_up, float proj_fov_down);
     /** 
      * Access _data with read only permission
@@ -169,8 +169,6 @@ private:
     cv::Mat morphDilate(cv::Mat img);
 
     cv::Mat morphErode(cv::Mat img);
-
-    std::vector<uint16_t> _labels;
 
     riVertex *_data;
     std::vector<float> _normalizedData;

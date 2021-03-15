@@ -26,13 +26,13 @@ set(CPP_FILES
 set(HEADERS
     ../include/rangeimage.h
     ../include/slic.h
+    ./gnuplot_i.hpp
 )
 
 add_executable(${PROJECT_BINARY_NAME}
     ${CPP_FILES}
     ${HEADERS}
 )
-
 qt5_use_modules(${PROJECT_BINARY_NAME} Widgets)
 
 target_link_libraries(${PROJECT_BINARY_NAME} ${OpenCV_LIBS})

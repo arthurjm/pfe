@@ -411,7 +411,6 @@ void Slic::createConnectivity(const cv::Mat &pImage)
             }
         }
     }
-
     _nbLabels = label;
     _clusters = new_clusters;
     initCls(pImage.rows, pImage.cols);
