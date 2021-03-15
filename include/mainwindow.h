@@ -33,13 +33,10 @@
 #define MAX_LEVEL 500
 #define MAX_WEIGHT 20
 
-
-
 typedef pcl::PointXYZRGBA KittiPoint;
 // typedef pcl::PointXYZI KittiPoint;
 typedef pcl::PointCloud<KittiPoint> KittiPointCloud;
 typedef pcl::visualization::PointCloudColorHandlerCustom<KittiPoint> KittiPointCloudColorHandlerCustom;
-
 
 using namespace std;
 namespace Ui
@@ -68,7 +65,6 @@ public slots:
     void setNbSpxSlider(int treeLevel);
     void switchMode();
     void switchContours();
-
 
     void updateColor(int colorMode = -1);
 
@@ -105,7 +101,7 @@ private:
     bool _equalHist = false;
 
     int _minSpx;
-    PointCloud* _pc;
+    PointCloud *_pc;
     // Pointcloud
     pcl::visualization::PCLVisualizer::Ptr _pclVisualizer;
 };

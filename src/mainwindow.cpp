@@ -52,6 +52,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->saveSelectionButton, SIGNAL(released()), this, SLOT(save()));
     connect(_ui->selectionButton, SIGNAL(released()), this, SLOT(switchMode()));
     connect(_ui->contoursButton, SIGNAL(released()), this, SLOT(switchContours()));
+    // bind clear maker button 
+    connect(_ui->clearMarkerButton, &QPushButton::released, this, [this]() {updateDisplay(_currentDisplayType); });
 
     connect(_ui->spinBoxMaxSpx, SIGNAL(editingFinished()), this, SLOT(updateMaxSpxSlider()));
     connect(_ui->spinBoxMaxWeight, SIGNAL(valueChanged(int)), this, SLOT(updateMaxWeightSlider()));
@@ -292,7 +294,7 @@ void MainWindow::switchMode()
     {
         _isScribble = false;
         _ui->clWidget->setScribble(false);
-        _ui->selectionButton->setText("Sélection");
+        _ui->selectionButton->setText("Selection");
         this->setCursor(Qt::ArrowCursor);
         _ui->nbSpxSlider->setVisible(true);
     }
@@ -317,13 +319,13 @@ void MainWindow::switchContours()
     {
         _showContours = false;
         _ui->clWidget->setContours(false);
-        _ui->contoursButton->setText("Objet");
+        _ui->contoursButton->setText("Object");
     }
     else
     {
         _showContours = true;
         _ui->clWidget->setContours(true);
-        _ui->contoursButton->setText("Objet + contours");
+        _ui->contoursButton->setText("Object + contours");
     }
 }
 void MainWindow::updateDisplay(int type)

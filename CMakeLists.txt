@@ -25,7 +25,7 @@ message(STATUS "VTK_QT_VERSION: " ${VTK_QT_VERSION})
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(PROJECT_BINARY_NAME fast_hierarchy)
+set(PROJECT_BINARY_NAME ri_segmentation)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
