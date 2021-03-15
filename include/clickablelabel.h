@@ -61,6 +61,10 @@ public:
      * */
     cv::Mat getDisplayMat(int type, bool isGray, bool interpolate, bool closing, bool equalHist);
 
+    /**
+     * In scribble mode, get object marker's color according to label;
+     * */
+    QColor getObjMarkerColor();
     void setCurrentLabel(int label);
 
     void setMetrics(int metric);
@@ -110,7 +114,7 @@ private:
     bool _isScribble;
     bool _showContours;
     int labelisationMode;
-    int penWidth = 10;
+    int penWidth = 5;
 
     // Indicate which label will be associated to the next selected superpixels
     int _currentLabel = SLIC_LABEL_GROUND; // Default : Ground

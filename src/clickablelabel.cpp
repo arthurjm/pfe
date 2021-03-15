@@ -84,7 +84,6 @@ void ClickableLabel::clear()
 
 void ClickableLabel::clearScribble()
 {
-    //_sh->clearScribbleClusters();
     _slic->clearScribbleClusters();
     _coloredImg = _imgRef.clone();
     updateDisplay();
@@ -267,9 +266,9 @@ void ClickableLabel::mousePressEvent(QMouseEvent *event)
     {
         lastPoint = QPoint(x, y);
         if (event->button() == Qt::LeftButton)
-            drawPointTo(QPoint(x, y), Qt::blue);
+            drawPointTo(QPoint(x, y), getObjMarkerColor());
         else if (event->button() == Qt::RightButton)
-            drawPointTo(QPoint(x, y), Qt::red);
+            drawPointTo(QPoint(x, y), QColor(0, 0, 0, 255));
     }
 }
 
@@ -300,10 +299,10 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
     {
         if (_isScribble)
         {
-            drawLineTo(QPoint(x, y), Qt::blue);
+            drawLineTo(QPoint(x, y), getObjMarkerColor());
 
             _slic->addObjectCluster(cv::Point2i(x, y));
-            _slic->binaryLabelisation(labelisationMode);
+            _slic->binaryLabelisation(labelisationMode, _currentLabel);
         }
         else
         {
@@ -314,10 +313,10 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
     {
         if (_isScribble)
         {
-            drawLineTo(QPoint(x, y), Qt::red);
+            drawLineTo(QPoint(x, y), QColor(0, 0, 0, 255));
 
             _slic->addBackgroundCluster(cv::Point2i(x, y));
-            _slic->binaryLabelisation(labelisationMode);
+            _slic->binaryLabelisation(labelisationMode, _currentLabel);
         }
         else
         {
@@ -361,11 +360,11 @@ void ClickableLabel::mouseMoveEvent(QMouseEvent *event)
     {
         if (_isScribble)
         {
-            drawLineTo(QPoint(x, y), Qt::blue);
+            drawLineTo(QPoint(x, y), getObjMarkerColor());
             // _sh->addObjectCluster(cv::Point2i(x, y));
             // _sh->binaryLabelisationConnected();
             _slic->addObjectCluster(cv::Point2i(x, y));
-            _slic->binaryLabelisation(labelisationMode);
+            _slic->binaryLabelisation(labelisationMode, _currentLabel);
         }
         else
         {
@@ -377,9 +376,9 @@ void ClickableLabel::mouseMoveEvent(QMouseEvent *event)
     {
         if (_isScribble)
         {
-            drawLineTo(QPoint(x, y), Qt::red);
+            drawLineTo(QPoint(x, y), QColor(0, 0, 0, 255));
             _slic->addBackgroundCluster(cv::Point2i(x, y));
-            _slic->binaryLabelisation(labelisationMode);
+            _slic->binaryLabelisation(labelisationMode, _currentLabel);
         }
         else
         {
@@ -587,6 +586,37 @@ cv::Mat ClickableLabel::getDisplayMat(int type, bool isGray, bool interpolate, b
         m = _rangeImage.createColorMat({RI_X, RI_Y, RI_Z}, isGray, interpolate, closing, equalHist);
     }
     return m;
+}
+
+QColor ClickableLabel::getObjMarkerColor()
+{
+    switch (_currentLabel)
+    {
+    case SLIC_LABEL_GROUND:
+        return QColor(173, 127, 168);
+        break;
+    case SLIC_LABEL_STUCTURE:
+        return QColor(185, 178, 78);
+        break;
+    case SLIC_LABEL_VEHICLE:
+        return QColor(98, 178, 205);
+        break;
+    case SLIC_LABEL_NATURE:
+        return QColor(96, 167, 109);
+        break;
+    case SLIC_LABEL_HUMAN:
+        return QColor(255, 0, 0);
+        break;
+    case SLIC_LABEL_OBJECT:
+        return QColor(140, 88, 50);
+        break;
+    case SLIC_LABEL_OUTLIER:
+        return QColor(128, 128, 128);
+        break;
+    default:
+        return QColor(255, 255, 255);
+        break;
+    }
 }
 
 void ClickableLabel::setCurrentLabel(int label)

@@ -76,9 +76,10 @@ public:
      */
 
     /* Draw functions. Displayal of the selected clusters. */
-    void binaryLabelisation(int pMode);
+    void binaryLabelisation(int pMode, int label = -1);
     void binaryLabelisationTree();
     void binaryLabelisationConnected();
+    void multiLabelisationConnected(int label);
     int levelOfFusion(int label1, int label2);
 
     void createSaliencyMap();

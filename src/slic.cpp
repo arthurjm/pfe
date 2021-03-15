@@ -688,7 +688,7 @@ void Slic::clearScribbleClusters()
     binaryLabelisation(1);
 }
 
-void Slic::binaryLabelisation(int pLabelisationMode)
+void Slic::binaryLabelisation(int pLabelisationMode, int label)
 {
     switch (pLabelisationMode)
     {
@@ -696,7 +696,8 @@ void Slic::binaryLabelisation(int pLabelisationMode)
         binaryLabelisationTree();
         break;
     case 2:
-        binaryLabelisationConnected();
+        // binaryLabelisationConnected();
+        multiLabelisationConnected(label);
         break;
     }
 }
@@ -775,6 +776,60 @@ void Slic::binaryLabelisationConnected()
                 auto spxIterator = find(_selectedClusters.begin(), _selectedClusters.end(), spx);
                 if (spxIterator != _selectedClusters.end())
                 {
+                    _selectedClusters.erase(spxIterator);
+                }
+            }
+        }
+    }
+}
+
+void Slic::multiLabelisationConnected(int label)
+{
+    if (obj.empty() || bg.empty())
+        return;
+    int lvl, min;
+    for (size_t i = 0; i < obj.size(); i++)
+    {
+        min = INT_MAX;
+        for (size_t j = 0; j < bg.size(); j++)
+        {
+            lvl = levelOfFusion(obj[i], bg[j]);
+            if (lvl < min)
+                min = lvl;
+        }
+        int indexObject = tree(min - 1, obj[i]);
+        for (unsigned int spx = 0; spx < _nbLabels; spx++)
+        {
+
+            if (tree(min - 1, spx) == indexObject)
+            {
+                if (find(_selectedClusters.begin(), _selectedClusters.end(), spx) == _selectedClusters.end())
+                {
+                    _labelVec.at(spx) = label;
+                    _selectedClusters.push_back(spx);
+                }
+            }
+        }
+    }
+
+    for (size_t i = 0; i < bg.size(); i++)
+    {
+        min = INT_MAX;
+        for (size_t j = 0; j < obj.size(); j++)
+        {
+            lvl = levelOfFusion(bg[i], obj[j]);
+            if (lvl < min)
+                min = lvl;
+        }
+        int indexBackground = tree(min - 1, bg[i]);
+        for (unsigned int spx = 0; spx < _nbLabels; spx++)
+        {
+            if (tree(min - 1, spx) == indexBackground)
+            {
+                auto spxIterator = find(_selectedClusters.begin(), _selectedClusters.end(), spx);
+                if (spxIterator != _selectedClusters.end())
+                {
+                    _labelVec.at(spx) = -1;
                     _selectedClusters.erase(spxIterator);
                 }
             }
@@ -1409,6 +1464,7 @@ cv::Vec3b Slic::getColorFromLabel(int index)
         color = cv::Vec3b(128, 128, 128);
         break;
     default:
+        color = cv::Vec3b(255, 255, 255);
         break;
     }
     return color;
