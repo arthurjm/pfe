@@ -52,8 +52,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->saveSelectionButton, SIGNAL(released()), this, SLOT(save()));
     connect(_ui->selectionButton, SIGNAL(released()), this, SLOT(switchMode()));
     connect(_ui->contoursButton, SIGNAL(released()), this, SLOT(switchContours()));
-    // bind clear maker button 
-    connect(_ui->clearMarkerButton, &QPushButton::released, this, [this]() {updateDisplay(_currentDisplayType); });
+    // bind clear maker button
+    connect(_ui->clearMarkerButton, &QPushButton::released, this, [this]() { updateDisplay(_currentDisplayType); });
 
     connect(_ui->spinBoxMaxSpx, SIGNAL(editingFinished()), this, SLOT(updateMaxSpxSlider()));
     connect(_ui->spinBoxMaxWeight, SIGNAL(valueChanged(int)), this, SLOT(updateMaxWeightSlider()));
@@ -105,9 +105,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
 
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
-    
+
     RangeImage ri = _pc->generateRangeImage();
-    
+
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
 
@@ -195,8 +195,6 @@ void MainWindow::openFile()
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
 }
-
-
 
 void MainWindow::initSuperpixelsLevel()
 {

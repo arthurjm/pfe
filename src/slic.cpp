@@ -68,7 +68,7 @@ void Slic::initData(const cv::Mat &pImage)
 
     int width = pImage.cols;
     /* Initialize the centers and counters. */
-    const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
+    const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
     for (int col = _step / 2; col <= pImage.cols - _step / 2; col += _step)
     {
         for (int row = _step / 2; row <= pImage.rows - _step / 2; row += _step)
@@ -108,7 +108,7 @@ float Slic::computeDist(int pCi, cv::Point pPixel, bool metrics[4])
     riVertex normalizedData = _rangeImage.getNormalizedValue(idx);
 
     // metrics, normalized raw data with interpolation
-    const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
+    const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
     Vec4f cenInterpolated4d(_centersInterpolated4D(pCi));
     float distMetrics = 0;
     if (metrics[SLIC_METRIC_X])
@@ -286,7 +286,7 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, Range
 
         int width = image.cols;
         /* Compute the new cluster centers. */
-        const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
+        const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
         for (int col = 0; col < image.cols; col++)
         {
             for (int row = 0; row < image.rows; row++)
@@ -492,7 +492,7 @@ void Slic::createHierarchy(bool metrics[4])
     std::vector<float> msi(_nbLabels * 4, 0); // spatial normalized and interpolated
 
     // metrics, normalized raw data with interpolation
-    const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
+    const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
     for (int i = 0; i < h; i++)
     {
         for (int j = 0; j < w; j++)

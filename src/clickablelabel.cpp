@@ -575,8 +575,11 @@ void ClickableLabel::setContours(bool showContours)
 cv::Mat ClickableLabel::getDisplayMat(int type, bool isGray, bool interpolate, bool closing, bool equalHist)
 {
     cv::Mat m;
-    if (type > 6 || type < 0)
+    if (type > RI_XYZ || type < RI_X)
+    {
         cerr << "Invalide type in ClickableLabel::getDisplayMat, it must in interval from 0 to 6!" << endl;
+        exit(EXIT_FAILURE);
+    }
     else if (type != RI_XYZ)
     {
         m = _rangeImage.createColorMat({type}, isGray, interpolate, closing, equalHist);
