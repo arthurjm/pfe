@@ -54,7 +54,7 @@ public:
      * @param height height of the range image
      **/
     RangeImage(riVertex *data, int width = WIDTH, int height = HEIGHT);
-    RangeImage(string pc, string labelFile, int width = WIDTH, int height = HEIGHT);
+    RangeImage(std::string pc, std::string labelFile, int width = WIDTH, int height = HEIGHT);
 
     /**
      * Create a gray image according to the associate attribut at idx index,

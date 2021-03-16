@@ -52,8 +52,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->saveSelectionButton, SIGNAL(released()), this, SLOT(save()));
     connect(_ui->selectionButton, SIGNAL(released()), this, SLOT(switchMode()));
     connect(_ui->contoursButton, SIGNAL(released()), this, SLOT(switchContours()));
-    // bind clear maker button 
-    connect(_ui->clearMarkerButton, &QPushButton::released, this, [this]() {updateDisplay(_currentDisplayType); });
+    // bind clear maker button
+    connect(_ui->clearMarkerButton, &QPushButton::released, this, [this]() { updateDisplay(_currentDisplayType); });
 
     connect(_ui->spinBoxMaxSpx, SIGNAL(editingFinished()), this, SLOT(updateMaxSpxSlider()));
     connect(_ui->spinBoxMaxWeight, SIGNAL(valueChanged(int)), this, SLOT(updateMaxWeightSlider()));
@@ -66,7 +66,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->whitePointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::White); });
     connect(_ui->projectionPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Projection); });
     connect(_ui->vtPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::GroundTruth); });
-    connect(_ui->greenPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Green); });
+    connect(_ui->greenPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Segmentation); });
 
     // Connect to range image display RadioButton
     connect(_ui->display_XYZ, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_XYZ); });
@@ -102,12 +102,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
         return;
     }
 
-    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
+    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName), _ui->clWidget);
+    // _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
 
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
-    
+
     RangeImage ri = _pc->generateRangeImage();
-    
+
     _interpolate = true;
     _img = ri.createColorMat({RI_Y}, _isGray, _interpolate);
 
@@ -161,7 +162,7 @@ void MainWindow::openFile()
     if (_pc != nullptr)
         delete _pc;
 
-    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
+    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName), _ui->clWidget);
     _pclVisualizer->removeAllPointClouds();
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
     _ui->vtkWidget->update();
@@ -195,8 +196,6 @@ void MainWindow::openFile()
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
 }
-
-
 
 void MainWindow::initSuperpixelsLevel()
 {

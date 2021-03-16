@@ -59,6 +59,8 @@ public slots:
     void switchMode();
     void switchContours();
 
+    // void displayProjectedPoints();
+
     void updateColor(Color colorMode = Color::White);
 
     /**

@@ -9,6 +9,7 @@
 #include <string>
 
 #include "rangeimage.h"
+#include "clickablelabel.h"
 
 #define FOV_UP 3.0
 #define FOV_DOWN -25.0
@@ -25,7 +26,7 @@ enum class Color
     White,
     Projection,
     GroundTruth,
-    Green
+    Segmentation
 };
 
 enum class Label
@@ -76,9 +77,11 @@ public:
      **/
     PointCloud(std::string fileName);
     PointCloud(std::string pcfileName, std::string labelfileName);
+    PointCloud(std::string pcfileName, std::string labelfileName, ClickableLabel *cl);
     void ChangeColor(Color colorMode = Color::White);
     const KittiPointCloud::Ptr getPointCloud();
     RangeImage generateRangeImage(int width = WIDTH, int height = HEIGHT);
+    // void setWidget(ClickableLabel *cl) { _cl = cl; };
 
 private:
     void createPointCloud(std::string fileName);
@@ -86,13 +89,14 @@ private:
     // void generateRangeImage(std::string fileName, int width = 1024, int height = 64);
 
     std::string _fileName;
+    ClickableLabel *_cl;
 
     KittiPointCloud::Ptr _pointCloud;
     std::vector<float> _remissions;
     std::vector<uint32_t> _labels;
 
     std::map<int, std::vector<int>> _projectedPoints;
-    RangeImage _ri;
+    RangeImage *_rangeImage;
 
     // bgr
     std::map<Label, std::vector<uint8_t>> _labelMap = {

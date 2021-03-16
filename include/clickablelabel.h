@@ -52,6 +52,8 @@ public:
     * @param ri reference on an RangeImage
     * */
     void setRangeImage(RangeImage &ri);
+    RangeImage *getRangeImage() { return &_rangeImage; };
+    Slic *getSlic() { return _slic; };
 
     /**
      * Generate a display matrice according to type

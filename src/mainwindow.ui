@@ -336,7 +336,7 @@
          <item>
           <widget class="QRadioButton" name="whitePointcloudButton">
            <property name="text">
-            <string>Blanc</string>
+            <string>White</string>
            </property>
           </widget>
          </item>
@@ -350,14 +350,14 @@
          <item>
           <widget class="QRadioButton" name="vtPointcloudButton">
            <property name="text">
-            <string>Vérité Terrain</string>
+            <string>Ground truth</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QRadioButton" name="greenPointcloudButton">
            <property name="text">
-            <string>Vert</string>
+            <string>Segmentation</string>
            </property>
           </widget>
          </item>
