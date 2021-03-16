@@ -55,17 +55,18 @@ RangeImage::RangeImage(riVertex *data, int width, int height)
     {
         if (_data[i].remission != -1)
         {
-            _minValue[0] = min(_minValue[0], _data[i].x);
-            _minValue[1] = min(_minValue[1], _data[i].y);
-            _minValue[2] = min(_minValue[2], _data[i].z);
-            _minValue[3] = min(_minValue[3], _data[i].depth);
+            _minValue[0] = min(_minValue[RI_X], _data[i].x);
+            _minValue[1] = min(_minValue[RI_Y], _data[i].y);
+            _minValue[2] = min(_minValue[RI_Z], _data[i].z);
+            _minValue[3] = min(_minValue[RI_DEPTH], _data[i].depth);
 
-            _maxValue[0] = max(_maxValue[0], _data[i].x);
-            _maxValue[1] = max(_maxValue[1], _data[i].y);
-            _maxValue[2] = max(_maxValue[2], _data[i].z);
-            _maxValue[3] = max(_maxValue[3], _data[i].depth);
+            _maxValue[0] = max(_maxValue[RI_X], _data[i].x);
+            _maxValue[1] = max(_maxValue[RI_Y], _data[i].y);
+            _maxValue[2] = max(_maxValue[RI_Z], _data[i].z);
+            _maxValue[3] = max(_maxValue[RI_DEPTH], _data[i].depth);
         }
     }
+
     separateInvalidComposant();
     // set the normalized and interpolated raw data attribute
     vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
@@ -144,8 +145,6 @@ RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _da
         {
             uint32_t label;
             fileLabel.read((char *)&label, sizeof(uint32_t));
-            // if((uint16_t)label == 1)
-            //     std::cout << i << std::endl;
             labels.push_back((uint16_t)label);
         }
         fileLabel.close();
@@ -155,7 +154,30 @@ RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _da
         cerr << "label file not found in RangeImage constructor" << endl;
         exit(EXIT_FAILURE);
     }
+
     pointCloudProjection(x, y, z, remission, labels, FOV_UP, FOV_DOWN);
+
+    for (int i = 0; i < 4; i++)
+    {
+        _minValue[i] = FLT_MAX;
+        _maxValue[i] = FLT_MIN;
+    }
+
+    for (int i = 0; i < _width * _height; i++)
+    {
+        if (_data[i].remission != -1)
+        {
+            _minValue[0] = min(_minValue[RI_X], _data[i].x);
+            _minValue[1] = min(_minValue[RI_Y], _data[i].y);
+            _minValue[2] = min(_minValue[RI_Z], _data[i].z);
+            _minValue[3] = min(_minValue[RI_DEPTH], _data[i].depth);
+
+            _maxValue[0] = max(_maxValue[RI_X], _data[i].x);
+            _maxValue[1] = max(_maxValue[RI_Y], _data[i].y);
+            _maxValue[2] = max(_maxValue[RI_Z], _data[i].z);
+            _maxValue[3] = max(_maxValue[RI_DEPTH], _data[i].depth);
+        }
+    }
     separateInvalidComposant();
     // set the normalized and interpolated raw data attribute
     vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
@@ -287,15 +309,6 @@ void RangeImage::pointCloudProjection(vector<float> scan_x, vector<float> scan_y
                 _data[idx].label = -1;
             else
                 _data[idx].label = (float)labels.at(i);
-            _minValue[0] = min(_minValue[0], _data[idx].x);
-            _minValue[1] = min(_minValue[1], _data[idx].y);
-            _minValue[2] = min(_minValue[2], _data[idx].z);
-            _minValue[3] = min(_minValue[3], _data[idx].depth);
-
-            _maxValue[0] = max(_maxValue[0], _data[idx].x);
-            _maxValue[1] = max(_maxValue[1], _data[idx].y);
-            _maxValue[2] = max(_maxValue[2], _data[idx].z);
-            _maxValue[3] = max(_maxValue[3], _data[idx].depth);
         }
     }
 }

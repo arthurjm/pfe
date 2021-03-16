@@ -152,7 +152,7 @@ cv::Point Slic::findLocalMinimum(cv::Point pCenter)
     return loc_min;
 }
 
-// TODO : delete pNc (weight) or rename 
+// TODO : delete pNc (weight) or rename
 void Slic::generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool metrics[4])
 {
     int width = ri.getWidth();
@@ -177,7 +177,7 @@ void Slic::generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool metrics[
     }
     _selectedClusters.clear();
     _step = step;
-    // TODO : delete (weight) pNc or rename 
+    // TODO : delete (weight) pNc or rename
     _nc = pNc;
 
     /* Clear previous data (if any), and re-initialize it. */
@@ -764,7 +764,7 @@ int Slic::levelOfFusion(int label1, int label2)
         if (tree(lvl, label1) == tree(lvl, label2))
             return lvl;
     }
-    return 1;
+    return -1;
 }
 /*
  * Display the cluster centers.

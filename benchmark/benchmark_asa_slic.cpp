@@ -24,17 +24,17 @@ using namespace std;
 
 map<int, vector<float>> _result;
 
-float computeAccuracy(Slic slic, const riVertex *riData, int width)
+float computeAccuracy(Slic *slic, const riVertex *riData, int width)
 {
     // nbLabels == number of clusters in the SLIC Algortithm
-    unsigned int nbLabel = slic.nbLabels() - 1;
-    unsigned int nbCluster = slic.getTreeLevel();
+    unsigned int nbLabel = slic->nbLabels() - 1;
+    unsigned int nbCluster = slic->getTreeLevel();
     float sum = 0;
 
     for (unsigned int i = 0; i < nbLabel; i++)
     {
         // pixels from one superpixel
-        vector<pair<int, int>> pixels = slic.pixelsOfSuperpixel(i);
+        vector<pair<int, int>> pixels = slic->pixelsOfSuperpixel(i);
         unsigned int size = pixels.size();
         // first indicate the label, second indicate the number it appears
         vector<pair<int, int>> labelCount;
@@ -106,7 +106,7 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
         {
             slic.setTreeLevel(nbSpxVec[j]);
         }
-        float accuracy = computeAccuracy(slic, riData, width);
+        float accuracy = computeAccuracy(&slic, riData, width);
         cout << "nbSpx : " << nbSpxVec[j] << " | accuracy : " << accuracy << endl;
         _result[nbSpxVec.at(j)].push_back(accuracy);
     }
@@ -242,7 +242,7 @@ int main(int argc, char **argv)
             cout << "using default parameters" << endl;
             break;
         case INVALID:
-            cerr << "invalid option, -help for the help" << endl;
+            cerr << "invalid option, execute without option for help" << endl;
             exit(EXIT_FAILURE);
             break;
         }
