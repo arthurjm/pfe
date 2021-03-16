@@ -60,7 +60,16 @@ public:
      * */
     RangeImage() : _data(nullptr) {}
 
+    /**
+     * Copy constructor
+     * @param ri lvalue of RangeImage object
+     * */
     RangeImage(RangeImage &ri);
+
+    /**
+     * Move constructor
+     * @param ri rvalue of RangeImage object
+     * */
     RangeImage(RangeImage &&ri);
 
     /**
@@ -80,7 +89,18 @@ public:
      * */
     RangeImage(string pc, string labelFile, int width = WIDTH, int height = HEIGHT);
 
+    /** 
+     * Copy assignement 
+     * @param ri lvalue of RangeImage object
+     * @return a reference to this object
+     * */
     RangeImage &operator=(const RangeImage &ri);
+
+    /**
+     * Move assignement 
+     * @param ri rvalue of RangeImage object
+     * @return a reference to this object
+     * */
     RangeImage &operator=(RangeImage &&ri);
 
     /**
@@ -155,11 +175,6 @@ public:
      * @return const std::vector<float> *
      * */
     const std::vector<float> *getNormalizedAndInterpolatedData();
-
-    /**
-     * Save the current range image as binary file
-     * */
-    void save(std::string filename);
 
 private:
     /**

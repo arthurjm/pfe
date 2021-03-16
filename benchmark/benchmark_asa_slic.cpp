@@ -98,7 +98,7 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
     {
         if (!mode || j == 0) // re-segmentation or first segmentation
         {
-            slic.generateSuperpixels(labImage, nbSpxVec[j], weightVec[0], ri, metrics);
+            slic.generateSuperpixels(nbSpxVec[j], weightVec[0], ri, metrics);
             slic.createConnectivity(labImage);
             slic.createHierarchy(metrics);
         }

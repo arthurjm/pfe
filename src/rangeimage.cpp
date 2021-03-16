@@ -466,15 +466,19 @@ void RangeImage::interpolation(vector<float> &data, int halfsizeX, int halfsizeY
 cv::Mat RangeImage::createColorMat(vector<int> idx, bool isGray, bool interpolate, bool closing, bool equalHist)
 {
     vector<float> normalizedData = normalizedValue(idx);
-    // convert to range between 0 and 255;
     size_t size = normalizedData.size();
-
+    // check type for the cv::Mat
     int nbComponent = 1;
     int cvType = CV_8UC1;
     if (idx.size() == 3)
     {
         cvType = CV_8UC3;
         nbComponent = 3;
+    }
+    else if (idx.size() != 1)
+    {
+        cerr << "invalid idx vector size in RangeImage::createColorMat" << endl;
+        exit(EXIT_FAILURE);
     }
 
     if (interpolate)
@@ -517,20 +521,30 @@ cv::Mat RangeImage::createColorMat(vector<int> idx, bool isGray, bool interpolat
 
 cv::Mat RangeImage::createCvMat(vector<uchar> data, int type)
 {
-
+    size_t size = _height * _width;
+    if (size <= 0)
+    {
+        cerr << "invalid size in RangeImage::createCvMat" << endl;
+        exit(EXIT_FAILURE);
+    }
     if (!(type == CV_8UC3 || type == CV_8UC1))
+    {
         cerr << "invalide CV_TYPE in createCvMat function" << endl;
+        exit(EXIT_FAILURE);
+    }
 
     cv::Mat m = cv::Mat(_height, _width, type);
 
-    size_t size = _height * _width;
     if (type == CV_8UC3)
         size *= 3;
 
     if (data.size() == size)
         memcpy(m.data, data.data(), data.size() * sizeof(uchar));
     else
+    {
         cerr << "invalide data vector in createCvMat function" << endl;
+        exit(EXIT_FAILURE);
+    }
 
     if (type == CV_8UC1)
     {
@@ -543,7 +557,11 @@ cv::Mat RangeImage::createCvMat(vector<uchar> data, int type)
 
 cv::Mat RangeImage::morphClose(cv::Mat img)
 {
-    // Test : Apply dilation
+    if (img.rows == 0 || img.cols == 0)
+    {
+        cerr << "invalid cv:::Mat in RangeImage::morphClose" << endl;
+        exit(EXIT_FAILURE);
+    }
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 3));
     cv::Mat img_close;
@@ -553,7 +571,11 @@ cv::Mat RangeImage::morphClose(cv::Mat img)
 
 cv::Mat RangeImage::morphOpen(cv::Mat img)
 {
-    // Test : Apply dilation
+    if (img.rows == 0 || img.cols == 0)
+    {
+        cerr << "invalid cv:::Mat in RangeImage::morphOpen" << endl;
+        exit(EXIT_FAILURE);
+    }
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 3));
     cv::Mat img_open;
@@ -563,7 +585,11 @@ cv::Mat RangeImage::morphOpen(cv::Mat img)
 
 cv::Mat RangeImage::morphDilate(cv::Mat img)
 {
-    // Test : Apply dilation
+    if (img.rows == 0 || img.cols == 0)
+    {
+        cerr << "invalid cv:::Mat in RangeImage::morphDilate" << endl;
+        exit(EXIT_FAILURE);
+    }
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 3));
     cv::Mat img_dilate;
@@ -573,7 +599,11 @@ cv::Mat RangeImage::morphDilate(cv::Mat img)
 
 cv::Mat RangeImage::morphErode(cv::Mat img)
 {
-    // Test : Apply dilation
+    if (img.rows == 0 || img.cols == 0)
+    {
+        cerr << "invalid cv:::Mat in RangeImage::morphErode" << endl;
+        exit(EXIT_FAILURE);
+    }
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 5));
     cv::Mat img_erode;
@@ -593,6 +623,11 @@ const vector<float> *RangeImage::getNormalizedAndInterpolatedData()
 
 cv::Mat RangeImage::getRawDataFromIndex(int index)
 {
+    if (index < 0)
+    {
+        cerr << "invalid index in RangeImage::getRawDataFromIndex" << endl;
+        exit(EXIT_FAILURE);
+    }
     int size = _height * _width;
     vector<float> rawData;
     rawData.reserve(size);
@@ -608,6 +643,12 @@ cv::Mat RangeImage::getRawDataFromIndex(int index)
 
 void RangeImage::setLabel(int index, int label)
 {
+    assert(_data);
+    if (index < 0)
+    {
+        cerr << "invalid index in RangeImage::setLabel" << endl;
+        exit(EXIT_FAILURE);
+    }
     _data[index].label = label;
 }
 
@@ -619,21 +660,4 @@ int RangeImage::getHeight()
 int RangeImage::getWidth()
 {
     return _width;
-}
-
-void RangeImage::save(string filename)
-{
-    int size = _height * _width;
-    nc::NdArray<float> riNdArr(1, size * DIM);
-    for (int i = 0; i < size; ++i)
-    {
-        int n_index = i * DIM;
-        riNdArr[n_index + 0] = _data[i].x;
-        riNdArr[n_index + 1] = _data[i].y;
-        riNdArr[n_index + 2] = _data[i].z;
-        riNdArr[n_index + 3] = _data[i].remission;
-        riNdArr[n_index + 4] = _data[i].depth;
-        riNdArr[n_index + 5] = _data[i].label;
-    }
-    riNdArr.tofile(filename);
 }
