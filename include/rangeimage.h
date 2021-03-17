@@ -78,14 +78,6 @@ public:
      **/
     RangeImage(riVertex *data, int width = WIDTH, int height = HEIGHT);
 
-    /**
-     * Create range image with ground truth labels
-     * @param pc path to the pointcloud binary file
-     * @param labelFile Path to the file contain the labels corresponding to the pointcloud 
-     * @param width height of the range image
-     * @param height height of the range image
-     * */
-    RangeImage(std::string pc, std::string labelFile, int width = WIDTH, int height = HEIGHT);
 
     /** 
      * Copy assignement 

@@ -2,6 +2,12 @@
 
 using namespace std;
 
+PointCloud::PointCloud(string pcfileName, ClickableLabel *cl)
+{
+    createPointCloud(pcfileName);
+    _cl = cl;
+}
+
 PointCloud::PointCloud(string pcfileName, string labelfileName, ClickableLabel *cl)
 {
     createPointCloud(pcfileName);
@@ -34,7 +40,7 @@ void PointCloud::createPointCloud(string fileName)
             file.read((char *)&intensity, sizeof(float));
             _remissions.push_back(intensity);
         }
-        cout << "Nombre de points : " << _pointCloud->size() << endl;
+        // cout << "Nombre de points : " << _pointCloud->size() << endl;
     }
     file.close();
 }
@@ -101,7 +107,7 @@ RangeImage PointCloud::generateRangeImage(int width, int height)
         i++;
     }
 
-    cout << "Nombre de points projetés : " << _projectedPoints.size() << endl;
+    // cout << "Nombre de points projetés : " << _projectedPoints.size() << endl;
 
     RangeImage ri(data, width, height);
     _rangeImage = &ri;
@@ -124,19 +130,16 @@ bool PointCloud::getLabels(string fileName)
 
             _labels.push_back(label);
         }
-        cout << "Nombre de labels : " << i << endl;
+        // cout << "Nombre de labels : " << i << endl;
         file.close();
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 void PointCloud::ChangeColor(Color colorMode)
 {
-    std::cout << "Couleur changée" << std::endl;
+    // std::cout << "Couleur changée" << std::endl;
     int i = 0;
 
     switch (colorMode)
@@ -188,6 +191,7 @@ void PointCloud::ChangeColor(Color colorMode)
         }
 
         int pts = 0;
+        // Juste besoin de SLIC
         RangeImage *ri = _cl->getRangeImage();
         const riVertex *riData = ri->getData();
         Slic *slic = _cl->getSlic();
@@ -267,7 +271,7 @@ void PointCloud::ChangeColor(Color colorMode)
             }
         }
 
-        cout << "Nombre de points selectionnés : " << pts << endl;
+        // cout << "Nombre de points selectionnés : " << pts << endl;
         break;
     }
 

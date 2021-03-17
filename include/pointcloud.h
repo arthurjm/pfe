@@ -75,6 +75,7 @@ public:
      * A cloud points is defined by its coordinates (x,y,z) and its remission r
      * @param fileName location of cloud points
      **/
+    PointCloud(std::string pcfileName, ClickableLabel *cl);
     PointCloud(std::string pcfileName, std::string labelfileName, ClickableLabel *cl);
     void ChangeColor(Color colorMode = Color::White);
     const KittiPointCloud::Ptr getPointCloud();

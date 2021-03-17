@@ -1,5 +1,6 @@
 #include "slic.h"
 #include "rangeimage.h"
+#include "pointcloud.h"
 #include <QFileDialog>
 #include <QApplication>
 #include <stdlib.h>
@@ -76,7 +77,10 @@ float computeAccuracy(Slic *slic, const riVertex *riData, int width)
 void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> nbSpxVec, bool metrics[4])
 {
     // The range image contains the ground truth data on label.
-    RangeImage ri(pathPointCloud, pathLabel);
+    PointCloud pc(pathPointCloud, pathLabel, nullptr);
+
+    RangeImage ri = pc.generateRangeImage();
+    // RangeImage ri(pathPointCloud, pathLabel);
     Slic slic;
 
     // create a range image with canal Y of the range image with an equalization of histogram and an interpolation on the "dead" pixels (remission == -1)
