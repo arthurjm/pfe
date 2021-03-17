@@ -83,17 +83,24 @@ public:
     void generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool *metrics);
 
     /**
-     * Enforce connectivity for an image.
-     * @param pImage the input image
+     * Enforce connectivity of the superpixels. This part is not actively discussed
+     * in the paper, but forms an active part of the implementation of the authors
+     * of the paper.
+     * The initialisation of _cls is made at the end of the function.
      * */
-    void createConnectivity(const cv::Mat &pImage);
+    void createConnectivity();
 
     /**
      * Computes a hierarchical segmentation matrix of size (nb of labels x nb of labels)
      * where each row of the matrix stores the label of the generated superpixels.
-     * @param metrics array contein metrics who used 
+     * @param metrics array contains metrics to be used 
      * */
     void createHierarchy(bool *metrics);
+
+    /**
+     * Create saliency map of the hierarchy, which weights each edge of the graph by the ultrametric distance between its extremities
+     * */
+    void createSaliencyMap();
 
     /* Draw functions. Resp. display of the centers, the contours and the selected clusters. */
 
@@ -120,17 +127,9 @@ public:
 
     /* Draw functions. Displayal of the selected clusters. */
     /**
-     * Apply labelisation according to pMode 
-     * @param pMode indicate which mode to use, defaut 2
-     * @param label indicate the label to be applied on a cluster, defaut -1
-     * */
-    void binaryLabelisation(int pMode, int label = -1);
-    /**
-     * 
-     * */
-    void binaryLabelisationTree();
-    /**
-     * 
+     * Find the minium tree level according obj and bg vector,
+     * go to the minimum tree level and update the selected cluster according to obj and bg vector
+     * label vector is also updated at the same time.
      * @param label indicate the label to be applied on a cluster
      * */
     void multiLabelisationConnected(int label);
@@ -142,11 +141,6 @@ public:
      * @return the treelevel where both labels are equal
      * */
     int levelOfFusion(int label1, int label2);
-
-    /**
-     * 
-     * */
-    void createSaliencyMap();
 
     /**
      * 
@@ -199,17 +193,18 @@ public:
     void deselectCluster(cv::Point2i pPos);
 
     /**
-     * 
-     * @param pPos
+     * Add selected SuperPixel (cluster) at the position pPos in the obj (object) vector and remove it from the bg (background) vector
+     * @param pPos position of pixel selected
      * */
     void addObjectCluster(cv::Point2i pPos);
     /**
-     * 
-     * @param pPos
+     * Add selected SuperPixel (cluster) at the position pPos in the bg (background) vector and remove it from the obj (object) vector
+     * @param pPos position of pixel selected
      * */
     void addBackgroundCluster(cv::Point2i pPos);
+
     /**
-     * 
+     * clear the object and background vectors
      * */
     void clearScribbleClusters();
 

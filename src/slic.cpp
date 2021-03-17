@@ -257,21 +257,15 @@ void Slic::generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool metrics[
     }
 }
 
-/*
- * Enforce connectivity of the superpixels. This part is not actively discussed
- * in the paper, but forms an active part of the implementation of the authors
- * of the paper.
- * The initialisation of _cls is made at the end of the function.
- *
- * Input : The image (cv::Mat).
- * Output: -
- */
-void Slic::createConnectivity(const cv::Mat &pImage)
+void Slic::createConnectivity()
 {
-    if (pImage.empty())
+    int width = _rangeImage.getWidth();
+    int height = _rangeImage.getHeight();
+    /* Initialize the cluster and distance matrices. */
+    if (width <= 0 || height <= 0)
     {
-        std::cerr << "Creation of connectivity : The image is empty" << std::endl;
-        return;
+        std::cerr << "Failed to create connectivity in Slic::createConnectivity, the range image is empty" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     int label = 0, adjlabel = 0;
@@ -282,18 +276,18 @@ void Slic::createConnectivity(const cv::Mat &pImage)
     }
     else
     {
-        lims = (pImage.cols * pImage.rows) / (_centers.rows);
+        lims = (width * height) / (_centers.rows);
     }
 
     const int dr4[4] = {0, -1, 0, 1};
     const int dc4[4] = {-1, 0, 1, 0};
 
     /* Initialize the new cluster matrix. */
-    cv::Mat_<int> new_clusters(pImage.rows, pImage.cols, -1);
+    cv::Mat_<int> new_clusters(height, width, -1);
 
-    for (int col = 0; col < pImage.cols; col++)
+    for (int col = 0; col < width; col++)
     {
-        for (int row = 0; row < pImage.rows; row++)
+        for (int row = 0; row < height; row++)
         {
             if (new_clusters(row, col) == -1)
             {
@@ -306,7 +300,7 @@ void Slic::createConnectivity(const cv::Mat &pImage)
                     int r = elements[0].x + dr4[k];
                     int c = elements[0].y + dc4[k];
 
-                    if (r >= 0 && r < pImage.rows && c >= 0 && c < pImage.cols)
+                    if (r >= 0 && r < height && c >= 0 && c < width)
                     {
                         if (new_clusters(r, c) >= 0)
                         {
@@ -323,7 +317,7 @@ void Slic::createConnectivity(const cv::Mat &pImage)
                         int r = elements[cpt].x + dr4[k];
                         int c = elements[cpt].y + dc4[k];
 
-                        if (r >= 0 && r < pImage.rows && c >= 0 && c < pImage.cols)
+                        if (r >= 0 && r < height && c >= 0 && c < width)
                         {
                             if (new_clusters(r, c) == -1 && _clusters(row, col) == _clusters(r, c))
                             {
@@ -351,17 +345,21 @@ void Slic::createConnectivity(const cv::Mat &pImage)
     }
     _nbLabels = label;
     _clusters = new_clusters;
-    initCls(pImage.rows, pImage.cols);
+    initCls(height, width);
 }
 
-/*
+/**
  * Computes the distance between two superpixels.
- *
- * Input : mean color and spatial barycenters matrix (cv::Mat), superpixel position
- * in the hierarchy (int), total number of labels (int) and a compactness constant (float).
- * Output: the distance (float)
- */
-
+ * @param msi metrics vector
+ * @param ms spatial distance 3D 
+ * @param mr remission distance
+ * @param mt number of pixels in a cluster
+ * @param i cluster i 
+ * @param j cluster j
+ * @param spn number of labels (cluster)
+ * @param compactness constant variable define in createHierarchy
+ * @return distance between two superpixels.
+ * */
 float distance(std::vector<float> msi, std::vector<float> ms, std::vector<float> mr, std::vector<float> mt, int i, int j, int spn, float compactness)
 {
     float dist_si = (msi[j] - msi[i]) * (msi[j] - msi[i]) +
@@ -376,18 +374,21 @@ float distance(std::vector<float> msi, std::vector<float> ms, std::vector<float>
     return d_mt * (dist_si + dist_r + dist_s * compactness);
 }
 
-/* Fill an adjacency matrix
- *
- * Input : Matrix of labels (cv::Mat), height (int), width (int), nb of spx (int), matrix to fill (cv::Mat)
- * Output: -
- */
+/**
+ * Fill an adjacency matrix
+ * @param L matrix of labels
+ * @param h height 
+ * @param w width
+ * @param spn number of labels (cluster)
+ * @param adj matrix of adjacent labels to fill
+ * */
 void adjacency(cv::Mat_<int> L, int h, int w, int spn, cv::Mat_<int> adj)
 {
     for (int i = 0; i < h - 1; i++)
     {
         for (int j = 0; j < w - 1; j++)
         {
-            int lab = L(i * w + j); // correction : (i*w + j) instead of (i + j*h)
+            int lab = L(i * w + j);
             if (lab != L(i * w + j + 1))
             {
                 adj(lab + L(i * w + j + 1) * spn) = 1;
@@ -402,21 +403,20 @@ void adjacency(cv::Mat_<int> L, int h, int w, int spn, cv::Mat_<int> adj)
     }
 }
 
-/*
- * Computes a hierarchical segmentation matrix of size (nb of labels x nb of labels)
- * where each row of the matrix stores the label of the generated superpixels.
- *
- * Input : segmentation image (cv::Mat)
- * Output: -
- */
 void Slic::createHierarchy(bool metrics[4])
 {
+    assert(metrics);
     int h = _rangeImage.getHeight();
     int w = _rangeImage.getWidth();
+    if (w <= 0 || h <= 0)
+    {
+        std::cerr << "Failed to create hierarchy in Slic::createHierarchy, the range image is empty" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     cv::Mat_<int> L = _clusters.clone().reshape(1, h * w);
 
-    _nbLabels = _nbLabels + 1;
+    _nbLabels = _nbLabels + 1; // TODO : try to remove +1
 
     float comp_factor = 100.0 / (h * w);
     float compactness = comp_factor * _nbLabels;
@@ -429,7 +429,7 @@ void Slic::createHierarchy(bool metrics[4])
 
     std::vector<float> msi(_nbLabels * 4, 0); // spatial normalized and interpolated
 
-    // metrics, normalized raw data with interpolation
+    // initialized vectors
     const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
     for (int i = 0; i < h; i++)
     {
@@ -463,7 +463,7 @@ void Slic::createHierarchy(bool metrics[4])
             mt[lab] += 1;
         }
     }
-    // center of cluster
+    // center of cluster (mean of each cluster)
     for (unsigned int lab = 0; lab < _nbLabels; lab++)
     {
         if (mt[lab] > 0)
@@ -483,7 +483,9 @@ void Slic::createHierarchy(bool metrics[4])
         }
     }
 
+    // matrix of distance between two clusters
     cv::Mat_<float> dist = cv::Mat(1, _nbLabels * _nbLabels, CV_32FC1, FLT_MAX);
+    // matrix contain the adjacent labels of clusters
     cv::Mat_<int> adj = cv::Mat(1, _nbLabels * _nbLabels, CV_32FC1, cv::Scalar(0));
 
     adjacency(L, h, w, _nbLabels, adj);
@@ -498,7 +500,7 @@ void Slic::createHierarchy(bool metrics[4])
     float dist_tmp, dmin;
     int l1 = 0, l2 = 0;
     dmin = FLT_MAX;
-
+    // fill the distance matrix and save the minimum distance
     for (unsigned int i = 0; i < _nbLabels; i++)
     {
         for (unsigned int j = i + 1; j < _nbLabels; j++)
@@ -521,7 +523,6 @@ void Slic::createHierarchy(bool metrics[4])
     }
     for (unsigned int i = 1; i < _nbLabels; i++)
     {
-
         //Classif merge and recopy l1 <- l2
         for (unsigned int j = 0; j < _nbLabels; j++)
         {
@@ -545,7 +546,7 @@ void Slic::createHierarchy(bool metrics[4])
             adj(l2 * _nbLabels + l2) = 0;
         }
 
-        //Update mean color and spatial barycenters
+        //Update mean metrics, remission, and spatial 3D barycenters
         ms[l2] = ms[l2] * mt[l2] + ms[l1] * mt[l1];
         ms[l2 + _nbLabels] = ms[l2 + _nbLabels] * mt[l2] + ms[l1 + _nbLabels] * mt[l1];
         ms[l2 + _nbLabels * 2] = ms[l2 + _nbLabels * 2] * mt[l2] + ms[l1 + _nbLabels * 2] * mt[l1];
@@ -570,7 +571,6 @@ void Slic::createHierarchy(bool metrics[4])
         {
             if (adj(l2 + _nbLabels * j))
             {
-
                 if (living_sp(j))
                 {
                     dist_tmp = distance(msi, ms, mr, mt, l2, j, _nbLabels, comp_factor * (_nbLabels - i));
@@ -657,50 +657,6 @@ void Slic::clearScribbleClusters()
 {
     obj.clear();
     bg.clear();
-    binaryLabelisation(1);
-}
-
-void Slic::binaryLabelisation(int pLabelisationMode, int label)
-{
-    switch (pLabelisationMode)
-    {
-    case 1:
-        binaryLabelisationTree();
-        break;
-    case 2:
-        multiLabelisationConnected(label);
-        break;
-    }
-}
-
-void Slic::binaryLabelisationTree()
-{
-    if (obj.empty() || bg.empty())
-        return;
-    _selectedClusters.clear();
-
-    int lvl, min;
-    for (size_t i = 0; i < obj.size(); i++)
-    {
-        min = INT_MAX;
-        for (size_t j = 0; j < bg.size(); j++)
-        {
-            lvl = levelOfFusion(obj[i], bg[j]);
-            if (lvl < min)
-                min = lvl;
-        }
-        int indexObject = tree(min - 1, obj[i]);
-        for (unsigned int spx = 0; spx < _nbLabels; spx++)
-        {
-            if (tree(min - 1, spx) == indexObject)
-            {
-                if (find(_selectedClusters.begin(), _selectedClusters.end(), spx) == _selectedClusters.end())
-                {
-                    _selectedClusters.push_back(spx);
-                }
-            }
-        }
-    }
 }
 
 void Slic::multiLabelisationConnected(int label)
@@ -708,6 +664,7 @@ void Slic::multiLabelisationConnected(int label)
     if (obj.empty() || bg.empty())
         return;
     int lvl, min;
+    // loop through object and background vector and find the minimum tree level where both labels are equal
     for (size_t i = 0; i < obj.size(); i++)
     {
         min = INT_MAX;
@@ -717,10 +674,12 @@ void Slic::multiLabelisationConnected(int label)
             if (lvl < min)
                 min = lvl;
         }
+
+        // go to the tree level according to elements in obj vector and add pixels which are not in selected clusters
+        // update label vector with indicate label in parameter
         int indexObject = tree(min - 1, obj[i]);
         for (unsigned int spx = 0; spx < _nbLabels; spx++)
         {
-
             if (tree(min - 1, spx) == indexObject)
             {
                 if (find(_selectedClusters.begin(), _selectedClusters.end(), spx) == _selectedClusters.end())
@@ -732,6 +691,7 @@ void Slic::multiLabelisationConnected(int label)
         }
     }
 
+    // loop through background and object vector and find the minimum tree level where both labels are equal
     for (size_t i = 0; i < bg.size(); i++)
     {
         min = INT_MAX;
@@ -741,6 +701,8 @@ void Slic::multiLabelisationConnected(int label)
             if (lvl < min)
                 min = lvl;
         }
+        // go to the tree level according to elements in bg vector and remove pixels which are in selected clusters
+        // update label vector with default label (-1)
         int indexBackground = tree(min - 1, bg[i]);
         for (unsigned int spx = 0; spx < _nbLabels; spx++)
         {
