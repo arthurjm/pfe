@@ -3,10 +3,48 @@
 
 using namespace std;
 
+RangeImage::~RangeImage()
+{
+    if (_data)
+    {
+        free(_data);
+        _data = nullptr;
+    }
+}
+
+RangeImage::RangeImage(RangeImage &ri) : _width(ri._width), _height(ri._height)
+{
+    _data = (riVertex *)malloc(sizeof(riVertex) * _width * _height);
+    for (int i = 0; i < _width * _height; i++)
+    {
+        _data[i] = ri._data[i];
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        _minValue[i] = ri._minValue[i];
+        _maxValue[i] = ri._maxValue[i];
+    }
+    _normalizedAndInterpolatedData = ri._normalizedAndInterpolatedData;
+}
+
+RangeImage::RangeImage(RangeImage &&ri) : _width(ri._width), _height(ri._height)
+{
+    _data = move(ri._data);
+    swap(_minValue, ri._minValue);
+    swap(_maxValue, ri._maxValue);
+    swap(_normalizedAndInterpolatedData, ri._normalizedAndInterpolatedData);
+}
+
 RangeImage::RangeImage(riVertex *data, int width, int height)
     : _data(data), _width(width), _height(height)
 {
-
+    assert(_data);
+    if (_width <= 0 || _height <= 0)
+    {
+        cerr << "invalid width or height in RangeImage constructor" << endl;
+        exit(EXIT_FAILURE);
+    }
+    // set the minimum and the maximum attributes
     for (int i = 0; i < 4; i++)
     {
         _minValue[i] = FLT_MAX;
@@ -15,28 +53,37 @@ RangeImage::RangeImage(riVertex *data, int width, int height)
 
     for (int i = 0; i < _width * _height; i++)
     {
-        _minValue[0] = min(_minValue[0], _data[i].x);
-        _minValue[1] = min(_minValue[1], _data[i].y);
-        _minValue[2] = min(_minValue[2], _data[i].z);
-        _minValue[3] = min(_minValue[3], _data[i].depth);
+        if (_data[i].remission != -1)
+        {
+            _minValue[0] = min(_minValue[RI_X], _data[i].x);
+            _minValue[1] = min(_minValue[RI_Y], _data[i].y);
+            _minValue[2] = min(_minValue[RI_Z], _data[i].z);
+            _minValue[3] = min(_minValue[RI_DEPTH], _data[i].depth);
 
-        _maxValue[0] = max(_maxValue[0], _data[i].x);
-        _maxValue[1] = max(_maxValue[1], _data[i].y);
-        _maxValue[2] = max(_maxValue[2], _data[i].z);
-        _maxValue[3] = max(_maxValue[3], _data[i].depth);
+            _maxValue[0] = max(_maxValue[RI_X], _data[i].x);
+            _maxValue[1] = max(_maxValue[RI_Y], _data[i].y);
+            _maxValue[2] = max(_maxValue[RI_Z], _data[i].z);
+            _maxValue[3] = max(_maxValue[RI_DEPTH], _data[i].depth);
+        }
     }
 
-    separateInvalideComposant();
+    separateInvalidComposant();
+    // set the normalized and interpolated raw data attribute
     vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
-    _normalizedData = normalizedValue(component);
-    interpolation(_normalizedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, component.size());
+    _normalizedAndInterpolatedData = normalizedValue(component);
+    interpolation(_normalizedAndInterpolatedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, component.size());
 }
 
 RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _data(nullptr), _width(width), _height(height)
 {
+    if (_width <= 0 || _height <= 0)
+    {
+        cerr << "invalid width or height in RangeImage constructor" << endl;
+        exit(EXIT_FAILURE);
+    }
     _data = (riVertex *)malloc(sizeof(riVertex) * width * height);
     assert(_data);
-
+    // initialization of riVertex
     for (int i = 0; i < _height * _width; ++i)
     {
         _data[i].x = -1;
@@ -46,7 +93,7 @@ RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _da
         _data[i].depth = -1;
         _data[i].label = -1;
     }
-
+    // read datas from the pointcloud file
     vector<float> x;
     vector<float> y;
     vector<float> z;
@@ -77,7 +124,15 @@ RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _da
         }
         filePc.close();
     }
-
+    else
+    {
+        cerr << "Binary Pointcloud file not found in RangeImage constructor" << endl;
+        exit(EXIT_FAILURE);
+    }
+    // read labels from labelfile
+    // the first 16 bits correspond to label
+    // the last 16 bits correspond to id
+    // ref http://www.semantic-kitti.org/dataset.html
     fstream fileLabel(labelFile.c_str(), ios::in | ios::binary);
 
     std::vector<uint16_t> labels;
@@ -90,22 +145,56 @@ RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _da
         {
             uint32_t label;
             fileLabel.read((char *)&label, sizeof(uint32_t));
-            // if((uint16_t)label == 1)
-            //     std::cout << i << std::endl;
             labels.push_back((uint16_t)label);
         }
         fileLabel.close();
     }
+    else
+    {
+        cerr << "label file not found in RangeImage constructor" << endl;
+        exit(EXIT_FAILURE);
+    }
+
     pointCloudProjection(x, y, z, remission, labels, FOV_UP, FOV_DOWN);
-    separateInvalideComposant();
+
+    for (int i = 0; i < 4; i++)
+    {
+        _minValue[i] = FLT_MAX;
+        _maxValue[i] = FLT_MIN;
+    }
+
+    for (int i = 0; i < _width * _height; i++)
+    {
+        if (_data[i].remission != -1)
+        {
+            _minValue[0] = min(_minValue[RI_X], _data[i].x);
+            _minValue[1] = min(_minValue[RI_Y], _data[i].y);
+            _minValue[2] = min(_minValue[RI_Z], _data[i].z);
+            _minValue[3] = min(_minValue[RI_DEPTH], _data[i].depth);
+
+            _maxValue[0] = max(_maxValue[RI_X], _data[i].x);
+            _maxValue[1] = max(_maxValue[RI_Y], _data[i].y);
+            _maxValue[2] = max(_maxValue[RI_Z], _data[i].z);
+            _maxValue[3] = max(_maxValue[RI_DEPTH], _data[i].depth);
+        }
+    }
+    separateInvalidComposant();
+    // set the normalized and interpolated raw data attribute
     vector<int> component = {RI_X, RI_Y, RI_Z, RI_REMISSION};
-    _normalizedData = normalizedValue(component);
-    interpolation(_normalizedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, component.size());
+    _normalizedAndInterpolatedData = normalizedValue(component);
+    interpolation(_normalizedAndInterpolatedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, component.size());
 }
 
-void RangeImage::separateInvalideComposant()
+void RangeImage::separateInvalidComposant()
 {
+    assert(_data);
     int size = _height * _width;
+    if (size <= 0)
+    {
+        cerr << "invalid size in RangeImage::separateInvalidComposant" << endl;
+        exit(EXIT_FAILURE);
+    }
+    // convert to bichrome image
     vector<uchar> tmpImg;
     tmpImg.reserve(size);
     for (int i = 0; i < size; ++i)
@@ -115,9 +204,11 @@ void RangeImage::separateInvalideComposant()
         else
             tmpImg.push_back(0);
     }
+    // apply morphologie to valid component
     cv::Mat m = morphOpen(createCvMat(tmpImg, CV_8UC1));
     cv::cvtColor(m, m, cv::COLOR_BGR2GRAY);
     uchar *mask = m.data;
+    // assigne -2 to invalid component's label
     for (int i = 0; i < size; ++i)
     {
         if (mask[i] == 255)
@@ -125,6 +216,36 @@ void RangeImage::separateInvalideComposant()
     }
 }
 
+RangeImage &RangeImage::operator=(const RangeImage &ri)
+{
+    _width = ri._width;
+    _height = ri._height;
+    _data = (riVertex *)malloc(sizeof(riVertex) * _width * _height);
+    for (int i = 0; i < _width * _height; i++)
+    {
+        _data[i] = ri._data[i];
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        _minValue[i] = ri._minValue[i];
+        _maxValue[i] = ri._maxValue[i];
+    }
+    _normalizedAndInterpolatedData = ri._normalizedAndInterpolatedData;
+    return *this;
+}
+
+RangeImage &RangeImage::operator=(RangeImage &&ri)
+{
+    _width = ri._width;
+    _height = ri._height;
+    _data = move(ri._data);
+    swap(_minValue, ri._minValue);
+    swap(_maxValue, ri._maxValue);
+    swap(_normalizedAndInterpolatedData, ri._normalizedAndInterpolatedData);
+    return *this;
+}
+
+// TODO Arthur and Tsiory
 void RangeImage::pointCloudProjection(vector<float> scan_x, vector<float> scan_y,
                                       vector<float> scan_z, vector<float> scan_remission, vector<uint16_t> labels, float proj_fov_up, float proj_fov_down)
 {
@@ -188,51 +309,57 @@ void RangeImage::pointCloudProjection(vector<float> scan_x, vector<float> scan_y
                 _data[idx].label = -1;
             else
                 _data[idx].label = (float)labels.at(i);
-            _minValue[0] = min(_minValue[0], _data[idx].x);
-            _minValue[1] = min(_minValue[1], _data[idx].y);
-            _minValue[2] = min(_minValue[2], _data[idx].z);
-            _minValue[3] = min(_minValue[3], _data[idx].depth);
-
-            _maxValue[0] = max(_maxValue[0], _data[idx].x);
-            _maxValue[1] = max(_maxValue[1], _data[idx].y);
-            _maxValue[2] = max(_maxValue[2], _data[idx].z);
-            _maxValue[3] = max(_maxValue[3], _data[idx].depth);
         }
     }
 }
 
 vector<float> RangeImage::normalizedValue(vector<int> idx)
 {
+    if (_data == nullptr)
+    {
+        cerr << "invalid _data in RangeImage::normalizedValue" << endl;
+        exit(EXIT_FAILURE);
+    }
+    int size = _width * _height;
+    if (size <= 0)
+    {
+        cerr << "invalid size in RangeImage::normalizedValue" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if ((int)idx.size() == 0)
+    {
+        cerr << "invalid idx vector size in RangeImage::normalizedValue" << endl;
+        exit(EXIT_FAILURE);
+    }
     vector<float> normVal;
-    normVal.reserve(_width * _height * idx.size());
+    normVal.reserve(size * idx.size());
     vector<float> min(idx.size()), max(idx.size());
     for (size_t i = 0; i < idx.size(); i++)
     {
 
-        if ((idx.at(i) < 4 && idx.at(i) >= 0) || idx.at(i) == RI_XYZ)
+        if (idx.at(i) < RI_REMISSION && idx.at(i) >= RI_X)
         {
             min.at(i) = _minValue[idx.at(i)];
             max.at(i) = _maxValue[idx.at(i)];
         }
-        else if (idx.at(i) == 4)
+        else if (idx.at(i) == RI_REMISSION)
         {
             min.at(i) = 0;
             max.at(i) = 1;
         }
         else
         {
-            cerr << "invalide index in normalizedValue function" << endl;
-            return normVal;
+            cerr << "invalide index in RangeImage::normalizedValue function" << endl;
+            exit(EXIT_FAILURE);
         }
     }
-    int size = _width * _height;
     float val, remission;
     for (int i = 0; i < size; i++)
     {
-        remission = *((float *)(_data) + i * DIM + 4);
+        remission = *((float *)(_data) + i * DIM + RI_REMISSION);
         for (size_t j = 0; j < idx.size(); j++)
         {
-            if (remission != -1.f)
+            if (remission != -1.f) // verification of valid pixel
             {
                 val = *((float *)(_data) + i * DIM + idx.at(j));
                 val = (val - min.at(j)) / (max.at(j) - min.at(j));
@@ -247,10 +374,16 @@ vector<float> RangeImage::normalizedValue(vector<int> idx)
 
 riVertex RangeImage::getNormalizedValue(int pixelIndex)
 {
+    assert(_data);
+    if (pixelIndex < 0 || pixelIndex >= _width * _height)
+    {
+        cerr << "invalid pixelIndex in RangeImage::getNormalizedValue, it must be in range of 0 and the image size" << endl;
+        exit(EXIT_FAILURE);
+    }
     riVertex riv;
 
     riv.remission = *((float *)(_data) + pixelIndex * DIM + RI_REMISSION);
-    if (riv.remission != -1)
+    if (riv.remission != -1) // verification of valid pixel
     {
         float val = *((float *)(_data) + pixelIndex * DIM + RI_X);
         val = (val - _minValue[RI_X]) / (_maxValue[RI_X] - _minValue[RI_X]);
@@ -281,10 +414,19 @@ riVertex RangeImage::getNormalizedValue(int pixelIndex)
 
 void RangeImage::interpolation(vector<float> &data, int halfsizeX, int halfsizeY, int nbComponent)
 {
-
     if (nbComponent != 1 && nbComponent != 3 && nbComponent != 4)
     {
         cerr << "invalid number of component in RangeImage::interpolation" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if ((int)data.size() != _width * _height * nbComponent)
+    {
+        cerr << "invalid data in RangeImage::interpolation" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if (halfsizeX < 0 || halfsizeY < 0)
+    {
+        cerr << "invalid halfsize in RangeImage::interpolation, can't be negative" << endl;
         exit(EXIT_FAILURE);
     }
 
@@ -306,7 +448,7 @@ void RangeImage::interpolation(vector<float> &data, int halfsizeX, int halfsizeY
                     {
                         if (x < _width && y < _height && x >= 0 && y >= 0) // inside the image
                         {
-                            if (x != j || y != i) // not himself
+                            if (x != j || y != i) // not itself
                             {
                                 if (_data[y * _width + x].remission != -1) // is a "dead" pixel
                                 {
@@ -337,15 +479,19 @@ void RangeImage::interpolation(vector<float> &data, int halfsizeX, int halfsizeY
 cv::Mat RangeImage::createColorMat(vector<int> idx, bool isGray, bool interpolate, bool closing, bool equalHist)
 {
     vector<float> normalizedData = normalizedValue(idx);
-    // convert to range between 0 and 255;
     size_t size = normalizedData.size();
-
+    // check type for the cv::Mat
     int nbComponent = 1;
     int cvType = CV_8UC1;
     if (idx.size() == 3)
     {
         cvType = CV_8UC3;
         nbComponent = 3;
+    }
+    else if (idx.size() != 1)
+    {
+        cerr << "invalid idx vector size in RangeImage::createColorMat" << endl;
+        exit(EXIT_FAILURE);
     }
 
     if (interpolate)
@@ -386,22 +532,32 @@ cv::Mat RangeImage::createColorMat(vector<int> idx, bool isGray, bool interpolat
     return img;
 }
 
-cv::Mat RangeImage::createCvMat(vector<uchar> dataColor, int type)
+cv::Mat RangeImage::createCvMat(vector<uchar> data, int type)
 {
-
+    size_t size = _height * _width;
+    if (size <= 0)
+    {
+        cerr << "invalid size in RangeImage::createCvMat" << endl;
+        exit(EXIT_FAILURE);
+    }
     if (!(type == CV_8UC3 || type == CV_8UC1))
+    {
         cerr << "invalide CV_TYPE in createCvMat function" << endl;
+        exit(EXIT_FAILURE);
+    }
 
     cv::Mat m = cv::Mat(_height, _width, type);
 
-    size_t size = _height * _width;
     if (type == CV_8UC3)
         size *= 3;
 
-    if (dataColor.size() == size)
-        memcpy(m.data, dataColor.data(), dataColor.size() * sizeof(uchar));
+    if (data.size() == size)
+        memcpy(m.data, data.data(), data.size() * sizeof(uchar));
     else
-        cerr << "invalide dataColor in createCvMat function" << endl;
+    {
+        cerr << "invalide data vector in createCvMat function" << endl;
+        exit(EXIT_FAILURE);
+    }
 
     if (type == CV_8UC1)
     {
@@ -414,7 +570,11 @@ cv::Mat RangeImage::createCvMat(vector<uchar> dataColor, int type)
 
 cv::Mat RangeImage::morphClose(cv::Mat img)
 {
-    // Test : Apply dilation
+    if (img.rows == 0 || img.cols == 0)
+    {
+        cerr << "invalid cv:::Mat in RangeImage::morphClose" << endl;
+        exit(EXIT_FAILURE);
+    }
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 3));
     cv::Mat img_close;
@@ -424,7 +584,11 @@ cv::Mat RangeImage::morphClose(cv::Mat img)
 
 cv::Mat RangeImage::morphOpen(cv::Mat img)
 {
-    // Test : Apply dilation
+    if (img.rows == 0 || img.cols == 0)
+    {
+        cerr << "invalid cv:::Mat in RangeImage::morphOpen" << endl;
+        exit(EXIT_FAILURE);
+    }
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 3));
     cv::Mat img_open;
@@ -434,7 +598,11 @@ cv::Mat RangeImage::morphOpen(cv::Mat img)
 
 cv::Mat RangeImage::morphDilate(cv::Mat img)
 {
-    // Test : Apply dilation
+    if (img.rows == 0 || img.cols == 0)
+    {
+        cerr << "invalid cv:::Mat in RangeImage::morphDilate" << endl;
+        exit(EXIT_FAILURE);
+    }
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 3));
     cv::Mat img_dilate;
@@ -444,7 +612,11 @@ cv::Mat RangeImage::morphDilate(cv::Mat img)
 
 cv::Mat RangeImage::morphErode(cv::Mat img)
 {
-    // Test : Apply dilation
+    if (img.rows == 0 || img.cols == 0)
+    {
+        cerr << "invalid cv:::Mat in RangeImage::morphErode" << endl;
+        exit(EXIT_FAILURE);
+    }
     cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
                                                 cv::Size(1, 5));
     cv::Mat img_erode;
@@ -457,13 +629,18 @@ const riVertex *RangeImage::getData()
     return _data;
 }
 
-const vector<float> *RangeImage::getNormalizedData()
+const vector<float> *RangeImage::getNormalizedAndInterpolatedData()
 {
-    return &_normalizedData;
+    return &_normalizedAndInterpolatedData;
 }
 
 cv::Mat RangeImage::getRawDataFromIndex(int index)
 {
+    if (index < 0)
+    {
+        cerr << "invalid index in RangeImage::getRawDataFromIndex" << endl;
+        exit(EXIT_FAILURE);
+    }
     int size = _height * _width;
     vector<float> rawData;
     rawData.reserve(size);
@@ -479,6 +656,12 @@ cv::Mat RangeImage::getRawDataFromIndex(int index)
 
 void RangeImage::setLabel(int index, int label)
 {
+    assert(_data);
+    if (index < 0)
+    {
+        cerr << "invalid index in RangeImage::setLabel" << endl;
+        exit(EXIT_FAILURE);
+    }
     _data[index].label = label;
 }
 
@@ -490,21 +673,4 @@ int RangeImage::getHeight()
 int RangeImage::getWidth()
 {
     return _width;
-}
-
-void RangeImage::save(string filename)
-{
-    int size = _height * _width;
-    nc::NdArray<float> riNdArr(1, size * DIM);
-    for (int i = 0; i < size; ++i)
-    {
-        int n_index = i * DIM;
-        riNdArr[n_index + 0] = _data[i].x;
-        riNdArr[n_index + 1] = _data[i].y;
-        riNdArr[n_index + 2] = _data[i].z;
-        riNdArr[n_index + 3] = _data[i].remission;
-        riNdArr[n_index + 4] = _data[i].depth;
-        riNdArr[n_index + 5] = _data[i].label;
-    }
-    riNdArr.tofile(filename);
 }

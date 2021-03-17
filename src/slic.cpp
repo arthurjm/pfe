@@ -1,35 +1,5 @@
 #include "slic.h"
 
-/*
- * Constructor. Nothing is done here.
- */
-Slic::Slic()
-{
-}
-
-/*
- * Copy constructor
- * Creates a new instance of Slic with the same reference to
- * selected_clusters and clusters parameters. The other parameters
- * are neither copied nor initialized.
- */
-Slic::Slic(Slic *pSlic) : _clusters{pSlic->getClusters()}, _selectedClusters{pSlic->selectedClusters()}
-{
-}
-
-/*
- * Destructor. Clear any present data.
- */
-Slic::~Slic()
-{
-}
-
-/*
- * Clear the data as saved by the algorithm.
- *
- * Input : -
- * Output: -
- */
 void Slic::clearData()
 {
     _clusters.release();
@@ -42,17 +12,12 @@ void Slic::clearData()
     _cls.clear();
 }
 
-/*
- * Initialize the cluster centers and initial values of the pixel-wise cluster
- * assignment and distance values.
- *
- * Input : The image (cv::Mat).
- * Output: -
- */
-void Slic::initData(const cv::Mat &pImage)
+void Slic::initData()
 {
+    int width = _rangeImage.getWidth();
+    int height = _rangeImage.getHeight();
     /* Initialize the cluster and distance matrices. */
-    if (pImage.rows == 0 || pImage.cols == 0)
+    if (width <= 0 || height <= 0)
     {
         std::cerr << "The image size has to be strictly positive" << std::endl;
         return;
@@ -62,31 +27,29 @@ void Slic::initData(const cv::Mat &pImage)
         std::cerr << "The number of requested superpixels is too huge" << std::endl;
         return;
     }
-    _clusters = cv::Mat_<int>(pImage.rows, pImage.cols, -1);
-    _distances = cv::Mat_<float>(pImage.rows, pImage.cols, FLT_MAX);
-    _labelVec.assign(pImage.rows * pImage.cols, -1);
+    _clusters = cv::Mat_<int>(height, width, -1);
+    _distances = cv::Mat_<float>(height, width, FLT_MAX);
+    _labelVec.assign(height * width, -1);
 
-    int width = pImage.cols;
     /* Initialize the centers and counters. */
-    const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
-    for (int col = _step / 2; col <= pImage.cols - _step / 2; col += _step)
+    const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
+    for (int col = _step / 2; col <= width - _step / 2; col += _step)
     {
-        for (int row = _step / 2; row <= pImage.rows - _step / 2; row += _step)
+        for (int row = _step / 2; row <= height - _step / 2; row += _step)
         {
             /* Find the local minimum (gradient-wise). */
-            cv::Point nc = findLocalMinimum(pImage, cv::Point(row, col));
-            cv::Vec3b colour = pImage.at<cv::Vec3b>(nc.x, nc.y);
-            /* Generate the center vector. */
-            Vec5f center(colour[0], colour[1], colour[2], nc.x, nc.y);
-            /* Append to vector of centers. */
-            _centers.push_back(center);
-            /* Append spatial cordinates*/
+            cv::Point nc = findLocalMinimum(cv::Point(row, col));
             int idx = nc.y + nc.x * width;
+            /* Generate the centers vector. */
             riVertex coord = _rangeImage.getNormalizedValue(idx);
+
+            Vec2f center(nc.x, nc.y);
             Vec4f centerNormalized4D = Vec4f(coord.x, coord.y, coord.z, coord.remission);
 
             Vec4f centerInterpolated4D = Vec4f(interpolatedData->at(idx * 4 + SLIC_METRIC_X), interpolatedData->at(idx * 4 + SLIC_METRIC_Y),
                                                interpolatedData->at(idx * 4 + SLIC_METRIC_Z), interpolatedData->at(idx * 4 + SLIC_METRIC_REMISSION));
+
+            _centers.push_back(center);
             _centersNormalized4D.push_back(centerNormalized4D);
             _centersInterpolated4D.push_back(centerInterpolated4D);
             _centerCounts.push_back(0);
@@ -94,22 +57,14 @@ void Slic::initData(const cv::Mat &pImage)
     }
 }
 
-/*
- * Compute the distance between a cluster center and an individual pixel.
- *
- * Input : The cluster index (int), the pixel (cv::Point), and the Lab values of
- *         the pixel (cv::Scalar).
- * Output: The distance (float).
- */
-float Slic::computeDist(int pCi, cv::Point pPixel, bool metrics[4])
+float Slic::computeDist(int clusterIndex, cv::Point pixel, bool metrics[4])
 {
-    Vec5f cen(_centers(pCi));
-    int idx = pPixel.y + pPixel.x * _rangeImage.getWidth();
+    int idx = pixel.y + pixel.x * _rangeImage.getWidth();
     riVertex normalizedData = _rangeImage.getNormalizedValue(idx);
 
     // metrics, normalized raw data with interpolation
-    const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
-    Vec4f cenInterpolated4d(_centersInterpolated4D(pCi));
+    const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
+    Vec4f cenInterpolated4d(_centersInterpolated4D(clusterIndex));
     float distMetrics = 0;
     if (metrics[SLIC_METRIC_X])
     {
@@ -138,7 +93,7 @@ float Slic::computeDist(int pCi, cv::Point pPixel, bool metrics[4])
     // normalized raw data
 
     // spatial 3D distance
-    Vec4f cenNormalized4d(_centersNormalized4D(pCi));
+    Vec4f cenNormalized4d(_centersNormalized4D(clusterIndex));
     float dr0 = cenNormalized4d[SLIC_METRIC_X] - normalizedData.x;
     float dr1 = cenNormalized4d[SLIC_METRIC_Y] - normalizedData.y;
     float dr2 = cenNormalized4d[SLIC_METRIC_Z] - normalizedData.z;
@@ -162,14 +117,7 @@ float Slic::computeDist(int pCi, cv::Point pPixel, bool metrics[4])
     //return sqrt(dc) + sqrt(ds * w);
 }
 
-/*
- * Find a local gradient minimum of a pixel in a 3x3 neighbourhood. This
- * method is called upon initialization of the cluster centers.
- *
- * Input : The image (cv::Mat &) and the pixel center (cv::Point).
- * Output: The local gradient minimum (cv::Point).
- */
-cv::Point Slic::findLocalMinimum(const cv::Mat_<cv::Vec3b> &pImage, cv::Point pCenter)
+cv::Point Slic::findLocalMinimum(cv::Point pCenter)
 {
     float min_grad = FLT_MAX;
     cv::Point loc_min(pCenter.x, pCenter.y);
@@ -180,15 +128,19 @@ cv::Point Slic::findLocalMinimum(const cv::Mat_<cv::Vec3b> &pImage, cv::Point pC
             riVertex riv1 = _rangeImage.getNormalizedValue(i * _rangeImage.getWidth() + (j + 1));
             riVertex riv2 = _rangeImage.getNormalizedValue((i + 1) * _rangeImage.getWidth() + j);
             riVertex riv3 = _rangeImage.getNormalizedValue(i * _rangeImage.getWidth() + j);
-            float x = riv1.x - riv3.x;
-            float y = riv1.y - riv3.y;
-            float z = riv1.z - riv3.z;
-            float i1i3 = sqrt(x * x + y * y + z * z);
-            x = riv2.x - riv3.x;
-            y = riv2.y - riv3.y;
-            z = riv2.z - riv3.z;
-            float i2i3 = sqrt(x * x + y * y + z * z);
-            float sum = i1i3 + i2i3;
+            // distance between riVertex 1 and riVertex 3
+            float dx = riv1.x - riv3.x;
+            float dy = riv1.y - riv3.y;
+            float dz = riv1.z - riv3.z;
+            float distRiv1Riv3 = sqrt(dx * dx + dy * dy + dz * dz);
+
+            // distance between riVertex 2 and riVertex 3
+            dx = riv2.x - riv3.x;
+            dy = riv2.y - riv3.y;
+            dz = riv2.z - riv3.z;
+            float distRiv2Riv3 = sqrt(dx * dx + dy * dy + dz * dz);
+
+            float sum = distRiv1Riv3 + distRiv2Riv3;
             if (sum < min_grad)
             {
                 min_grad = sum;
@@ -200,33 +152,24 @@ cv::Point Slic::findLocalMinimum(const cv::Mat_<cv::Vec3b> &pImage, cv::Point pC
     return loc_min;
 }
 
-/*
- * Compute the over-segmentation based on the step-size and relative weighting
- * of the pixel and colour values.
- *
- * Input : The Lab image (cv::Mat), the stepsize (int), and the weight (int).
- * Output: -
- */
-void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, RangeImage &ri, bool metrics[4])
+// TODO : delete pNc (weight) or rename
+void Slic::generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool metrics[4])
 {
-    if (pImage.empty())
+    int width = ri.getWidth();
+    int height = ri.getHeight();
+    int size = height * width;
+    if (nbSpx <= 0 || nbSpx > size)
     {
-        std::cerr << "Generation of superpixels : The image is empty" << std::endl;
-        return;
-    }
-    if (pNbSpx <= 0 || pNbSpx > pImage.rows * pImage.cols)
-    {
-        std::cerr << "The number of superpixels should be between 1 and number of pixels of pImage" << std::endl;
+        std::cerr << "The number of superpixels should be between 1 and number of pixels of range image" << std::endl;
         return;
     }
 
-    int w = pImage.cols, h = pImage.rows;
-    if (w == 0 || h == 0)
+    if (width == 0 || height == 0)
     {
         std::cerr << "The size of the image shouldn't be 0" << std::endl;
         return;
     }
-    int step = sqrt((w * h) / (double)pNbSpx);
+    int step = sqrt(size / (double)nbSpx);
     if (step == 0)
     {
         std::cerr << "The number of superpixels should not exceed the amount of pixels in the image" << std::endl;
@@ -234,32 +177,29 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, Range
     }
     _selectedClusters.clear();
     _step = step;
+    // TODO : delete (weight) pNc or rename
     _nc = pNc;
-    _ns = step;
-
-    /* make a new Mat header, that allows us to iterate the image more efficiently. */
-    cv::Mat_<cv::Vec3b> image(pImage);
 
     /* Clear previous data (if any), and re-initialize it. */
     clearData();
     _rangeImage = ri;
-    initData(image);
+    initData();
 
-    /* Run EM for 10 iterations (as prescribed by the algorithm). */
+    /* Run segmentation for 10 iterations (as prescribed by the algorithm). */
     for (int i = 0; i < NR_ITERATIONS; i++)
     {
         /* Reset distance values. */
         _distances = FLT_MAX;
         for (int j = 0; j < _centers.rows; j++)
         {
-            Vec5f cen(_centers(j));
+            Vec2f cen(_centers(j));
             /* Only compare to pixels in a 2 x step by 2 x step region. */
-            for (int row = cen[3] - step; row < cen[3] + step; row++)
+            for (int row = cen[0] - step; row < cen[0] + step; row++)
             {
-                for (int col = cen[4] - step; col < cen[4] + step; col++)
+                for (int col = cen[1] - step; col < cen[1] + step; col++)
                 {
 
-                    if (row >= 0 && row < image.rows && col >= 0 && col < image.cols)
+                    if (row >= 0 && row < height && col >= 0 && col < width)
                     {
                         float d = computeDist(j, cv::Point(row, col), metrics);
 
@@ -284,19 +224,17 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, Range
             _centerCounts[j] = 0;
         }
 
-        int width = image.cols;
         /* Compute the new cluster centers. */
-        const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
-        for (int col = 0; col < image.cols; col++)
+        const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
+        for (int col = 0; col < width; col++)
         {
-            for (int row = 0; row < image.rows; row++)
+            for (int row = 0; row < height; row++)
             {
                 int c_id = _clusters(row, col);
 
                 if (c_id != -1)
                 {
-                    cv::Vec3b colour = image(row, col);
-                    _centers(c_id) += Vec5f(colour[0], colour[1], colour[2], row, col);
+                    _centers(c_id) += Vec2f(row, col);
 
                     int idx = col + row * width;
                     riVertex coord = _rangeImage.getNormalizedValue(idx);
@@ -319,21 +257,15 @@ void Slic::generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, Range
     }
 }
 
-/*
- * Enforce connectivity of the superpixels. This part is not actively discussed
- * in the paper, but forms an active part of the implementation of the authors
- * of the paper.
- * The initialisation of _cls is made at the end of the function.
- *
- * Input : The image (cv::Mat).
- * Output: -
- */
-void Slic::createConnectivity(const cv::Mat &pImage)
+void Slic::createConnectivity()
 {
-    if (pImage.empty())
+    int width = _rangeImage.getWidth();
+    int height = _rangeImage.getHeight();
+    /* Initialize the cluster and distance matrices. */
+    if (width <= 0 || height <= 0)
     {
-        std::cerr << "Creation of connectivity : The image is empty" << std::endl;
-        return;
+        std::cerr << "Failed to create connectivity in Slic::createConnectivity, the range image is empty" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     int label = 0, adjlabel = 0;
@@ -344,18 +276,18 @@ void Slic::createConnectivity(const cv::Mat &pImage)
     }
     else
     {
-        lims = (pImage.cols * pImage.rows) / (_centers.rows);
+        lims = (width * height) / (_centers.rows);
     }
 
     const int dr4[4] = {0, -1, 0, 1};
     const int dc4[4] = {-1, 0, 1, 0};
 
     /* Initialize the new cluster matrix. */
-    cv::Mat_<int> new_clusters(pImage.rows, pImage.cols, -1);
+    cv::Mat_<int> new_clusters(height, width, -1);
 
-    for (int col = 0; col < pImage.cols; col++)
+    for (int col = 0; col < width; col++)
     {
-        for (int row = 0; row < pImage.rows; row++)
+        for (int row = 0; row < height; row++)
         {
             if (new_clusters(row, col) == -1)
             {
@@ -368,7 +300,7 @@ void Slic::createConnectivity(const cv::Mat &pImage)
                     int r = elements[0].x + dr4[k];
                     int c = elements[0].y + dc4[k];
 
-                    if (r >= 0 && r < pImage.rows && c >= 0 && c < pImage.cols)
+                    if (r >= 0 && r < height && c >= 0 && c < width)
                     {
                         if (new_clusters(r, c) >= 0)
                         {
@@ -385,7 +317,7 @@ void Slic::createConnectivity(const cv::Mat &pImage)
                         int r = elements[cpt].x + dr4[k];
                         int c = elements[cpt].y + dc4[k];
 
-                        if (r >= 0 && r < pImage.rows && c >= 0 && c < pImage.cols)
+                        if (r >= 0 && r < height && c >= 0 && c < width)
                         {
                             if (new_clusters(r, c) == -1 && _clusters(row, col) == _clusters(r, c))
                             {
@@ -413,17 +345,21 @@ void Slic::createConnectivity(const cv::Mat &pImage)
     }
     _nbLabels = label;
     _clusters = new_clusters;
-    initCls(pImage.rows, pImage.cols);
+    initCls(height, width);
 }
 
-/*
+/**
  * Computes the distance between two superpixels.
- *
- * Input : mean color and spatial barycenters matrix (cv::Mat), superpixel position
- * in the hierarchy (int), total number of labels (int) and a compactness constant (float).
- * Output: the distance (float)
- */
-
+ * @param msi metrics vector
+ * @param ms spatial distance 3D 
+ * @param mr remission distance
+ * @param mt number of pixels in a cluster
+ * @param i cluster i 
+ * @param j cluster j
+ * @param spn number of labels (cluster)
+ * @param compactness constant variable define in createHierarchy
+ * @return distance between two superpixels.
+ * */
 float distance(std::vector<float> msi, std::vector<float> ms, std::vector<float> mr, std::vector<float> mt, int i, int j, int spn, float compactness)
 {
     float dist_si = (msi[j] - msi[i]) * (msi[j] - msi[i]) +
@@ -438,18 +374,21 @@ float distance(std::vector<float> msi, std::vector<float> ms, std::vector<float>
     return d_mt * (dist_si + dist_r + dist_s * compactness);
 }
 
-/* Fill an adjacency matrix
- *
- * Input : Matrix of labels (cv::Mat), height (int), width (int), nb of spx (int), matrix to fill (cv::Mat)
- * Output: -
- */
+/**
+ * Fill an adjacency matrix
+ * @param L matrix of labels
+ * @param h height 
+ * @param w width
+ * @param spn number of labels (cluster)
+ * @param adj matrix of adjacent labels to fill
+ * */
 void adjacency(cv::Mat_<int> L, int h, int w, int spn, cv::Mat_<int> adj)
 {
     for (int i = 0; i < h - 1; i++)
     {
         for (int j = 0; j < w - 1; j++)
         {
-            int lab = L(i * w + j); // correction : (i*w + j) instead of (i + j*h)
+            int lab = L(i * w + j);
             if (lab != L(i * w + j + 1))
             {
                 adj(lab + L(i * w + j + 1) * spn) = 1;
@@ -464,21 +403,20 @@ void adjacency(cv::Mat_<int> L, int h, int w, int spn, cv::Mat_<int> adj)
     }
 }
 
-/*
- * Computes a hierarchical segmentation matrix of size (nb of labels x nb of labels)
- * where each row of the matrix stores the label of the generated superpixels.
- *
- * Input : segmentation image (cv::Mat)
- * Output: -
- */
 void Slic::createHierarchy(bool metrics[4])
 {
+    assert(metrics);
     int h = _rangeImage.getHeight();
     int w = _rangeImage.getWidth();
+    if (w <= 0 || h <= 0)
+    {
+        std::cerr << "Failed to create hierarchy in Slic::createHierarchy, the range image is empty" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     cv::Mat_<int> L = _clusters.clone().reshape(1, h * w);
 
-    _nbLabels = _nbLabels + 1;
+    _nbLabels = _nbLabels + 1; // TODO : try to remove +1
 
     float comp_factor = 100.0 / (h * w);
     float compactness = comp_factor * _nbLabels;
@@ -491,8 +429,8 @@ void Slic::createHierarchy(bool metrics[4])
 
     std::vector<float> msi(_nbLabels * 4, 0); // spatial normalized and interpolated
 
-    // metrics, normalized raw data with interpolation
-    const vector<float> *interpolatedData = _rangeImage.getNormalizedData();
+    // initialized vectors
+    const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
     for (int i = 0; i < h; i++)
     {
         for (int j = 0; j < w; j++)
@@ -525,7 +463,7 @@ void Slic::createHierarchy(bool metrics[4])
             mt[lab] += 1;
         }
     }
-    // center of cluster
+    // center of cluster (mean of each cluster)
     for (unsigned int lab = 0; lab < _nbLabels; lab++)
     {
         if (mt[lab] > 0)
@@ -545,7 +483,9 @@ void Slic::createHierarchy(bool metrics[4])
         }
     }
 
+    // matrix of distance between two clusters
     cv::Mat_<float> dist = cv::Mat(1, _nbLabels * _nbLabels, CV_32FC1, FLT_MAX);
+    // matrix contain the adjacent labels of clusters
     cv::Mat_<int> adj = cv::Mat(1, _nbLabels * _nbLabels, CV_32FC1, cv::Scalar(0));
 
     adjacency(L, h, w, _nbLabels, adj);
@@ -560,7 +500,7 @@ void Slic::createHierarchy(bool metrics[4])
     float dist_tmp, dmin;
     int l1 = 0, l2 = 0;
     dmin = FLT_MAX;
-
+    // fill the distance matrix and save the minimum distance
     for (unsigned int i = 0; i < _nbLabels; i++)
     {
         for (unsigned int j = i + 1; j < _nbLabels; j++)
@@ -583,7 +523,6 @@ void Slic::createHierarchy(bool metrics[4])
     }
     for (unsigned int i = 1; i < _nbLabels; i++)
     {
-
         //Classif merge and recopy l1 <- l2
         for (unsigned int j = 0; j < _nbLabels; j++)
         {
@@ -607,7 +546,7 @@ void Slic::createHierarchy(bool metrics[4])
             adj(l2 * _nbLabels + l2) = 0;
         }
 
-        //Update mean color and spatial barycenters
+        //Update mean metrics, remission, and spatial 3D barycenters
         ms[l2] = ms[l2] * mt[l2] + ms[l1] * mt[l1];
         ms[l2 + _nbLabels] = ms[l2 + _nbLabels] * mt[l2] + ms[l1 + _nbLabels] * mt[l1];
         ms[l2 + _nbLabels * 2] = ms[l2 + _nbLabels * 2] * mt[l2] + ms[l1 + _nbLabels * 2] * mt[l1];
@@ -632,7 +571,6 @@ void Slic::createHierarchy(bool metrics[4])
         {
             if (adj(l2 + _nbLabels * j))
             {
-
                 if (living_sp(j))
                 {
                     dist_tmp = distance(msi, ms, mr, mt, l2, j, _nbLabels, comp_factor * (_nbLabels - i));
@@ -719,102 +657,6 @@ void Slic::clearScribbleClusters()
 {
     obj.clear();
     bg.clear();
-    binaryLabelisation(1);
-}
-
-void Slic::binaryLabelisation(int pLabelisationMode, int label)
-{
-    switch (pLabelisationMode)
-    {
-    case 1:
-        binaryLabelisationTree();
-        break;
-    case 2:
-        // binaryLabelisationConnected();
-        multiLabelisationConnected(label);
-        break;
-    }
-}
-
-void Slic::binaryLabelisationTree()
-{
-    if (obj.empty() || bg.empty())
-        return;
-    _selectedClusters.clear();
-
-    int lvl, min;
-    for (size_t i = 0; i < obj.size(); i++)
-    {
-        min = INT_MAX;
-        for (size_t j = 0; j < bg.size(); j++)
-        {
-            lvl = levelOfFusion(obj[i], bg[j]);
-            if (lvl < min)
-                min = lvl;
-        }
-        int indexObject = tree(min - 1, obj[i]);
-        for (unsigned int spx = 0; spx < _nbLabels; spx++)
-        {
-            if (tree(min - 1, spx) == indexObject)
-            {
-                if (find(_selectedClusters.begin(), _selectedClusters.end(), spx) == _selectedClusters.end())
-                {
-                    _selectedClusters.push_back(spx);
-                }
-            }
-        }
-    }
-}
-
-void Slic::binaryLabelisationConnected()
-{
-    if (obj.empty() || bg.empty())
-        return;
-    int lvl, min;
-    for (size_t i = 0; i < obj.size(); i++)
-    {
-        min = INT_MAX;
-        for (size_t j = 0; j < bg.size(); j++)
-        {
-            lvl = levelOfFusion(obj[i], bg[j]);
-            if (lvl < min)
-                min = lvl;
-        }
-        int indexObject = tree(min - 1, obj[i]);
-        for (unsigned int spx = 0; spx < _nbLabels; spx++)
-        {
-            if (tree(min - 1, spx) == indexObject)
-            {
-                if (find(_selectedClusters.begin(), _selectedClusters.end(), spx) == _selectedClusters.end())
-                {
-                    _selectedClusters.push_back(spx);
-                }
-            }
-        }
-    }
-
-    for (size_t i = 0; i < bg.size(); i++)
-    {
-        min = INT_MAX;
-        for (size_t j = 0; j < obj.size(); j++)
-        {
-            lvl = levelOfFusion(bg[i], obj[j]);
-            if (lvl < min)
-                min = lvl;
-        }
-        int indexBackground = tree(min - 1, bg[i]);
-        for (unsigned int spx = 0; spx < _nbLabels; spx++)
-        {
-            if (tree(min - 1, spx) == indexBackground)
-            {
-                auto spxIterator = find(_selectedClusters.begin(), _selectedClusters.end(), spx);
-                if (spxIterator != _selectedClusters.end())
-                {
-                    _selectedClusters.erase(spxIterator);
-                }
-            }
-        }
-    }
 }
 
 void Slic::multiLabelisationConnected(int label)
@@ -822,6 +664,7 @@ void Slic::multiLabelisationConnected(int label)
     if (obj.empty() || bg.empty())
         return;
     int lvl, min;
+    // loop through object and background vector and find the minimum tree level where both labels are equal
     for (size_t i = 0; i < obj.size(); i++)
     {
         min = INT_MAX;
@@ -831,10 +674,12 @@ void Slic::multiLabelisationConnected(int label)
             if (lvl < min)
                 min = lvl;
         }
+
+        // go to the tree level according to elements in obj vector and add pixels which are not in selected clusters
+        // update label vector with indicate label in parameter
         int indexObject = tree(min - 1, obj[i]);
         for (unsigned int spx = 0; spx < _nbLabels; spx++)
         {
-
             if (tree(min - 1, spx) == indexObject)
             {
                 if (find(_selectedClusters.begin(), _selectedClusters.end(), spx) == _selectedClusters.end())
@@ -846,6 +691,7 @@ void Slic::multiLabelisationConnected(int label)
         }
     }
 
+    // loop through background and object vector and find the minimum tree level where both labels are equal
     for (size_t i = 0; i < bg.size(); i++)
     {
         min = INT_MAX;
@@ -855,6 +701,8 @@ void Slic::multiLabelisationConnected(int label)
             if (lvl < min)
                 min = lvl;
         }
+        // go to the tree level according to elements in bg vector and remove pixels which are in selected clusters
+        // update label vector with default label (-1)
         int indexBackground = tree(min - 1, bg[i]);
         for (unsigned int spx = 0; spx < _nbLabels; spx++)
         {
@@ -890,7 +738,7 @@ void Slic::displayCenterGrid(cv::Mat &pImage, cv::Scalar pColour)
 {
     for (int i = 0; i < _centers.rows; i++)
     {
-        cv::circle(pImage, cv::Point2d(_centers(i)[3], _centers(i)[4]), 2, pColour, 2);
+        cv::circle(pImage, cv::Point2d(_centers(i)[0], _centers(i)[1]), 2, pColour, 2);
     }
 }
 

@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 project(pfe_lidar)
-
+add_compile_options(-Wall -g)
 include_directories(include/)
 include_directories(/usr/local/include)
 include_directories(/usr/include/)
@@ -56,9 +56,9 @@ set(CPP_FILES
     src/main.cpp
     src/mainwindow.cpp
     src/rangeimage.cpp
-    src/shdist.cpp
+    # src/shdist.cpp
     src/slic.cpp
-    src/superpixelhierarchy.cpp
+    # src/superpixelhierarchy.cpp
     src/pointcloud.cpp
     src/clickablelabel.cpp
 
@@ -67,11 +67,11 @@ set(HEADERS
     include/mainwindow.h 
     include/clickablelabel.h
     include/rangeimage.h
-    include/shdist.h
+    # include/shdist.h
     include/slic.h
     include/pointcloud.h
-    include/superpixelhierarchy.h
-    include/superpixelhierarchymex.hpp
+    # include/superpixelhierarchy.h
+    # include/superpixelhierarchymex.hpp
 
 )
 

@@ -24,17 +24,17 @@ using namespace std;
 
 map<int, vector<float>> _result;
 
-float computeAccuracy(Slic slic, const riVertex *riData, int width)
+float computeAccuracy(Slic *slic, const riVertex *riData, int width)
 {
     // nbLabels == number of clusters in the SLIC Algortithm
-    unsigned int nbLabel = slic.nbLabels() - 1;
-    unsigned int nbCluster = slic.getTreeLevel();
+    unsigned int nbLabel = slic->nbLabels() - 1;
+    unsigned int nbCluster = slic->getTreeLevel();
     float sum = 0;
 
     for (unsigned int i = 0; i < nbLabel; i++)
     {
         // pixels from one superpixel
-        vector<pair<int, int>> pixels = slic.pixelsOfSuperpixel(i);
+        vector<pair<int, int>> pixels = slic->pixelsOfSuperpixel(i);
         unsigned int size = pixels.size();
         // first indicate the label, second indicate the number it appears
         vector<pair<int, int>> labelCount;
@@ -82,11 +82,6 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
     // create a range image with canal Y of the range image with an equalization of histogram and an interpolation on the "dead" pixels (remission == -1)
     cv::Mat img = ri.createColorMat({RI_Y}, false, true, false, true);
     const riVertex *riData = ri.getData();
-
-    cv::Mat imgTmp = img.clone();
-    cv::Mat labImage = imgTmp;
-    // cvtColor(imgTmp, labImage, cv::COLOR_BGR2Lab);
-
     int width = img.cols;
 
     // Make sure that first element is the largest
@@ -98,15 +93,15 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
     {
         if (!mode || j == 0) // re-segmentation or first segmentation
         {
-            slic.generateSuperpixels(labImage, nbSpxVec[j], weightVec[0], ri, metrics);
-            slic.createConnectivity(labImage);
+            slic.generateSuperpixels(nbSpxVec[j], weightVec[0], ri, metrics);
+            slic.createConnectivity();
             slic.createHierarchy(metrics);
         }
         else // hierarchy
         {
             slic.setTreeLevel(nbSpxVec[j]);
         }
-        float accuracy = computeAccuracy(slic, riData, width);
+        float accuracy = computeAccuracy(&slic, riData, width);
         cout << "nbSpx : " << nbSpxVec[j] << " | accuracy : " << accuracy << endl;
         _result[nbSpxVec.at(j)].push_back(accuracy);
     }
@@ -242,7 +237,7 @@ int main(int argc, char **argv)
             cout << "using default parameters" << endl;
             break;
         case INVALID:
-            cerr << "invalid option, -help for the help" << endl;
+            cerr << "invalid option, execute without option for help" << endl;
             exit(EXIT_FAILURE);
             break;
         }
