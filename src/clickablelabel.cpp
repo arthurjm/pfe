@@ -99,8 +99,8 @@ void ClickableLabel::initSuperpixels(int pNbSpx, int pWeight)
     Mat imgTmp = _imgRef.clone();
     Mat labImage;
     cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
-    _slic->generateSuperpixels(labImage, pNbSpx, pWeight, _rangeImage, _metrics);
-    _slic->createConnectivity(labImage);
+    _slic->generateSuperpixels(pNbSpx, pWeight, _rangeImage, _metrics);
+    _slic->createConnectivity();
     _slic->createHierarchy(_metrics);
 
     //saliency
@@ -228,8 +228,6 @@ void ClickableLabel::saveSelection(string filename)
                 _rangeImage.setLabel(index, label);
         }
     }
-
-    _rangeImage.save(filename);
 }
 
 /*
@@ -302,7 +300,7 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
             drawLineTo(QPoint(x, y), getObjMarkerColor());
 
             _slic->addObjectCluster(cv::Point2i(x, y));
-            _slic->binaryLabelisation(labelisationMode, _currentLabel);
+            _slic->multiLabelisationConnected(_currentLabel);
         }
         else
         {
@@ -316,7 +314,7 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
             drawLineTo(QPoint(x, y), QColor(0, 0, 0, 255));
 
             _slic->addBackgroundCluster(cv::Point2i(x, y));
-            _slic->binaryLabelisation(labelisationMode, _currentLabel);
+            _slic->multiLabelisationConnected(_currentLabel);
         }
         else
         {
@@ -362,9 +360,8 @@ void ClickableLabel::mouseMoveEvent(QMouseEvent *event)
         {
             drawLineTo(QPoint(x, y), getObjMarkerColor());
             // _sh->addObjectCluster(cv::Point2i(x, y));
-            // _sh->binaryLabelisationConnected();
             _slic->addObjectCluster(cv::Point2i(x, y));
-            _slic->binaryLabelisation(labelisationMode, _currentLabel);
+            _slic->multiLabelisationConnected(_currentLabel);
         }
         else
         {
@@ -378,7 +375,7 @@ void ClickableLabel::mouseMoveEvent(QMouseEvent *event)
         {
             drawLineTo(QPoint(x, y), QColor(0, 0, 0, 255));
             _slic->addBackgroundCluster(cv::Point2i(x, y));
-            _slic->binaryLabelisation(labelisationMode, _currentLabel);
+            _slic->multiLabelisationConnected(_currentLabel);
         }
         else
         {
@@ -575,8 +572,11 @@ void ClickableLabel::setContours(bool showContours)
 cv::Mat ClickableLabel::getDisplayMat(int type, bool isGray, bool interpolate, bool closing, bool equalHist)
 {
     cv::Mat m;
-    if (type > 6 || type < 0)
+    if (type > RI_XYZ || type < RI_X)
+    {
         cerr << "Invalide type in ClickableLabel::getDisplayMat, it must in interval from 0 to 6!" << endl;
+        exit(EXIT_FAILURE);
+    }
     else if (type != RI_XYZ)
     {
         m = _rangeImage.createColorMat({type}, isGray, interpolate, closing, equalHist);

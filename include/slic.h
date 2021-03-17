@@ -40,7 +40,7 @@ using namespace std;
 #define SLIC_METRIC_Z 2
 #define SLIC_METRIC_REMISSION 3
 
-typedef cv::Vec<float, 5> Vec5f;
+typedef cv::Vec<float, 2> Vec2f;
 typedef cv::Vec<float, 4> Vec4f;
 
 /*
@@ -54,109 +54,307 @@ class Slic
 {
 public:
     /* Class constructors and deconstructors. */
-    Slic();
-    Slic(Slic *pSlic);
-    ~Slic();
+    /**
+     * Default constructor, nothing is made here 
+     * */
+    Slic() {}
 
-    /* Generate an over-segmentation for an image. */
-    void generateSuperpixels(const cv::Mat &pImage, int pNbSpx, int pNc, RangeImage &ri, bool *metrics);
-    /* Enforce connectivity for an image. */
-    void createConnectivity(const cv::Mat &pImage);
-    void createHierarchy(bool *metric);
+    /**
+     * Copy constructor
+     * copy the reference ofselected_clusters and clusters parameters. 
+     * The other parameters are neither copied nor initialized.
+     * @param pSlic reference to Slic object 
+     * */
+    Slic(Slic &pSlic) : _clusters(pSlic.getClusters()), _selectedClusters(pSlic.selectedClusters()) {}
 
-    /* Draw functions. Resp. displayal of the centers, the contours and the selected clusters. */
+    /**
+     * Destructor
+     * */
+    ~Slic() {}
+
+    /**
+     * Generate an over-segmentation for an image.
+     * Compute the over-segmentation based on the step-size and relative weighting of the pixel and colour values.
+     * @param nbSpx the number of superpixels
+     * @param pNc the weight TODO : delete or rename
+     * @param ri the range image
+     * @param metrics a boolean array indicate which metric should be applied
+     **/
+    void generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool *metrics);
+
+    /**
+     * Enforce connectivity of the superpixels. This part is not actively discussed
+     * in the paper, but forms an active part of the implementation of the authors
+     * of the paper.
+     * The initialisation of _cls is made at the end of the function.
+     * */
+    void createConnectivity();
+
+    /**
+     * Computes a hierarchical segmentation matrix of size (nb of labels x nb of labels)
+     * where each row of the matrix stores the label of the generated superpixels.
+     * @param metrics array contains metrics to be used 
+     * */
+    void createHierarchy(bool *metrics);
+
+    /**
+     * Create saliency map of the hierarchy, which weights each edge of the graph by the ultrametric distance between its extremities
+     * */
+    void createSaliencyMap();
+
+    /* Draw functions. Resp. display of the centers, the contours and the selected clusters. */
+
+    /**
+     * Display the cluster centers.
+     * @param pImage the image to display upon (cv::Mat)  
+     * @param pColour the colour (cv::Vec3b)
+     * */
     void displayCenterGrid(cv::Mat &pImage, cv::Scalar pColour);
+
+    /**
+     * Display a single pixel wide contour around the clusters.
+     * @param pImage  the target image (cv::Mat) 
+     * @param pColour the contour colour (cv::Vec3b)
+     * */
     void displayContours(cv::Mat &pImage, cv::Vec3b pColour);
+
+    /**
+     * Give the pixels of each cluster the same colour values. The specified colour
+     * is the mean RGB colour per cluster.
+     * @param pImage The target image (cv::Mat).
+     * */
     void colourWithClusterMeans(cv::Mat &pImage);
 
-    /*
-     *
-     *  Following functions are the one we added to the basic code
-     *
-     */
-
     /* Draw functions. Displayal of the selected clusters. */
-    void binaryLabelisation(int pMode, int label = -1);
-    void binaryLabelisationTree();
-    void binaryLabelisationConnected();
+    /**
+     * Find the minium tree level according obj and bg vector,
+     * go to the minimum tree level and update the selected cluster according to obj and bg vector
+     * label vector is also updated at the same time.
+     * @param label indicate the label to be applied on a cluster
+     * */
     void multiLabelisationConnected(int label);
+
+    /**
+     * Find the treelevel where label1 and label2 are equal
+     * @param label1 first label to be compared with
+     * @param label2 second label to be compared with
+     * @return the treelevel where both labels are equal
+     * */
     int levelOfFusion(int label1, int label2);
 
-    void createSaliencyMap();
+    /**
+     * 
+     * @param pImage
+     * */
     void displaySaliency(cv::Mat &pImage);
+    /**
+     * 
+     * @param pImage
+     * */
     void displayMultipleSaliency(cv::Mat &pImage);
+    /**
+     * 
+     * @param pImage
+     * */
     void displayClusters(cv::Mat &pImage);
 
     /* JL, ZY */
+    /**
+     * 
+     * @param backgroundImage
+     * @param selectionImage
+     * */
     cv::Mat displaySelection(cv::Mat backgroundImage, cv::Mat selectionImage);
+
+    /**
+     * 
+     * @param pImage
+     * */
     cv::Mat displayGraySelection(cv::Mat pImage);
 
+    /**
+     * 
+     * @param pImage
+     * @param pImageRef
+     * */
     void getAndDisplaySelection(cv::Mat &pImage, const cv::Mat pImageRef);
 
     /* Functions relative to the selection/deselection of superpixels */
+    /**
+     * 
+     * @param pPos
+     * @param label
+     * */
     void selectCluster(cv::Point2i pPos, int label);
+    /**
+     * 
+     * @param pPos
+     * */
     void deselectCluster(cv::Point2i pPos);
 
+    /**
+     * Add selected SuperPixel (cluster) at the position pPos in the obj (object) vector and remove it from the bg (background) vector
+     * @param pPos position of pixel selected
+     * */
     void addObjectCluster(cv::Point2i pPos);
+    /**
+     * Add selected SuperPixel (cluster) at the position pPos in the bg (background) vector and remove it from the obj (object) vector
+     * @param pPos position of pixel selected
+     * */
     void addBackgroundCluster(cv::Point2i pPos);
+
+    /**
+     * clear the object and background vectors
+     * */
     void clearScribbleClusters();
 
+    /**
+     * 
+     * @param indexCluster
+     * */
     void splitSuperpixel(int indexCluster);
+    /**
+     * 
+     * */
     void clearSelectedClusters();
 
     /* Return the selected region */
+    /**
+     * 
+     * @param pImage
+     * */
     cv::Mat getRoiSelection(const cv::Mat pImage);
     /* Adapt selection of new segmentation from the current one */
+
+    /**
+     * 
+     * */
     void spreadSelection();
     /* Return the list of superpixels labels neighbours of a superpixel given by its label */
+    /**
+     * 
+     * @param pLabelSpx
+     * */
     vector<int> findLabelNeighbours(size_t pLabelSpx);
 
     /* Data access and attribution functions */
+    /**
+     * 
+     * */
     unsigned int nbLabels() { return _nbLabels; }
+    /**
+     * 
+     * */
     const cv::Mat_<int> getClusters() const;
+    /**
+     * 
+     * */
     const vector<int> selectedClusters() const;
+    /**
+     * 
+     * */
     const vector<vector<pair<int, int>>> getCls() const;
+    /**
+     * 
+     * @param pLabel
+     * */
     const vector<pair<int, int>> pixelsOfSuperpixel(int pLabel) const;
+    /**
+     * 
+     * @param pRow
+     * @param pCol
+     * */
     int labelOfPixel(int pRow, int pCol);
+    /**
+     * 
+     * @param pClusters
+     * */
     void setClusters(const cv::Mat_<int> pClusters);
+    /**
+     * 
+     * @param pCls
+     * */
     void setCls(vector<vector<pair<int, int>>> pCls);
 
+    /**
+     * 
+     * */
     int getTreeLevel();
+    /**
+     * 
+     * @param pZoom
+     * */
     void setTreeLevel(unsigned int pZoom);
+    /**
+     * 
+     * */
     void zoomInTree();
+    /**
+     * 
+     * */
     void zoomOutTree();
+    /**
+     * 
+     * @param label
+     * */
     cv::Vec3b getColorFromLabel(int label);
 
+    /**
+     * 
+     * */
     const vector<int> getLabelVec() { return _labelVec; };
 
 private:
-    /** Compute the distance between a center and an individual pixel.
-    * @param pCi index of superpixel
-    * @param pPixel a point to compute distance with
+    /** 
+    * Compute the distance between a center and an individual pixel.
+    * @param clusterIndex index of superpixel
+    * @param pixel a point to compute distance with
     * @param metrics a boolean array indicate which data should be taking into account for compute distance
     * */
-    float computeDist(int pCi, cv::Point pPixel, bool *metrics);
-    /* Find the pixel with the lowest gradient in a 3x3 surrounding. */
-    cv::Point findLocalMinimum(const cv::Mat_<cv::Vec3b> &pImage, cv::Point pCenter);
+    float computeDist(int clusterIndex, cv::Point pixel, bool *metrics);
 
-    /* Remove and initialize the 2d vectors. */
+    /**
+     * Find a local 3D gradient minimum of a pixel in a 3x3 neighbourhood. This
+     * method is called upon initialization of the cluster centers.
+     * @param pCenter the center pixel
+     * */
+    cv::Point findLocalMinimum(cv::Point pCenter);
+
+    /**
+     * Clear attributs vectors and release cv::Mat
+     * */
     void clearData();
-    void initData(const cv::Mat &pImage);
-    /* Added */
+
+    /**
+    * Initialize the cluster centers and initial values of the pixel-wise cluster
+    * assignment and distance values.
+    * Initialize normailzed and interpolated data from range image,
+    * they will be used for distance computation.
+     * @param pImage the image (cv::Mat).
+     * */
+    void initData();
+    /**
+     * 
+     * @param pCols
+     * @param pRows
+     * */
     void initCls(int pCols, int pRows);
 
     /* The step size per cluster, and the colour (nc) and distance (ns)
      * parameters. */
-    int _step, _nc, _ns = 500;
+    // TODO: delete nc (weight)
+    int _step, _nc;
     unsigned int _nbLabels = 0;
 
     /* The cluster assignments and distance values for each pixel. */
     cv::Mat_<int> _clusters;
     cv::Mat_<float> _distances;
 
-    /* The LAB and xy values of the centers. */
-    cv::Mat_<Vec5f> _centers;
+    /* The xy values of the centers. */
+    cv::Mat_<Vec2f> _centers;
+    /* the normalized data from range image (x,y,z,remission)*/
     cv::Mat_<Vec4f> _centersNormalized4D;
+    /* The normalized and interpolated data from range image (x,y,z,remission) */
     cv::Mat_<Vec4f> _centersInterpolated4D;
 
     /* The number of occurences of each center. */

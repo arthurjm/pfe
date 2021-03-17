@@ -139,9 +139,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _ui->clWidget->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
     updateSuperpixelsLevel();
 
-    int w_width = min(_img.cols, (int)MAX_WIDTH);
-    int w_height = min(2 * _img.rows, (int)MAX_HEIGHT);
-
     _brushCursor.setColor(QColor(0, 0, 0));
     _brushCursor.setStyle(Qt::SolidPattern);
     _palCursor.setBrush(QPalette::Active, QPalette::Window, _brushCursor);
