@@ -2,27 +2,11 @@
 
 using namespace std;
 
-PointCloud::PointCloud(string fileName)
-{
-    createPointCloud(fileName);
-    // _pointCloud = getPointCloud(fileName);
-}
-
-PointCloud::PointCloud(string pcfileName, string labelfileName)
-{
-    _fileName = pcfileName;
-    createPointCloud(pcfileName);
-    getLabels(labelfileName);
-    // generateRangeImage(pcfileName);
-}
-
 PointCloud::PointCloud(string pcfileName, string labelfileName, ClickableLabel *cl)
 {
-    _fileName = pcfileName;
     createPointCloud(pcfileName);
     getLabels(labelfileName);
     _cl = cl;
-    // generateRangeImage(pcfileName);
 }
 
 void PointCloud::createPointCloud(string fileName)
@@ -36,7 +20,7 @@ void PointCloud::createPointCloud(string fileName)
         file.seekg(0, std::ios::beg);
         int i;
         float intensity;
-        for (i = 0; file.good() && !file.eof(); i++)
+        for (i = 0; file.good() && !file.eof() && file.peek() != EOF; ++i)
         {
             KittiPoint point;
             file.read((char *)&point.x, 3 * sizeof(float));
@@ -111,10 +95,13 @@ RangeImage PointCloud::generateRangeImage(int width, int height)
             data[idx].z = z;
             data[idx].remission = _remissions.at(i);
             data[idx].depth = depth;
-            data[idx].label = -1;
+            if (_labels.size() > 0)
+                data[idx].label = _labels.at(i);
         }
         i++;
     }
+
+    cout << "Nombre de points projetés : " << _projectedPoints.size() << endl;
 
     RangeImage ri(data, width, height);
     _rangeImage = &ri;
@@ -130,7 +117,7 @@ bool PointCloud::getLabels(string fileName)
     {
         file.seekg(0, std::ios::beg);
         int i;
-        for (i = 0; file.good() && !file.eof(); i++)
+        for (i = 0; file.good() && !file.eof() && file.peek() != EOF; i++)
         {
             uint32_t label;
             file.read((char *)&label, sizeof(uint32_t));
@@ -194,12 +181,13 @@ void PointCloud::ChangeColor(Color colorMode)
     {
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
         {
-            it->r = 0;
-            it->g = 0;
-            it->b = 0;
-            it->a = 0;
+            it->r = 255;
+            it->g = 255;
+            it->b = 255;
+            it->a = 50;
         }
 
+        int pts = 0;
         RangeImage *ri = _cl->getRangeImage();
         const riVertex *riData = ri->getData();
         Slic *slic = _cl->getSlic();
@@ -225,52 +213,61 @@ void PointCloud::ChangeColor(Color colorMode)
                         _pointCloud->at(pcIdx).g = 127;
                         _pointCloud->at(pcIdx).r = 173;
                         _pointCloud->at(pcIdx).a = 255;
+                        pts++;
                     }
-                    if (label == SLIC_LABEL_STUCTURE)
+                    else if (label == SLIC_LABEL_STUCTURE)
                     {
                         _pointCloud->at(pcIdx).b = 78;
                         _pointCloud->at(pcIdx).g = 178;
                         _pointCloud->at(pcIdx).r = 185;
                         _pointCloud->at(pcIdx).a = 255;
+                        pts++;
                     }
-                    if (label == SLIC_LABEL_VEHICLE)
+                    else if (label == SLIC_LABEL_VEHICLE)
                     {
                         _pointCloud->at(pcIdx).b = 205;
                         _pointCloud->at(pcIdx).g = 178;
                         _pointCloud->at(pcIdx).r = 98;
                         _pointCloud->at(pcIdx).a = 255;
+                        pts++;
                     }
-                    if (label == SLIC_LABEL_NATURE)
+                    else if (label == SLIC_LABEL_NATURE)
                     {
                         _pointCloud->at(pcIdx).b = 109;
                         _pointCloud->at(pcIdx).g = 167;
                         _pointCloud->at(pcIdx).r = 96;
                         _pointCloud->at(pcIdx).a = 255;
+                        pts++;
                     }
-                    if (label == SLIC_LABEL_HUMAN)
+                    else if (label == SLIC_LABEL_HUMAN)
                     {
                         _pointCloud->at(pcIdx).b = 0;
                         _pointCloud->at(pcIdx).g = 0;
                         _pointCloud->at(pcIdx).r = 255;
                         _pointCloud->at(pcIdx).a = 255;
+                        pts++;
                     }
-                    if (label == SLIC_LABEL_OBJECT)
+                    else if (label == SLIC_LABEL_OBJECT)
                     {
                         _pointCloud->at(pcIdx).b = 50;
                         _pointCloud->at(pcIdx).g = 88;
                         _pointCloud->at(pcIdx).r = 140;
                         _pointCloud->at(pcIdx).a = 255;
+                        pts++;
                     }
-                    if (label == SLIC_LABEL_OUTLIER)
+                    else if (label == SLIC_LABEL_OUTLIER)
                     {
                         _pointCloud->at(pcIdx).b = 128;
                         _pointCloud->at(pcIdx).g = 128;
                         _pointCloud->at(pcIdx).r = 128;
                         _pointCloud->at(pcIdx).a = 255;
+                        pts++;
                     }
                 }
             }
         }
+
+        cout << "Nombre de points selectionnés : " << pts << endl;
         break;
     }
 

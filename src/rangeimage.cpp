@@ -58,7 +58,7 @@ RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _da
         filePc.seekg(0, std::ios::beg);
         int i;
         float tmp;
-        for (i = 0; filePc.good() && !filePc.eof(); i++)
+        for (i = 0; filePc.good() && !filePc.eof() && filePc.peek() != EOF; i++)
         {
             if (i != 0)
             {
@@ -86,7 +86,7 @@ RangeImage::RangeImage(string pc, string labelFile, int width, int height) : _da
         fileLabel.seekg(0, std::ios::beg);
         int i;
 
-        for (i = 0; fileLabel.good() && !fileLabel.eof(); i++)
+        for (i = 0; fileLabel.good() && !fileLabel.eof() && fileLabel.peek() != EOF; i++)
         {
             uint32_t label;
             fileLabel.read((char *)&label, sizeof(uint32_t));
