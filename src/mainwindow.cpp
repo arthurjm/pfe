@@ -101,7 +101,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
 
-
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
 
     RangeImage ri = _pc->generateRangeImage();
@@ -157,7 +156,7 @@ void MainWindow::openFile()
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
     _ui->vtkWidget->update();
 
-    RangeImage ri = _pc->generateRangeImage(true);
+    RangeImage ri = _pc->generateRangeImage();
 
     _img = ri.createColorMat({RI_Y}, false, true);
     _ui->display_Y->setChecked(true);
@@ -167,12 +166,12 @@ void MainWindow::openFile()
     if (scale < 1.0)
         cv::resize(_img, _img, cv::Size(0, 0), scale, scale);
 
-    _ui->clWidget->clear();
     _ui->clWidget->setImgRef(_img);
     _ui->clWidget->setRangeImage(ri);
 
     _ui->clWidget->initSuperpixels(INITIAL_NB_SPX);
     updateSuperpixelsLevel();
+    _ui->clWidget->clear();
 
     _ui->nbSpxSlider->setMaximum(MAX_LEVEL);
     _ui->spinBoxMaxSpx->setValue(MAX_LEVEL);
@@ -311,6 +310,7 @@ void MainWindow::updateDisplay(int type)
 
 void MainWindow::updateMetrics(int metric)
 {
+    _ui->clWidget->deleteSelection();
     _ui->clWidget->setMetrics(metric);
     _ui->clWidget->initSuperpixels(_ui->nbSpxSlider->maximum());
     updateSuperpixelsLevel();

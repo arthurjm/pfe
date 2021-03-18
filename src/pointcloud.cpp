@@ -257,13 +257,12 @@ void PointCloud::ChangeColor(Color colorMode)
             cout << "Invalid size: " << _labels.size() << " selected labels with " << _pointCloud->size() << " points" << endl;
             break;
         }
-
+        _projectedLabels = _selectedLabels;
         pcl::search::KdTree<KittiPoint> tree(true);
 
         boost::shared_ptr<vector<int>> projectedPointsIndices(new vector<int>());
         for (auto i : _projectedPoints)
             projectedPointsIndices->push_back(i.second.at(0));
-        cout << "size: " << projectedPointsIndices->size() << endl;
 
         tree.setInputCloud(_pointCloud, projectedPointsIndices);
         std::vector<float> k_sqr_distances;
@@ -275,17 +274,13 @@ void PointCloud::ChangeColor(Color colorMode)
             if (_selectedLabels.at(i) == (uint16_t)Label::unlabeled)
             {
                 int res = tree.radiusSearch(_pointCloud->at(i), 1.0, indices, k_sqr_distances, max);
-                // if (res < 100) cout << "res: " << res << endl;
-                // for (int j = 0; j < res; j++)
-                // {
-                // }
                 if (res > 0)
-                    _selectedLabels.at(i) = _selectedLabels.at(indices.at(0));
+                    _projectedLabels.at(i) = _selectedLabels.at(indices.at(0));
             }
         }
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
         {
-            uint16_t l = _selectedLabels.at(i);
+            uint16_t l = _projectedLabels.at(i);
             if (_labelMap.count((Label)l) > 0)
             {
                 it->b = _labelMap[(Label)l].at(0);
@@ -295,7 +290,6 @@ void PointCloud::ChangeColor(Color colorMode)
             }
             ++i;
         }
-        cout << "fin propagation" << endl;
 
         break;
     }

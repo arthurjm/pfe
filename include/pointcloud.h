@@ -95,6 +95,7 @@ private:
     std::vector<float> _remissions;
     std::vector<uint16_t> _labels;
     std::vector<uint16_t> _selectedLabels;
+    std::vector<uint16_t> _projectedLabels;
 
     RangeImage _rangeImage;
     std::map<int, std::vector<int>> _projectedPoints;

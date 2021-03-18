@@ -261,7 +261,7 @@ void RangeImage::interpolation(vector<float> &data, int halfsizeX, int halfsizeY
     {
         for (int j = 0; j < _width; j++)
         {
-            bool validLabel = _data[i * _width + j].label == -1;
+            bool validLabel = _data[i * _width + j].label != -2;
             bool validRemission = _data[i * _width + j].remission == -1;
             if (validLabel && validRemission)
             {
