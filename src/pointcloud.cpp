@@ -249,6 +249,57 @@ void PointCloud::ChangeColor(Color colorMode)
         break;
     }
 
+    case Color::Propagation:
+    {
+        this->getSelectedLabels();
+        if (_selectedLabels.size() != _pointCloud->size())
+        {
+            cout << "Invalid size: " << _labels.size() << " selected labels with " << _pointCloud->size() << " points" << endl;
+            break;
+        }
+
+        pcl::search::KdTree<KittiPoint> tree(true);
+
+        boost::shared_ptr<vector<int>> projectedPointsIndices(new vector<int>());
+        for (auto i : _projectedPoints)
+            projectedPointsIndices->push_back(i.second.at(0));
+        cout << "size: " << projectedPointsIndices->size() << endl;
+
+        tree.setInputCloud(_pointCloud, projectedPointsIndices);
+        std::vector<float> k_sqr_distances;
+        vector<int> indices;
+        // _projectedPoints.begin().second.at(0);
+        int max = 100;
+        for (int i = 0; i < (int)_selectedLabels.size(); ++i)
+        {
+            if (_selectedLabels.at(i) == (uint16_t)Label::unlabeled)
+            {
+                int res = tree.radiusSearch(_pointCloud->at(i), 1.0, indices, k_sqr_distances, max);
+                // if (res < 100) cout << "res: " << res << endl;
+                // for (int j = 0; j < res; j++)
+                // {
+                // }
+                if (res > 0)
+                    _selectedLabels.at(i) = _selectedLabels.at(indices.at(0));
+            }
+        }
+        for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
+        {
+            uint16_t l = _selectedLabels.at(i);
+            if (_labelMap.count((Label)l) > 0)
+            {
+                it->b = _labelMap[(Label)l].at(0);
+                it->g = _labelMap[(Label)l].at(1);
+                it->r = _labelMap[(Label)l].at(2);
+                it->a = 255;
+            }
+            ++i;
+        }
+        cout << "fin propagation" << endl;
+
+        break;
+    }
+
     default: // White
     {
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)

@@ -63,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->projectionPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Projection); });
     connect(_ui->groundTruthPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::GroundTruth); });
     connect(_ui->segmentationPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Segmentation); });
+    connect(_ui->propagationPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Propagation); });
 
     // Connect to range image display RadioButton
     connect(_ui->display_XYZ, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_XYZ); });

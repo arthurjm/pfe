@@ -1,15 +1,15 @@
 #ifndef __CLOUDPOINTS_H__
 #define __CLOUDPOINTS_H__
 
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/visualization/point_cloud_color_handlers.h>
+#include "rangeimage.h"
+#include "clickablelabel.h"
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <string>
 
-#include "rangeimage.h"
-#include "clickablelabel.h"
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/search/kdtree.h>
 
 #define FOV_UP 3.0
 #define FOV_DOWN -25.0
@@ -19,14 +19,14 @@
 
 typedef pcl::PointXYZRGBA KittiPoint;
 typedef pcl::PointCloud<KittiPoint> KittiPointCloud;
-typedef pcl::visualization::PointCloudColorHandlerCustom<KittiPoint> KittiPointCloudColorHandlerCustom;
 
 enum class Color
 {
     White,
     Projection,
     GroundTruth,
-    Segmentation
+    Segmentation,
+    Propagation
 };
 
 enum class Label
@@ -84,20 +84,20 @@ public:
     bool saveLabels(std::string fileName);
 
     void ChangeColor(Color colorMode = Color::White);
+
     const KittiPointCloud::Ptr getPointCloud();
     RangeImage generateRangeImage(bool groundTruth = false, int width = WIDTH, int height = HEIGHT);
 
 private:
     void createPointCloud(std::string fileName);
     void getSelectedLabels();
-
     KittiPointCloud::Ptr _pointCloud;
     std::vector<float> _remissions;
     std::vector<uint16_t> _labels;
     std::vector<uint16_t> _selectedLabels;
 
-    std::map<int, std::vector<int>> _projectedPoints;
     RangeImage _rangeImage;
+    std::map<int, std::vector<int>> _projectedPoints;
 
     // bgr
     std::map<Label, std::vector<uint8_t>> _labelMap = {

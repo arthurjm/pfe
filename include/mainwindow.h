@@ -1,7 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-// #include "clickablelabel.h"
 #include "rangeimage.h"
 #include "pointcloud.h"
 
@@ -17,10 +16,6 @@
 // OpenCV
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
-
-// PCL
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/visualization/point_cloud_color_handlers.h>
 
 // VTK
 #include <vtkRenderWindow.h>
