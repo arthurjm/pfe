@@ -46,3 +46,4 @@ Makefile.gtest
 .qmake.stash
 *.user
 *.txt
+data/malade.label

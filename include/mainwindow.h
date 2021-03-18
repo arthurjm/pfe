@@ -43,6 +43,8 @@ class MainWindow : public QMainWindow
 
 public slots:
     void openFile();
+    void openLabels();
+    void save();
 
     void updateSuperpixelsLevel();
     void initSuperpixelsLevel();
@@ -52,7 +54,6 @@ public slots:
     void updateMaxWeightSlider();
 
     void resetSelection();
-    void save();
     void displayPixelValues(QPoint pPos, QColor pCol, int pLabelSpx);
     void displayCursor(int pX, int pY);
     void setNbSpxSlider(int treeLevel);
@@ -96,8 +97,9 @@ private:
     bool _equalHist = false;
 
     int _minSpx;
-    PointCloud *_pc;
+
     // Pointcloud
+    PointCloud *_pc;
     pcl::visualization::PCLVisualizer::Ptr _pclVisualizer;
 };
 

@@ -75,31 +75,32 @@ public:
      * A cloud points is defined by its coordinates (x,y,z) and its remission r
      * @param fileName location of cloud points
      **/
-    PointCloud(std::string pcfileName, ClickableLabel *cl);
-    PointCloud(std::string pcfileName, std::string labelfileName, ClickableLabel *cl);
+    PointCloud(std::string pcFileName);
+    PointCloud(std::string pcFileName, std::string labelFileName);
+
+    bool openLabels(std::string fileName);
+    bool saveLabels(std::string fileName);
+
     void ChangeColor(Color colorMode = Color::White);
     const KittiPointCloud::Ptr getPointCloud();
-    RangeImage generateRangeImage(int width = WIDTH, int height = HEIGHT);
-    // void setWidget(ClickableLabel *cl) { _cl = cl; };
+    RangeImage generateRangeImage(bool groundTruth = false, int width = WIDTH, int height = HEIGHT);
 
 private:
     void createPointCloud(std::string fileName);
-    bool getLabels(std::string labelfileName);
-    // void generateRangeImage(std::string fileName, int width = 1024, int height = 64);
-
-    ClickableLabel *_cl;
+    void getSelectedLabels();
 
     KittiPointCloud::Ptr _pointCloud;
     std::vector<float> _remissions;
-    std::vector<uint32_t> _labels;
+    std::vector<uint16_t> _labels;
+    std::vector<uint16_t> _selectedLabels;
 
     std::map<int, std::vector<int>> _projectedPoints;
-    RangeImage *_rangeImage;
+    RangeImage _rangeImage;
 
     // bgr
     std::map<Label, std::vector<uint8_t>> _labelMap = {
         {Label::unlabeled, {0, 0, 0}},
-        {Label::outlier, {0, 0, 255}},
+        {Label::outlier, {75, 75, 75}},
         {Label::car, {245, 150, 100}},
         {Label::bicycle, {245, 230, 100}},
         {Label::bus, {250, 80, 100}},

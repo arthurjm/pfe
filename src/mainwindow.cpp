@@ -18,7 +18,6 @@ string getLabelFileName(QString fileName)
     QString labelFileName(path);
     labelFileName.append("/../labels/");
     labelFileName.append(base);
-    std::cout << "label file : " << labelFileName.toStdString() << std::endl;
     return labelFileName.toStdString();
 }
 
@@ -43,7 +42,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _ui->valueNbSpxSlider->setNum(INITIAL_NB_SPX);
     _ui->nbSpxSlider->setValue(INITIAL_NB_SPX);
 
-    connect(_ui->actionOpen_file, SIGNAL(triggered()), this, SLOT(openFile()));
+    // Menu bar actions
+    connect(_ui->openFile, SIGNAL(triggered()), this, SLOT(openFile()));
+    connect(_ui->openLabels, SIGNAL(triggered()), this, SLOT(openLabels()));
+    connect(_ui->saveLabels, SIGNAL(triggered()), this, SLOT(save()));
+
     connect(_ui->nbSpxSlider, SIGNAL(sliderReleased()), this, SLOT(updateSuperpixelsLevel()));
     connect(_ui->nbSpxSlider, SIGNAL(valueChanged(int)), this, SLOT(updateSliderValues()));
     connect(_ui->weightSlider, SIGNAL(sliderReleased()), this, SLOT(updateSuperpixelsWeight()));
@@ -102,7 +105,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
         return;
     }
 
-    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName), _ui->clWidget);
+    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
     // _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
 
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
@@ -152,19 +155,19 @@ MainWindow::~MainWindow()
 
 void MainWindow::openFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/velodyne"), "Binary file (*.bin)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open a point cloud", QString("../data/velodyne"), "Binary file (*.bin)");
     if (fileName == nullptr)
         return;
 
     if (_pc != nullptr)
         delete _pc;
 
-    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName), _ui->clWidget);
+    _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
     _pclVisualizer->removeAllPointClouds();
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
     _ui->vtkWidget->update();
 
-    RangeImage ri = _pc->generateRangeImage();
+    RangeImage ri = _pc->generateRangeImage(true);
 
     _img = ri.createColorMat({RI_Y}, false, true);
     _ui->display_Y->setChecked(true);
@@ -192,6 +195,22 @@ void MainWindow::openFile()
 
     _ui->statusBar->addWidget(_ui->pixelValuesLabel);
     _ui->statusBar->addWidget(_ui->pixelColorLabel);
+}
+
+void MainWindow::openLabels()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, "Open labels", QString("../data/label"), "Label file (*.label)");
+    if (fileName == nullptr)
+        return;
+    _pc->openLabels(fileName.toStdString());
+}
+
+void MainWindow::save()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, "Save labels", QString("../data"), "Label file (*.label)");
+    if (fileName == nullptr)
+        return;
+    _pc->saveLabels(fileName.toStdString());
 }
 
 void MainWindow::initSuperpixelsLevel()
@@ -249,12 +268,6 @@ void MainWindow::setNbSpxSlider(int treeLevel)
 void MainWindow::resetSelection()
 {
     _ui->clWidget->deleteSelection();
-}
-
-void MainWindow::save()
-{
-    QString fileName = QFileDialog::getSaveFileName(this, "Save a range image", QString("../data/range_image_labeled/save.bin"), "Binary file (*.bin)");
-    _ui->clWidget->saveSelection(fileName.toStdString());
 }
 
 void MainWindow::displayPixelValues(QPoint pos, QColor col, int label_spx)

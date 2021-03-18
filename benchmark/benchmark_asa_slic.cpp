@@ -79,7 +79,7 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
     // The range image contains the ground truth data on label.
     PointCloud pc(pathPointCloud, pathLabel, nullptr);
 
-    RangeImage ri = pc.generateRangeImage();
+    RangeImage ri = pc.generateRangeImage(true);
     // RangeImage ri(pathPointCloud, pathLabel);
     Slic slic;
 
