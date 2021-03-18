@@ -78,7 +78,6 @@ public:
      **/
     RangeImage(riVertex *data, int width = WIDTH, int height = HEIGHT);
 
-
     /** 
      * Copy assignement 
      * @param ri lvalue of RangeImage object
@@ -105,21 +104,6 @@ public:
      * */
     cv::Mat createColorMat(std::vector<int> idx, bool isGray = false, bool interpolate = false, bool closing = false, bool equalHist = false);
 
-    /**
-     * Project voxels from pointcould to 2D space 
-     * // TODO Arthur and Tsiory
-     * @param scan_x
-     * @param scan_y
-     * @param scan_z
-     * @param scan_remission
-     * @param labels
-     * @param proj_fov_up 
-     * @param proj_fov_down 
-     * */
-    void pointCloudProjection(std::vector<float> scan_x, std::vector<float> scan_y,
-                              std::vector<float> scan_z, std::vector<float> scan_remission, std::vector<uint16_t> labels,
-                              float proj_fov_up, float proj_fov_down);
-                              
     /** 
      * Access _data with read only permission
      * @return an const pointer of _data

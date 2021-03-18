@@ -28,7 +28,7 @@ map<int, vector<float>> _result;
 float computeAccuracy(Slic *slic, const riVertex *riData, int width)
 {
     // nbLabels == number of clusters in the SLIC Algortithm
-    unsigned int nbLabel = slic->nbLabels() - 1;
+    unsigned int nbLabel = slic->nbLabels();
     unsigned int nbCluster = slic->getTreeLevel();
     float sum = 0;
 

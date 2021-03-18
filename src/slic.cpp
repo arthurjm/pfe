@@ -29,7 +29,6 @@ void Slic::initData()
     }
     _clusters = cv::Mat_<int>(height, width, -1);
     _distances = cv::Mat_<float>(height, width, FLT_MAX);
-    _labelVec.assign(height * width, -1);
 
     /* Initialize the centers and counters. */
     const vector<float> *interpolatedData = _rangeImage.getNormalizedAndInterpolatedData();
@@ -416,8 +415,9 @@ void Slic::createHierarchy(bool metrics[4])
 
     cv::Mat_<int> L = _clusters.clone().reshape(1, h * w);
 
-    _nbLabels = _nbLabels + 1; // TODO : try to remove +1
+    //_nbLabels = _nbLabels +1 ; // TODO : try to remove +1
 
+    _labelVec.assign(_nbLabels, -1);
     float comp_factor = 100.0 / (h * w);
     float compactness = comp_factor * _nbLabels;
 
@@ -664,6 +664,8 @@ void Slic::multiLabelisationConnected(int label)
     if (obj.empty() || bg.empty())
         return;
     int lvl, min;
+    const riVertex *riData = _rangeImage.getData();
+    int width = _rangeImage.getWidth();
     // loop through object and background vector and find the minimum tree level where both labels are equal
     for (size_t i = 0; i < obj.size(); i++)
     {
@@ -685,6 +687,14 @@ void Slic::multiLabelisationConnected(int label)
                 if (find(_selectedClusters.begin(), _selectedClusters.end(), spx) == _selectedClusters.end())
                 {
                     _labelVec.at(spx) = label;
+                    vector<pair<int, int>> pixels = pixelsOfSuperpixel(spx);
+                    unsigned int size = pixels.size();
+                    for (unsigned int j = 0; j < size; j++)
+                    {
+                        int index = pixels.at(j).first * width + pixels.at(j).second;
+                        if (riData[index].remission != -1)
+                            _rangeImage.setLabel(index, label);
+                    }
                     _selectedClusters.push_back(spx);
                 }
             }
@@ -712,6 +722,14 @@ void Slic::multiLabelisationConnected(int label)
                 if (spxIterator != _selectedClusters.end())
                 {
                     _labelVec.at(spx) = -1;
+                    vector<pair<int, int>> pixels = pixelsOfSuperpixel(spx);
+                    unsigned int size = pixels.size();
+                    for (unsigned int j = 0; j < size; j++)
+                    {
+                        int index = pixels.at(j).first * width + pixels.at(j).second;
+                        if (riData[index].remission != -1)
+                            _rangeImage.setLabel(index, -1);
+                    }
                     _selectedClusters.erase(spxIterator);
                 }
             }
@@ -1042,11 +1060,23 @@ void Slic::selectCluster(cv::Point2i pPos, int label)
     int indexCluster = labelOfPixel(pPos.y, pPos.x);
     if (indexCluster == -1)
         return;
+
+    const riVertex *riData = _rangeImage.getData();
+    int width = _rangeImage.getWidth();
     for (unsigned int i = 0; i < _nbLabels; i++)
     {
         if (tree(treeLevel, i) == indexCluster)
         {
             _labelVec.at(i) = label;
+            vector<pair<int, int>> pixels = pixelsOfSuperpixel(i);
+            unsigned int size = pixels.size();
+            for (unsigned int j = 0; j < size; j++)
+            {
+                int index = pixels.at(j).first * width + pixels.at(j).second;
+                if (riData[index].remission != -1)
+                    _rangeImage.setLabel(index, label);
+            }
+
             if (find(_selectedClusters.begin(), _selectedClusters.end(), i) == _selectedClusters.end())
             {
                 _selectedClusters.push_back(i);
@@ -1066,6 +1096,9 @@ void Slic::deselectCluster(cv::Point2i pPos)
     int indexCluster = labelOfPixel(pPos.y, pPos.x);
     if (indexCluster == -1)
         return;
+
+    const riVertex *riData = _rangeImage.getData();
+    int width = _rangeImage.getWidth();
     for (unsigned int i = 0; i < _nbLabels; i++)
     {
         if (tree(treeLevel, i) == indexCluster)
@@ -1078,6 +1111,15 @@ void Slic::deselectCluster(cv::Point2i pPos)
             auto index = find(_selectedClusters.begin(), _selectedClusters.end(), i);
             if (index != _selectedClusters.end())
             {
+                _labelVec.at(i) = -1;
+                vector<pair<int, int>> pixels = pixelsOfSuperpixel(i);
+                unsigned int size = pixels.size();
+                for (unsigned int j = 0; j < size; j++)
+                {
+                    int index = pixels.at(j).first * width + pixels.at(j).second;
+                    if (riData[index].remission != -1)
+                        _rangeImage.setLabel(index, -1);
+                }
                 _selectedClusters.erase(index);
             }
         }
@@ -1098,6 +1140,20 @@ void Slic::deselectCluster(cv::Point2i pPos)
 
 void Slic::clearSelectedClusters()
 {
+    int width = _rangeImage.getWidth();
+    const riVertex *riData = _rangeImage.getData();
+    for (uint i = 0; i < _labelVec.size(); i++)
+    {
+        _labelVec.at(i) = -1;
+        vector<pair<int, int>> pixels = pixelsOfSuperpixel(i);
+        unsigned int size = pixels.size();
+        for (unsigned int j = 0; j < size; j++)
+        {
+            int index = pixels.at(j).first * width + pixels.at(j).second;
+            if (riData[index].remission != -1)
+                _rangeImage.setLabel(index, -1);
+        }
+    }
     _selectedClusters.clear();
 }
 
