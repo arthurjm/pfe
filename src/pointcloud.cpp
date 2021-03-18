@@ -165,7 +165,7 @@ bool PointCloud::saveLabels(string fileName)
     if (file.good())
     {
         file.seekg(0, std::ios::beg);
-        for (uint16_t label : _selectedLabels)
+        for (uint16_t label : _projectedLabels)
         {
             uint32_t label32 = ((uint32_t)0 << 16) | (uint32_t)label;
             file.write((char *)&label32, sizeof(uint32_t));
