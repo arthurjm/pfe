@@ -36,9 +36,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _pclVisualizer->setBackgroundColor(0.2, 0.2, 0.2);
     _pclVisualizer->setShowFPS(false);
 
-    _ui->valueWeightSlider->setNum(INITIAL_WEIGHT);
-    _ui->weightSlider->setValue(INITIAL_WEIGHT);
-
     _ui->valueNbSpxSlider->setNum(INITIAL_NB_SPX);
     _ui->nbSpxSlider->setValue(INITIAL_NB_SPX);
 
@@ -49,17 +46,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     connect(_ui->nbSpxSlider, SIGNAL(sliderReleased()), this, SLOT(updateSuperpixelsLevel()));
     connect(_ui->nbSpxSlider, SIGNAL(valueChanged(int)), this, SLOT(updateSliderValues()));
-    connect(_ui->weightSlider, SIGNAL(sliderReleased()), this, SLOT(updateSuperpixelsWeight()));
-    connect(_ui->weightSlider, SIGNAL(valueChanged(int)), this, SLOT(updateSliderValues()));
     connect(_ui->resetSelectionButton, SIGNAL(released()), this, SLOT(resetSelection()));
-    connect(_ui->saveSelectionButton, SIGNAL(released()), this, SLOT(save()));
-    connect(_ui->selectionButton, SIGNAL(released()), this, SLOT(switchMode()));
+    connect(_ui->selectionButton, SIGNAL(released()), this, SLOT(switchSelection()));
     connect(_ui->contoursButton, SIGNAL(released()), this, SLOT(switchContours()));
     // bind clear maker button
     connect(_ui->clearMarkerButton, &QPushButton::released, this, [this]() { updateDisplay(_currentDisplayType); });
 
     connect(_ui->spinBoxMaxSpx, SIGNAL(editingFinished()), this, SLOT(updateMaxSpxSlider()));
-    connect(_ui->spinBoxMaxWeight, SIGNAL(valueChanged(int)), this, SLOT(updateMaxWeightSlider()));
 
     connect(_ui->clWidget, SIGNAL(pixelValue(QPoint, QColor, int)), this, SLOT(displayPixelValues(QPoint, QColor, int)));
     connect(_ui->clWidget, SIGNAL(mousePos(int, int)), this, SLOT(displayCursor(int, int)));
@@ -68,8 +61,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     // Pointcloud buttons
     connect(_ui->whitePointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::White); });
     connect(_ui->projectionPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Projection); });
-    connect(_ui->vtPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::GroundTruth); });
-    connect(_ui->greenPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Segmentation); });
+    connect(_ui->groundTruthPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::GroundTruth); });
+    connect(_ui->segmentationPointcloudButton, &QRadioButton::clicked, this, [this]() { updateColor(Color::Segmentation); });
 
     // Connect to range image display RadioButton
     connect(_ui->display_XYZ, &QRadioButton::clicked, this, [this]() { updateDisplay(RI_XYZ); });
@@ -106,7 +99,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     }
 
     _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
-    // _pc = new PointCloud(fileName.toStdString(), getLabelFileName(fileName));
+
 
     _pclVisualizer->addPointCloud<KittiPoint>(_pc->getPointCloud(), "point_cloud");
 
@@ -133,13 +126,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     _ui->clWidget->setRangeImage(ri);
     _ui->clWidget->setMaximumLevel(MAX_LEVEL);
     _ui->nbSpxSlider->setMaximum(MAX_LEVEL);
-    _ui->weightSlider->setMaximum(MAX_WEIGHT);
     _ui->spinBoxMaxSpx->setValue(MAX_LEVEL);
-    _ui->spinBoxMaxWeight->setValue(MAX_WEIGHT);
 
-    _ui->spinBoxMaxWeight->setVisible(false); //remove to enable changing max values of weight
-
-    _ui->clWidget->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
+    _ui->clWidget->initSuperpixels(INITIAL_NB_SPX);
     updateSuperpixelsLevel();
 
     _brushCursor.setColor(QColor(0, 0, 0));
@@ -181,14 +170,11 @@ void MainWindow::openFile()
     _ui->clWidget->setImgRef(_img);
     _ui->clWidget->setRangeImage(ri);
 
-    _ui->clWidget->initSuperpixels(INITIAL_NB_SPX, INITIAL_WEIGHT);
+    _ui->clWidget->initSuperpixels(INITIAL_NB_SPX);
     updateSuperpixelsLevel();
 
     _ui->nbSpxSlider->setMaximum(MAX_LEVEL);
     _ui->spinBoxMaxSpx->setValue(MAX_LEVEL);
-
-    _ui->valueWeightSlider->setNum(INITIAL_WEIGHT);
-    _ui->weightSlider->setValue(INITIAL_WEIGHT);
 
     _ui->valueNbSpxSlider->setNum(INITIAL_NB_SPX);
     _ui->nbSpxSlider->setValue(INITIAL_NB_SPX);
@@ -215,30 +201,17 @@ void MainWindow::save()
 
 void MainWindow::initSuperpixelsLevel()
 {
-    // _ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), true);
-    _ui->clWidget->initSuperpixels(_ui->nbSpxSlider->maximum(), _ui->weightSlider->value());
+    _ui->clWidget->initSuperpixels(_ui->nbSpxSlider->maximum());
 }
 
 void MainWindow::updateSuperpixelsLevel()
 {
-    //_ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value(), _ui->weightSlider->value(), false);
     _ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value());
-}
-
-void MainWindow::updateSuperpixelsWeight()
-{
-    initSuperpixelsLevel();
-    _ui->clWidget->clear();
 }
 
 void MainWindow::updateSliderValues()
 {
     _ui->valueNbSpxSlider->setNum(_ui->nbSpxSlider->value());
-    // if (_ui->weightSlider->value() == _ui->weightSlider->maximum()){
-    //     _ui->valueWeightSlider->setText(trUtf8("\u221e")); // Symbol infinite
-    // } else {
-    _ui->valueWeightSlider->setNum(_ui->weightSlider->value());
-    // }
 }
 
 void MainWindow::updateMaxSpxSlider()
@@ -252,11 +225,6 @@ void MainWindow::updateMaxSpxSlider()
 
     initSuperpixelsLevel();
     updateSuperpixelsLevel();
-}
-
-void MainWindow::updateMaxWeightSlider()
-{
-    _ui->weightSlider->setMaximum(_ui->spinBoxMaxWeight->value());
 }
 
 void MainWindow::setNbSpxSlider(int treeLevel)
@@ -297,13 +265,13 @@ void MainWindow::displayCursor(int x, int y)
     _ui->cursor->show();
 }
 
-void MainWindow::switchMode()
+void MainWindow::switchSelection()
 {
     if (_isScribble)
     {
         _isScribble = false;
         _ui->clWidget->setScribble(false);
-        _ui->selectionButton->setText("Selection");
+        _ui->selectionButton->setText("Scribble");
         this->setCursor(Qt::ArrowCursor);
         _ui->nbSpxSlider->setVisible(true);
     }
@@ -311,14 +279,8 @@ void MainWindow::switchMode()
     {
         _isScribble = true;
         _ui->clWidget->setScribble(true);
-        _ui->selectionButton->setText("Scribble");
+        _ui->selectionButton->setText("Selection");
         this->setCursor(Qt::PointingHandCursor);
-
-        //set nb spx on max level and disable it :
-        // _ui->valueNbSpxSlider->setNum(_ui->clWidget->nbSpx());
-        // _ui->nbSpxSlider->setValue(_ui->clWidget->nbSpx());
-        // _ui->clWidget->updateSuperpixels(_ui->nbSpxSlider->value());
-        // _ui->nbSpxSlider->setVisible(false);
     }
 }
 
@@ -337,6 +299,7 @@ void MainWindow::switchContours()
         _ui->contoursButton->setText("Object + contours");
     }
 }
+
 void MainWindow::updateDisplay(int type)
 {
     _img = _ui->clWidget->getDisplayMat(type, _isGray, _interpolate, _closing, _equalHist);
@@ -348,7 +311,7 @@ void MainWindow::updateDisplay(int type)
 void MainWindow::updateMetrics(int metric)
 {
     _ui->clWidget->setMetrics(metric);
-    _ui->clWidget->initSuperpixels(_ui->nbSpxSlider->maximum(), _ui->weightSlider->value());
+    _ui->clWidget->initSuperpixels(_ui->nbSpxSlider->maximum());
     updateSuperpixelsLevel();
 }
 
@@ -357,4 +320,17 @@ void MainWindow::updateColor(Color colorMode)
     _pc->ChangeColor(colorMode);
     _pclVisualizer->updatePointCloud(_pc->getPointCloud(), "point_cloud");
     _ui->vtkWidget->update();
+    if (colorMode == Color::Segmentation)
+    {
+        if (!_segmentation)
+        {
+            _segmentation = !_segmentation;
+            _ui->segmentationPointcloudButton->setText("Refresh selection");
+        }
+    }
+    else if (_segmentation)
+    {
+        _segmentation = !_segmentation;
+        _ui->segmentationPointcloudButton->setText("Selected labels");
+    }
 }

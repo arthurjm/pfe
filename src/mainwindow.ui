@@ -62,13 +62,13 @@
          <property name="minimumSize">
           <size>
            <width>1024</width>
-           <height>0</height>
+           <height>128</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
            <width>1024</width>
-           <height>16777215</height>
+           <height>128</height>
           </size>
          </property>
         </widget>
@@ -106,45 +106,32 @@
           <property name="verticalSpacing">
            <number>0</number>
           </property>
-          <item row="0" column="4">
-           <widget class="QPushButton" name="saveSelectionButton">
-            <property name="text">
-             <string>Save Selection</string>
-            </property>
-            <property name="autoDefault">
-             <bool>false</bool>
-            </property>
-            <property name="default">
-             <bool>false</bool>
-            </property>
-            <property name="flat">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="3">
-           <widget class="QSpinBox" name="spinBoxMaxWeight">
+          <item row="0" column="3">
+           <widget class="QSpinBox" name="spinBoxMaxSpx">
             <property name="minimum">
              <number>1</number>
             </property>
             <property name="maximum">
-             <number>100</number>
+             <number>10000</number>
             </property>
             <property name="singleStep">
-             <number>10</number>
+             <number>100</number>
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="weightLabel">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>30</height>
-             </size>
+          <item row="0" column="1">
+           <widget class="QSlider" name="nbSpxSlider">
+            <property name="minimum">
+             <number>1</number>
             </property>
-            <property name="text">
-             <string>Weight</string>
+            <property name="maximum">
+             <number>1000</number>
+            </property>
+            <property name="value">
+             <number>300</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
@@ -167,13 +154,6 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="2">
-           <widget class="QLabel" name="valueWeightSlider">
-            <property name="text">
-             <string>&amp;20</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="5">
            <widget class="QLabel" name="selectedColorLabel">
             <property name="minimumSize">
@@ -190,62 +170,17 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QSlider" name="nbSpxSlider">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>1000</number>
-            </property>
-            <property name="value">
-             <number>300</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QSpinBox" name="spinBoxMaxSpx">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>10000</number>
-            </property>
-            <property name="singleStep">
-             <number>100</number>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="4">
-           <widget class="QPushButton" name="resetSelectionButton">
-            <property name="text">
-             <string>Reset Selection</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QSlider" name="weightSlider">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>20</number>
-            </property>
-            <property name="value">
-             <number>10</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="0">
            <widget class="QLabel" name="nbSpxLabel">
             <property name="text">
              <string>Number of superpixels</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QPushButton" name="resetSelectionButton">
+            <property name="text">
+             <string>Reset Selection</string>
             </property>
            </widget>
           </item>
@@ -288,7 +223,7 @@
              </size>
             </property>
             <property name="text">
-             <string>Selection</string>
+             <string>Scribble</string>
             </property>
             <property name="checkable">
              <bool>false</bool>
@@ -334,30 +269,30 @@
        <item row="0" column="1">
         <layout class="QVBoxLayout" name="vtkButtons">
          <item>
-          <widget class="QRadioButton" name="whitePointcloudButton">
+          <widget class="QPushButton" name="whitePointcloudButton">
            <property name="text">
-            <string>White</string>
+            <string>Default</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="projectionPointcloudButton">
+          <widget class="QPushButton" name="projectionPointcloudButton">
            <property name="text">
             <string>Projection</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="vtPointcloudButton">
+          <widget class="QPushButton" name="groundTruthPointcloudButton">
            <property name="text">
             <string>Ground truth</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="greenPointcloudButton">
+          <widget class="QPushButton" name="segmentationPointcloudButton">
            <property name="text">
-            <string>Segmentation</string>
+            <string>Selected labels</string>
            </property>
           </widget>
          </item>
@@ -600,7 +535,7 @@
                  <bool>false</bool>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">color:purple</string>
+                 <string notr="true">color:rgb(255,0,255)</string>
                 </property>
                 <property name="text">
                  <string>&amp;Ground</string>
@@ -616,7 +551,7 @@
                  </font>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">color:rgb(113,108,44)</string>
+                 <string notr="true">color:rgb(255,200,0)</string>
                 </property>
                 <property name="text">
                  <string>Structure</string>
@@ -632,7 +567,7 @@
                  </font>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">color:rgb(98,178,205)</string>
+                 <string notr="true">color:rgb(100,150,245)</string>
                 </property>
                 <property name="text">
                  <string>&amp;Vehicle</string>
@@ -648,7 +583,7 @@
                  </font>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">color:green</string>
+                 <string notr="true">color:rgb(0,175,0)</string>
                 </property>
                 <property name="text">
                  <string>Nature</string>
@@ -664,7 +599,7 @@
                  </font>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">color:red</string>
+                 <string notr="true">color:rgb(255,30,30)</string>
                 </property>
                 <property name="text">
                  <string>&amp;Human</string>
@@ -680,7 +615,7 @@
                  </font>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">color:brown</string>
+                 <string notr="true">color:rgb(255,240,150)</string>
                 </property>
                 <property name="text">
                  <string>O&amp;bject</string>
@@ -696,7 +631,7 @@
                  </font>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">color:gray</string>
+                 <string notr="true">color:rgb(100,100,100)</string>
                 </property>
                 <property name="text">
                  <string>Outlier</string>
@@ -1274,12 +1209,12 @@
      <x>0</x>
      <y>0</y>
      <width>1380</width>
-     <height>22</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>Fi&amp;le</string>
     </property>
     <addaction name="openFile"/>
     <addaction name="openLabels"/>
@@ -1290,28 +1225,28 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="openFile">
    <property name="text">
-    <string>Open file</string>
+    <string>&amp;Open file</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
    </property>
   </action>
   <action name="openLabels">
-    <property name="text">
-     <string>Open labels</string>
-    </property>
-    <property name="shortcut">
-        <string>Ctrl+L</string>
-    </property>
-   </action>
-   <action name="saveLabels">
-    <property name="text">
-     <string>Save labels</string>
-    </property>
-    <property name="shortcut">
-     <string>Ctrl+S</string>
-    </property>
-   </action>
+   <property name="text">
+    <string>Open &amp;labels</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="saveLabels">
+   <property name="text">
+    <string>&amp;Save labels</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

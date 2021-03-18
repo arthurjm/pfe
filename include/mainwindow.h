@@ -28,9 +28,7 @@
 #define MAX_WIDTH 2100.0
 #define MAX_HEIGHT 800.0
 #define INITIAL_NB_SPX 500
-#define INITIAL_WEIGHT 20
 #define MAX_LEVEL 500
-#define MAX_WEIGHT 20
 
 namespace Ui
 {
@@ -48,19 +46,16 @@ public slots:
 
     void updateSuperpixelsLevel();
     void initSuperpixelsLevel();
-    void updateSuperpixelsWeight();
     void updateSliderValues();
     void updateMaxSpxSlider();
-    void updateMaxWeightSlider();
 
     void resetSelection();
     void displayPixelValues(QPoint pPos, QColor pCol, int pLabelSpx);
     void displayCursor(int pX, int pY);
     void setNbSpxSlider(int treeLevel);
-    void switchMode();
-    void switchContours();
 
-    // void displayProjectedPoints();
+    void switchSelection();
+    void switchContours();
 
     void updateColor(Color colorMode = Color::White);
 
@@ -95,6 +90,7 @@ private:
     bool _closing = false;
     int _currentDisplayType = RI_Y;
     bool _equalHist = false;
+    bool _segmentation = false;
 
     int _minSpx;
 

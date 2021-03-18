@@ -92,14 +92,14 @@ void ClickableLabel::clearScribble()
  * Input : Number of superpixels (int), weight (int)
  * Output: -
  */
-void ClickableLabel::initSuperpixels(int pNbSpx, int pWeight)
+void ClickableLabel::initSuperpixels(int pNbSpx)
 {
     if (_imgRef.empty())
         return;
     Mat imgTmp = _imgRef.clone();
     Mat labImage;
     cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
-    _slic->generateSuperpixels(pNbSpx, pWeight, _rangeImage, _metrics);
+    _slic->generateSuperpixels(pNbSpx, _rangeImage, _metrics);
     _slic->createConnectivity();
     _slic->createHierarchy(_metrics);
 
@@ -202,33 +202,6 @@ void ClickableLabel::deleteSelection()
     updateDisplay();
 }
 
-/*
- *  Save the current selection in the /images folder.
- *
- * Input : -
- * Output: -
- */
-void ClickableLabel::saveSelection(string filename)
-{
-    // get labelized labels from slic and compare with labels in range image
-    // only update on valide index where label on range image != -2
-
-    const riVertex *riData = _rangeImage.getData();
-    unsigned int nbCluster = _slic->nbLabels() - 1;
-    vector<int> labels = _slic->getLabelVec();
-    for (int i = 0; i < nbCluster; i++)
-    {
-        int label = labels.at(i);
-        vector<pair<int, int>> pixels = _slic->pixelsOfSuperpixel(i);
-        unsigned int size = pixels.size();
-        for (unsigned int j = 0; j < size; j++)
-        {
-            int index = pixels.at(j).first * _imgRef.cols + pixels.at(j).second;
-            if (riData[index].remission != -1)
-                _rangeImage.setLabel(index, label);
-        }
-    }
-}
 
 /*
  *  Get the global coordinate based on the current zoom, the image coordinate
@@ -593,25 +566,25 @@ QColor ClickableLabel::getObjMarkerColor()
     switch (_currentLabel)
     {
     case SLIC_LABEL_GROUND:
-        return QColor(173, 127, 168);
+        return QColor(255, 0, 255);
         break;
     case SLIC_LABEL_STUCTURE:
-        return QColor(185, 178, 78);
+        return QColor(255, 200, 0);
         break;
     case SLIC_LABEL_VEHICLE:
-        return QColor(98, 178, 205);
+        return QColor(100, 150, 245);
         break;
     case SLIC_LABEL_NATURE:
-        return QColor(96, 167, 109);
+        return QColor(0, 175, 0);
         break;
     case SLIC_LABEL_HUMAN:
-        return QColor(255, 0, 0);
+        return QColor(255, 30, 30);
         break;
     case SLIC_LABEL_OBJECT:
-        return QColor(140, 88, 50);
+        return QColor(255, 240, 150);
         break;
     case SLIC_LABEL_OUTLIER:
-        return QColor(128, 128, 128);
+        return QColor(75, 75, 75);
         break;
     default:
         return QColor(255, 255, 255);

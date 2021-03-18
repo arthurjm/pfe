@@ -20,9 +20,8 @@ PointCloud::PointCloud(string pcFileName, string labelFileName)
     openLabels(labelFileName);
 
     _selectedLabels.reserve(_pointCloud->size());
-    uint32_t unlabel = ((uint32_t)0 << 16) | (uint32_t)1;
-    for (int i = 0; i < _pointCloud->size(); ++i)
-        _selectedLabels.push_back(unlabel);
+    for (size_t i = 0; i < _pointCloud->size(); ++i)
+        _selectedLabels.push_back((uint16_t)Label::unlabeled);
 }
 
 void PointCloud::createPointCloud(string fileName)
@@ -50,7 +49,6 @@ void PointCloud::createPointCloud(string fileName)
             file.read((char *)&intensity, sizeof(float));
             _remissions.push_back(intensity);
         }
-        // cout << "Nombre de points : " << _pointCloud->size() << endl;
     }
     file.close();
 }
@@ -117,8 +115,6 @@ RangeImage PointCloud::generateRangeImage(bool groundTruth, int width, int heigh
         i++;
     }
 
-    // cout << "Nombre de points projetés : " << _projectedPoints.size() << endl;
-
     RangeImage ri(data, width, height);
     _rangeImage = ri;
     return _rangeImage;
@@ -126,30 +122,25 @@ RangeImage PointCloud::generateRangeImage(bool groundTruth, int width, int heigh
 
 void PointCloud::getSelectedLabels()
 {
-    int pts = 0;
     const riVertex *riData = _rangeImage.getData();
 
     for (map<int, std::vector<int>>::iterator it = _projectedPoints.begin(); it != _projectedPoints.end(); ++it)
     {
         int pcIdx = it->second.at(0);
         int riIdx = it->first;
-        if (pcIdx <= _selectedLabels.size() && riIdx <= _rangeImage.getWidth() * _rangeImage.getHeight())
+        if (pcIdx < (int)_selectedLabels.size() && riIdx < _rangeImage.getWidth() * _rangeImage.getHeight())
         {
             if (riData[riIdx].label < 0)
                 _selectedLabels.at(pcIdx) = (uint16_t)Label::unlabeled; // unlabeled because not in the range image
             else
                 _selectedLabels.at(pcIdx) = (uint16_t)riData[riIdx].label;
         }
-        else
-            cout << "pc idx:" << pcIdx << " size:" << _selectedLabels.size()
-                 << "\nri idx:" << riIdx << " size:" << _rangeImage.getWidth() * _rangeImage.getHeight() << endl;
     }
 }
 
 bool PointCloud::openLabels(string fileName)
 {
     _labels.clear();
-    cout << _labels.capacity() << endl;
     fstream file(fileName.c_str(), ios::in | ios::binary);
     if (file.good())
     {
@@ -162,7 +153,6 @@ bool PointCloud::openLabels(string fileName)
 
             _labels.push_back((uint16_t)label);
         }
-        cout << "Nombre de labels ouverts : " << i << endl;
         file.close();
         return true;
     }
@@ -175,13 +165,11 @@ bool PointCloud::saveLabels(string fileName)
     if (file.good())
     {
         file.seekg(0, std::ios::beg);
-        int i;
-        for (uint32_t label : _selectedLabels)
+        for (uint16_t label : _selectedLabels)
         {
-            file.write((char *)&label, sizeof(uint32_t));
-            i++;
+            uint32_t label32 = ((uint32_t)0 << 16) | (uint32_t)label;
+            file.write((char *)&label32, sizeof(uint32_t));
         }
-        cout << "Nombre de labels sauvegardés: " << i << endl;
         file.close();
         return true;
     }
@@ -190,7 +178,6 @@ bool PointCloud::saveLabels(string fileName)
 
 void PointCloud::ChangeColor(Color colorMode)
 {
-    // std::cout << "Couleur changée" << std::endl;
     int i = 0;
 
     switch (colorMode)
@@ -217,8 +204,11 @@ void PointCloud::ChangeColor(Color colorMode)
 
     case Color::GroundTruth:
     {
-        if (_labels.size() < _pointCloud->size())
+        if (_labels.size() != _pointCloud->size())
+        {
+            cout << "Invalid size: " << _labels.size() << " labels with " << _pointCloud->size() << " points" << endl;
             break;
+        }
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
         {
             uint16_t l = _labels.at(i);
@@ -237,16 +227,12 @@ void PointCloud::ChangeColor(Color colorMode)
     case Color::Segmentation:
     {
         this->getSelectedLabels();
-        // for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
-        // {
-        //     it->r = 255;
-        //     it->g = 255;
-        //     it->b = 255;
-        //     it->a = 50;
-        // }
 
-        if (_selectedLabels.size() < _pointCloud->size())
+        if (_selectedLabels.size() != _pointCloud->size())
+        {
+            cout << "Invalid size: " << _labels.size() << " selected labels with " << _pointCloud->size() << " points" << endl;
             break;
+        }
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
         {
             uint16_t l = _selectedLabels.at(i);
@@ -257,14 +243,9 @@ void PointCloud::ChangeColor(Color colorMode)
                 it->r = _labelMap[(Label)l].at(2);
                 it->a = 255;
             }
-            else
-            {
-                cout << l << endl;
-            }
             ++i;
         }
 
-        // cout << "Nombre de points selectionnés : " << pts << endl;
         break;
     }
 

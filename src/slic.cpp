@@ -151,8 +151,7 @@ cv::Point Slic::findLocalMinimum(cv::Point pCenter)
     return loc_min;
 }
 
-// TODO : delete pNc (weight) or rename
-void Slic::generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool metrics[4])
+void Slic::generateSuperpixels(int nbSpx, RangeImage &ri, bool metrics[4])
 {
     int width = ri.getWidth();
     int height = ri.getHeight();
@@ -176,8 +175,6 @@ void Slic::generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool metrics[
     }
     _selectedClusters.clear();
     _step = step;
-    // TODO : delete (weight) pNc or rename
-    _nc = pNc;
 
     /* Clear previous data (if any), and re-initialize it. */
     clearData();
@@ -1382,25 +1379,25 @@ cv::Vec3b Slic::getColorFromLabel(int index)
     switch (label)
     {
     case SLIC_LABEL_GROUND:
-        color = cv::Vec3b(168, 127, 173);
+        color = cv::Vec3b(255, 0, 255);
         break;
     case SLIC_LABEL_STUCTURE:
-        color = cv::Vec3b(78, 178, 185);
+        color = cv::Vec3b(0, 200, 255);
         break;
     case SLIC_LABEL_VEHICLE:
-        color = cv::Vec3b(205, 178, 98);
+        color = cv::Vec3b(245, 150, 100);
         break;
     case SLIC_LABEL_NATURE:
-        color = cv::Vec3b(109, 167, 96);
+        color = cv::Vec3b(0, 175, 0);
         break;
     case SLIC_LABEL_HUMAN:
-        color = cv::Vec3b(0, 0, 255);
+        color = cv::Vec3b(30, 30, 255);
         break;
     case SLIC_LABEL_OBJECT:
-        color = cv::Vec3b(50, 88, 140);
+        color = cv::Vec3b(150, 240, 255);
         break;
     case SLIC_LABEL_OUTLIER:
-        color = cv::Vec3b(128, 128, 128);
+        color = cv::Vec3b(75, 75, 75);
         break;
     default:
         color = cv::Vec3b(255, 255, 255);

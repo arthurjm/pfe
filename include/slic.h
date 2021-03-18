@@ -76,11 +76,10 @@ public:
      * Generate an over-segmentation for an image.
      * Compute the over-segmentation based on the step-size and relative weighting of the pixel and colour values.
      * @param nbSpx the number of superpixels
-     * @param pNc the weight TODO : delete or rename
      * @param ri the range image
      * @param metrics a boolean array indicate which metric should be applied
      **/
-    void generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool *metrics);
+    void generateSuperpixels(int nbSpx, RangeImage &ri, bool *metrics);
 
     /**
      * Enforce connectivity of the superpixels. This part is not actively discussed

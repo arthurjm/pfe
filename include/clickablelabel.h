@@ -28,11 +28,8 @@ public:
     QImage cvToQt(cv::Mat &pSrc);
     cv::Mat qtToCv(const QImage &pSrc);
     void setImgRef(cv::Mat pImg);
-    void initSuperpixels(int pNbSpx, int pWeight);
-    // void updateSuperpixels(int pNbSpx, int pWeight, bool buildScribbleLevels);
+    void initSuperpixels(int pNbSpx);
     void updateSuperpixels(int pNbSpx);
-    //void generateSuperpixelsZoom(int pNbSpx, int pWeight);
-    void saveSelection(string filename);
 
     void updateDisplay();
     void updateClusters();
