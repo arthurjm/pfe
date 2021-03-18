@@ -2,6 +2,11 @@
 
 using namespace std;
 
+PointCloud::~PointCloud()
+{
+    _rangeImage.freeData();
+}
+
 PointCloud::PointCloud(string pcFileName)
 {
     createPointCloud(pcFileName);
@@ -129,7 +134,12 @@ void PointCloud::getSelectedLabels()
         int pcIdx = it->second.at(0);
         int riIdx = it->first;
         if (pcIdx <= _selectedLabels.size() && riIdx <= _rangeImage.getWidth() * _rangeImage.getHeight())
-            _selectedLabels.at(pcIdx) = (uint16_t)riData[riIdx].label;
+        {
+            if (riData[riIdx].label < 0)
+                _selectedLabels.at(pcIdx) = 0;
+            else
+                _selectedLabels.at(pcIdx) = (uint16_t)riData[riIdx].label;
+        }
         else
             cout << "pc idx:" << pcIdx << " size:" << _selectedLabels.size()
                  << "\nri idx:" << riIdx << " size:" << _rangeImage.getWidth() * _rangeImage.getHeight() << endl;
@@ -238,6 +248,7 @@ void PointCloud::ChangeColor(Color colorMode)
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
         {
             uint16_t l = _selectedLabels.at(i);
+            cout << l << endl;
             if (_labelMap.count((Label)l) > 0)
             {
                 it->b = _labelMap[(Label)l].at(0);

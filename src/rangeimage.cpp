@@ -5,6 +5,10 @@ using namespace std;
 
 RangeImage::~RangeImage()
 {
+}
+
+void RangeImage::freeData()
+{
     if (_data)
     {
         free(_data);
@@ -12,13 +16,13 @@ RangeImage::~RangeImage()
     }
 }
 
-RangeImage::RangeImage(RangeImage &ri) : _width(ri._width), _height(ri._height)
+RangeImage::RangeImage(RangeImage &ri) : _data(ri._data), _width(ri._width), _height(ri._height)
 {
-    _data = (riVertex *)malloc(sizeof(riVertex) * _width * _height);
-    for (int i = 0; i < _width * _height; i++)
-    {
-        _data[i] = ri._data[i];
-    }
+    //     _data = (riVertex *)malloc(sizeof(riVertex) * _width * _height);
+    //     for (int i = 0; i < _width * _height; i++)
+    //     {
+    //         _data[i] = ri._data[i];
+    //     }
     for (int i = 0; i < 4; i++)
     {
         _minValue[i] = ri._minValue[i];
@@ -74,7 +78,6 @@ RangeImage::RangeImage(riVertex *data, int width, int height)
     interpolation(_normalizedAndInterpolatedData, RI_INTERPOLATE_HS_X, RI_INTERPOLATE_HS_Y, component.size());
 }
 
-
 void RangeImage::separateInvalidComposant()
 {
     assert(_data);
@@ -110,11 +113,12 @@ RangeImage &RangeImage::operator=(const RangeImage &ri)
 {
     _width = ri._width;
     _height = ri._height;
-    _data = (riVertex *)malloc(sizeof(riVertex) * _width * _height);
-    for (int i = 0; i < _width * _height; i++)
-    {
-        _data[i] = ri._data[i];
-    }
+    // _data = (riVertex *)malloc(sizeof(riVertex) * _width * _height);
+    // for (int i = 0; i < _width * _height; i++)
+    // {
+    //     _data[i] = ri._data[i];
+    // }
+    _data = ri._data;
     for (int i = 0; i < 4; i++)
     {
         _minValue[i] = ri._minValue[i];

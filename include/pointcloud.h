@@ -78,6 +78,8 @@ public:
     PointCloud(std::string pcFileName);
     PointCloud(std::string pcFileName, std::string labelFileName);
 
+    ~PointCloud();
+
     bool openLabels(std::string fileName);
     bool saveLabels(std::string fileName);
 

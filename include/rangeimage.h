@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <string>
 
-#include "NumCpp.hpp"
-
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 
@@ -52,6 +50,11 @@ public:
      * Destructor 
      * */
     ~RangeImage();
+
+    /**
+     * meemory liberation fo data structure 
+     * */
+    void freeData();
 
     /**
      * Default constructor

@@ -182,6 +182,7 @@ void Slic::generateSuperpixels(int nbSpx, int pNc, RangeImage &ri, bool metrics[
     /* Clear previous data (if any), and re-initialize it. */
     clearData();
     _rangeImage = ri;
+
     initData();
 
     /* Run segmentation for 10 iterations (as prescribed by the algorithm). */
