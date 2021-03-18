@@ -20,7 +20,7 @@ PointCloud::PointCloud(string pcFileName, string labelFileName)
     openLabels(labelFileName);
 
     _selectedLabels.reserve(_pointCloud->size());
-    uint32_t unlabel = ((uint32_t)0 << 16) | (uint32_t)0;
+    uint32_t unlabel = ((uint32_t)0 << 16) | (uint32_t)1;
     for (int i = 0; i < _pointCloud->size(); ++i)
         _selectedLabels.push_back(unlabel);
 }
@@ -67,7 +67,7 @@ RangeImage PointCloud::generateRangeImage(bool groundTruth, int width, int heigh
         data[i].z = -1;
         data[i].remission = -1;
         data[i].depth = -1;
-        data[i].label = -1;
+        data[i].label = 1; // outlier
     }
 
     float fov_up = FOV_UP / 180.0 * M_PI;     // field of view up in rad
@@ -136,7 +136,7 @@ void PointCloud::getSelectedLabels()
         if (pcIdx <= _selectedLabels.size() && riIdx <= _rangeImage.getWidth() * _rangeImage.getHeight())
         {
             if (riData[riIdx].label < 0)
-                _selectedLabels.at(pcIdx) = 0;
+                _selectedLabels.at(pcIdx) = (uint16_t)Label::unlabeled; // unlabeled because not in the range image
             else
                 _selectedLabels.at(pcIdx) = (uint16_t)riData[riIdx].label;
         }
@@ -148,6 +148,8 @@ void PointCloud::getSelectedLabels()
 
 bool PointCloud::openLabels(string fileName)
 {
+    _labels.clear();
+    cout << _labels.capacity() << endl;
     fstream file(fileName.c_str(), ios::in | ios::binary);
     if (file.good())
     {
@@ -160,7 +162,7 @@ bool PointCloud::openLabels(string fileName)
 
             _labels.push_back((uint16_t)label);
         }
-        // cout << "Nombre de labels : " << i << endl;
+        cout << "Nombre de labels ouverts : " << i << endl;
         file.close();
         return true;
     }
@@ -248,13 +250,16 @@ void PointCloud::ChangeColor(Color colorMode)
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
         {
             uint16_t l = _selectedLabels.at(i);
-            cout << l << endl;
             if (_labelMap.count((Label)l) > 0)
             {
                 it->b = _labelMap[(Label)l].at(0);
                 it->g = _labelMap[(Label)l].at(1);
                 it->r = _labelMap[(Label)l].at(2);
                 it->a = 255;
+            }
+            else
+            {
+                cout << l << endl;
             }
             ++i;
         }

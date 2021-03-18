@@ -27,13 +27,13 @@ using namespace std;
 /* The number of iterations run by the clustering algorithm. */
 #define NR_ITERATIONS 10
 
-#define SLIC_LABEL_GROUND 0
-#define SLIC_LABEL_STUCTURE 1
-#define SLIC_LABEL_VEHICLE 2
-#define SLIC_LABEL_NATURE 3
-#define SLIC_LABEL_HUMAN 4
-#define SLIC_LABEL_OBJECT 5
-#define SLIC_LABEL_OUTLIER 6
+#define SLIC_LABEL_OUTLIER 1
+#define SLIC_LABEL_VEHICLE 10
+#define SLIC_LABEL_HUMAN 30
+#define SLIC_LABEL_GROUND 40
+#define SLIC_LABEL_STUCTURE 50
+#define SLIC_LABEL_NATURE 70
+#define SLIC_LABEL_OBJECT 80
 
 #define SLIC_METRIC_X 0
 #define SLIC_METRIC_Y 1

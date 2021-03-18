@@ -621,11 +621,6 @@ QColor ClickableLabel::getObjMarkerColor()
 
 void ClickableLabel::setCurrentLabel(int label)
 {
-    if (label < SLIC_LABEL_GROUND || label > SLIC_LABEL_OUTLIER)
-    {
-        cerr << "Invalide label in ClickableLabel::setCurrentLabel." << endl;
-        exit(EXIT_FAILURE);
-    }
     _currentLabel = label;
 }
 
