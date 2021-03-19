@@ -140,7 +140,7 @@ void PointCloud::getSelectedLabels()
 
 bool PointCloud::openLabels(string fileName)
 {
-    _labels.clear();
+    vector<uint16_t> tmpLabels;
     fstream file(fileName.c_str(), ios::in | ios::binary);
     if (file.good())
     {
@@ -151,9 +151,17 @@ bool PointCloud::openLabels(string fileName)
             uint32_t label;
             file.read((char *)&label, sizeof(uint32_t));
 
-            _labels.push_back((uint16_t)label);
+            tmpLabels.push_back((uint16_t)label);
         }
         file.close();
+        if (tmpLabels.size() == _pointCloud->size())
+        {
+            _labels = tmpLabels;
+        }
+        else
+        {
+            cout << "Invalid size: " << _labels.size() << " labels with " << _pointCloud->size() << " points" << endl;
+        }
         return true;
     }
     return false;
@@ -204,11 +212,6 @@ void PointCloud::ChangeColor(Color colorMode)
 
     case Color::GroundTruth:
     {
-        if (_labels.size() != _pointCloud->size())
-        {
-            cout << "Invalid size: " << _labels.size() << " labels with " << _pointCloud->size() << " points" << endl;
-            break;
-        }
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
         {
             uint16_t l = _labels.at(i);
@@ -260,7 +263,7 @@ void PointCloud::ChangeColor(Color colorMode)
         _projectedLabels = _selectedLabels;
         pcl::search::KdTree<KittiPoint> tree(true);
 
-        boost::shared_ptr<vector<int>> projectedPointsIndices(new vector<int>());
+        pcl::IndicesPtr projectedPointsIndices(new vector<int>());
         for (auto i : _projectedPoints)
             projectedPointsIndices->push_back(i.second.at(0));
 

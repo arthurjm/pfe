@@ -193,10 +193,12 @@ void MainWindow::openLabels()
 
 void MainWindow::save()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save labels", QString("../data"), "Label file (*.label)");
-    if (fileName == nullptr)
+    QString QfileName = QFileDialog::getSaveFileName(this, "Save labels", QString("../data"), "Label file (*.label)");
+    if (QfileName == nullptr)
         return;
-    _pc->saveLabels(fileName.toStdString());
+    string fileName = QfileName.toStdString() + ".label";
+    cout << fileName << endl;
+    _pc->saveLabels(fileName);
 }
 
 void MainWindow::initSuperpixelsLevel()

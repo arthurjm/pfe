@@ -17,6 +17,8 @@
 #define WIDTH 1024
 #define HEIGHT 64
 
+#define PROPAGATION_RADIUS 1.0
+
 typedef pcl::PointXYZRGBA KittiPoint;
 typedef pcl::PointCloud<KittiPoint> KittiPointCloud;
 
