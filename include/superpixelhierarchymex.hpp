@@ -243,12 +243,12 @@ public:
 
             float dist = dr + di + distMetrics;
 
-            int distEdge = arc->confidence;
-            if (m_iter > m_iterSwitch)
-                dist *= distEdge;
+            // int distEdge = arc->confidence;
+            // if (m_iter > m_iterSwitch)
+            //     dist *= distEdge;
 
             //ARTHUR: added to weight the spatial distance
-            dist = ((float)m_connect / 20.0) * (float)dist;
+            //dist = ((float)m_connect / 20.0) * (float)dist;
 
             if (dist < m_dist[lu])
             {
@@ -260,9 +260,8 @@ public:
                 m_dist[lv] = dist;
                 m_minarc[lv] = arc;
             }
-
-            return;
         }
+        return;
     }
 
     void growRegion()
@@ -340,6 +339,7 @@ public:
             }
         }
         m_vexnum = m_regionnum;
+        delete[] indices;
     }
 
     void merge()
@@ -665,17 +665,23 @@ private:
     {
         const vector<float> *interpolatedData = rangeImage.getNormalizedAndInterpolatedData();
         riVertex riData;
-        for (int i = 0; i < m_vexmax; i++)
+        int count = 0;
+        for (int i = 0; i < m_w; i++)
         {
-            riData = rangeImage.getNormalizedValue(i);
-            m_coord3D[i * 3 + SH_METRIC_X] = riData.x;
-            m_coord3D[i * 3 + SH_METRIC_Y] = riData.y;
-            m_coord3D[i * 3 + SH_METRIC_Z] = riData.z;
-            m_remission[i] = riData.remission;
-            m_interpolated3D[i * 4 + SH_METRIC_X] = interpolatedData->at(i * 4 + SH_METRIC_X);
-            m_interpolated3D[i * 4 + SH_METRIC_Y] = interpolatedData->at(i * 4 + SH_METRIC_Y);
-            m_interpolated3D[i * 4 + SH_METRIC_Z] = interpolatedData->at(i * 4 + SH_METRIC_Z);
-            m_interpolated3D[i * 4 + SH_METRIC_REMISSION] = interpolatedData->at(i * 4 + SH_METRIC_REMISSION);
+            for (int j = 0; j < m_h; j++)
+            {
+                int idx = j * m_w + i;
+                riData = rangeImage.getNormalizedValue(idx);
+                m_coord3D[count * 3 + SH_METRIC_X] = riData.x;
+                m_coord3D[count * 3 + SH_METRIC_Y] = riData.y;
+                m_coord3D[count * 3 + SH_METRIC_Z] = riData.z;
+                m_remission[count] = riData.remission;
+                m_interpolated3D[count * 4 + SH_METRIC_X] = interpolatedData->at(idx * 4 + SH_METRIC_X);
+                m_interpolated3D[count * 4 + SH_METRIC_Y] = interpolatedData->at(idx * 4 + SH_METRIC_Y);
+                m_interpolated3D[count * 4 + SH_METRIC_Z] = interpolatedData->at(idx * 4 + SH_METRIC_Z);
+                m_interpolated3D[count * 4 + SH_METRIC_REMISSION] = interpolatedData->at(idx * 4 + SH_METRIC_REMISSION);
+                count++;
+            }
         }
     }
 };

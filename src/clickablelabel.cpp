@@ -13,13 +13,13 @@ ClickableLabel::ClickableLabel(QWidget *parent)
     : QLabel(parent)
 {
     setMouseTracking(true);
-    _slic = new Slic();
+    //_slic = new Slic();
     _isScribble = false;
     _showContours = true;
     labelisationMode = 2;
     for (int i = 0; i < 4; ++i)
         _metrics[i] = false;
-    // _sh = new SuperpixelHierarchy();
+    _sh = new SuperpixelHierarchy();
 }
 
 /*
@@ -27,8 +27,8 @@ ClickableLabel::ClickableLabel(QWidget *parent)
  */
 ClickableLabel::~ClickableLabel()
 {
-    //delete _sh;
-    delete _slic;
+    delete _sh;
+    //delete _slic;
 }
 
 /*
@@ -84,7 +84,8 @@ void ClickableLabel::clear()
 
 void ClickableLabel::clearScribble()
 {
-    _slic->clearScribbleClusters();
+    //_slic->clearScribbleClusters();
+    _sh->clearScribbleClusters();
     _coloredImg = _imgRef.clone();
     updateDisplay();
 }
@@ -94,18 +95,33 @@ void ClickableLabel::clearScribble()
  */
 void ClickableLabel::initSuperpixels(int pNbSpx)
 {
+    // if (_imgRef.empty())
+    //     return;
+    // Mat imgTmp = _imgRef.clone();
+    // Mat labImage;
+    // cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
+    // // _slic->generateSuperpixels(pNbSpx, _rangeImage, _metrics);
+    // // _slic->createConnectivity();
+    // // _slic->createHierarchy(_metrics);
+
+    // _sh->buildHierarchy(_imgRef.clone(), _imgRef.clone(), pNbSpx, true, _rangeImage, _metrics);
+
+    // //saliency
+    // _rightImgContours = Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255));
+    // // _slic->displayMultipleSaliency(_rightImgContours);
+    // _sh->displayAllSaliency(_rightImgContours);
+
     if (_imgRef.empty())
         return;
-    Mat imgTmp = _imgRef.clone();
-    Mat labImage;
-    cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
-    _slic->generateSuperpixels(pNbSpx, _rangeImage, _metrics);
-    _slic->createConnectivity();
-    _slic->createHierarchy(_metrics);
-
-    //saliency
+    _leftImgContours = _sh->buildHierarchy(_imgRef.clone(), _imgContours.clone(), pNbSpx, true, _rangeImage, _metrics);
+    _leftImgClusters = _leftImgContours.clone();
+    _zoomLeftImg = applyZoom(_leftImgContours);
     _rightImgContours = Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255));
-    _slic->displayMultipleSaliency(_rightImgContours);
+    _rightImgContours = _sh->displayAllSaliency(_rightImgContours);
+    _rightImgClusters = _rightImgContours.clone();
+
+    updateClusters();
+    updateDisplay();
 }
 
 /*
@@ -115,24 +131,13 @@ void ClickableLabel::initSuperpixels(int pNbSpx)
 
 void ClickableLabel::updateSuperpixels(int pNbSpx)
 {
-    _slic->setTreeLevel(pNbSpx);
     if (_imgRef.empty())
         return;
-    Mat imgTmp = _imgRef.clone();
-    Mat labImage;
-    cvtColor(imgTmp, labImage, COLOR_BGR2Lab);
-
-    imgTmp = _imgRef.clone();
-    _slic->displayContours(imgTmp, Vec3b(0, 0, 0));
-
-    _leftImgContours = imgTmp.clone();
-
-    //original contours
-    // _rightImgContours =  Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255,255,255));
-    // _slic->displayContours(_rightImgContours, Vec3b(255,0,255));
-
-    _leftImgClusters = imgTmp.clone();
-    _zoomLeftImg = applyZoom(imgTmp);
+    _leftImgContours = _sh->buildHierarchy(_imgRef.clone(), _imgContours.clone(), pNbSpx, false, _rangeImage, _metrics);
+    _leftImgClusters = _leftImgContours.clone();
+    _zoomLeftImg = applyZoom(_leftImgContours);
+    _rightImgContours = Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255));
+    _rightImgContours = _sh->displayAllSaliency(_rightImgContours);
     _rightImgClusters = _rightImgContours.clone();
 
     updateClusters();
@@ -172,11 +177,12 @@ void ClickableLabel::updateDisplay()
  */
 void ClickableLabel::updateClusters()
 {
-    _leftImgClusters = _slic->displayGraySelection(_leftImgContours);
+    _leftImgClusters = _sh->displayGreySelection(_leftImgContours);
+
     _zoomLeftImg = applyZoom(_leftImgClusters.clone());
 
-    _rightImgClusters = _slic->displaySelection(_rightImgContours, _leftImgContours);
-    _rightImgNoContours = _slic->displaySelection(cv::Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255)), _imgRef);
+    _rightImgClusters = _sh->displaySelection(_rightImgContours, _leftImgContours);
+    _rightImgNoContours = _sh->displaySelection(cv::Mat(_imgRef.rows, _imgRef.cols, CV_8UC3, cv::Scalar(255, 255, 255)), _imgRef);
 }
 
 /*
@@ -188,8 +194,8 @@ void ClickableLabel::updateClusters()
 void ClickableLabel::deleteSelection()
 {
 
-    _slic->clearScribbleClusters();
-    _slic->clearSelectedClusters();
+    _sh->clearScribbleClusters();
+    _sh->clearSelectedClusters();
 
     _leftImgClusters = _leftImgContours;
     _rightImgClusters = _rightImgContours;
@@ -201,7 +207,6 @@ void ClickableLabel::deleteSelection()
         _zoomLeftImg = applyZoom(_leftImgContours.clone());
     updateDisplay();
 }
-
 
 /*
  *  Get the global coordinate based on the current zoom, the image coordinate
@@ -272,12 +277,13 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
         {
             drawLineTo(QPoint(x, y), getObjMarkerColor());
 
-            _slic->addObjectCluster(cv::Point2i(x, y));
-            _slic->multiLabelisationConnected(_currentLabel);
+            _sh->addObjectCluster(cv::Point2i(x, y));
+            //_sh->multiLabelisationConnected(_currentLabel);
+            _sh->binaryLabelisationConnected();
         }
         else
         {
-            _slic->selectCluster(cv::Point2i(x, y), _currentLabel);
+            _sh->selectCluster(cv::Point2i(x, y) /*, _currentLabel*/);
         }
     }
     else if (event->type() == QEvent::MouseButtonRelease && event->button() == Qt::RightButton)
@@ -286,12 +292,13 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
         {
             drawLineTo(QPoint(x, y), QColor(0, 0, 0, 255));
 
-            _slic->addBackgroundCluster(cv::Point2i(x, y));
-            _slic->multiLabelisationConnected(_currentLabel);
+            _sh->addBackgroundCluster(cv::Point2i(x, y));
+            //_sh->multiLabelisationConnected(_currentLabel);
+            _sh->binaryLabelisationConnected();
         }
         else
         {
-            _slic->deselectCluster(cv::Point2i(x, y));
+            _sh->deselectCluster(cv::Point2i(x, y));
         }
     }
     updateClusters();
@@ -325,21 +332,21 @@ void ClickableLabel::mouseMoveEvent(QMouseEvent *event)
 
     Vec3b bgrPixel = _imgRef.at<Vec3b>(y, x);
     QColor bgr(bgrPixel[2], bgrPixel[1], bgrPixel[0]);
-    // emit pixelValue(QPoint(x, y), bgr, _sh->labelOfPixel(cv::Point2i(x, y)));
-    emit pixelValue(QPoint(x, y), bgr, _slic->labelOfPixel(x, y));
+    emit pixelValue(QPoint(x, y), bgr, _sh->labelOfPixel(cv::Point2i(x, y)));
     if (event->buttons() & Qt::LeftButton)
     {
         if (_isScribble)
         {
             drawLineTo(QPoint(x, y), getObjMarkerColor());
             // _sh->addObjectCluster(cv::Point2i(x, y));
-            _slic->addObjectCluster(cv::Point2i(x, y));
-            _slic->multiLabelisationConnected(_currentLabel);
+            _sh->addObjectCluster(cv::Point2i(x, y));
+            // _sh->multiLabelisationConnected(_currentLabel);
+            _sh->binaryLabelisationConnected();
         }
         else
         {
-            // _sh->selectCluster(Point2i(x, y));
-            _slic->selectCluster(Point2i(x, y), _currentLabel);
+            _sh->selectCluster(Point2i(x, y));
+            //_sh->selectCluster(Point2i(x, y), _currentLabel);
         }
     }
     else if (event->buttons() & Qt::RightButton)
@@ -347,12 +354,13 @@ void ClickableLabel::mouseMoveEvent(QMouseEvent *event)
         if (_isScribble)
         {
             drawLineTo(QPoint(x, y), QColor(0, 0, 0, 255));
-            _slic->addBackgroundCluster(cv::Point2i(x, y));
-            _slic->multiLabelisationConnected(_currentLabel);
+            _sh->addBackgroundCluster(cv::Point2i(x, y));
+            // _sh->multiLabelisationConnected(_currentLabel);
+            _sh->binaryLabelisationConnected();
         }
         else
         {
-            _slic->deselectCluster(Point2i(x, y));
+            _sh->deselectCluster(Point2i(x, y));
         }
     }
     updateClusters();
@@ -373,7 +381,7 @@ void ClickableLabel::wheelEvent(QWheelEvent *event)
         if (!_isScribble)
         {
             // int newLevel = _sh->zoomInHierarchy(_maxLevel);
-            _slic->zoomInTree();
+            _sh->zoomInHierarchy(_maxLevel);
             // updateSuperpixels(newLevel, _sh->getCurrentWeight(), false);
         }
         zoomIn(event->x(), event->y());
@@ -383,14 +391,14 @@ void ClickableLabel::wheelEvent(QWheelEvent *event)
         if (!_isScribble)
         {
             // int newLevel = _sh->zoomOutHierarchy();
-            _slic->zoomOutTree();
+            _sh->zoomOutHierarchy();
             // updateSuperpixels(newLevel, _sh->getCurrentWeight(), false);
         }
         zoomOut(event->x(), event->y());
     }
     // updateSlider(_sh->getCurrentLevel());
-    updateSuperpixels(_slic->getTreeLevel());
-    updateSlider(_slic->getTreeLevel());
+    updateSuperpixels(_sh->getCurrentLevel());
+    updateSlider(_sh->getCurrentLevel());
     updateDisplay();
 }
 
@@ -525,11 +533,6 @@ void ClickableLabel::drawLineTo(const QPoint &pEndPoint, QColor pColor)
  * Input : -
  * Output: - Number of superpixels in _slic (int)
  */
-
-int ClickableLabel::nbSpx()
-{
-    return _slic->nbLabels();
-}
 
 void ClickableLabel::setScribble(bool isScribble)
 {

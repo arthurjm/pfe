@@ -50,7 +50,7 @@ public:
     * */
     void setRangeImage(RangeImage &ri);
     RangeImage *getRangeImage() { return &_rangeImage; };
-    Slic *getSlic() { return _slic; };
+    //Slic *getSlic() { return _slic; };
 
     /**
      * Generate a display matrice according to type
@@ -86,8 +86,8 @@ private:
     void drawPointTo(const QPoint &pPoint, QColor pColor);
     void drawLineTo(const QPoint &endPoint, QColor pColor);
 
-    // SuperpixelHierarchy *_sh;
-    Slic *_slic;
+    SuperpixelHierarchy *_sh;
+    //Slic *_slic;
 
     int _maxLevel;
 
@@ -116,7 +116,7 @@ private:
     int penWidth = 5;
 
     // Indicate which label will be associated to the next selected superpixels
-    int _currentLabel = SLIC_LABEL_GROUND; // Default : Ground
+    int _currentLabel = 5; //SLIC_LABEL_GROUND; // Default : Ground
     bool _metrics[4];
 };
 
