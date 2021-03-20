@@ -9,43 +9,23 @@
 #include <limits.h>
 #include <string.h>
 #include "rangeimage.h"
+
+#define SH_METRIC_X 0
+#define SH_METRIC_Y 1
+#define SH_METRIC_Z 2
+#define SH_METRIC_REMISSION 3
+
 using namespace std;
 
-template <class T>
-void radixSortLSD(int *I, int *Itemp, T *J, T *Jtemp, int length)
+class sort_dist
 {
-    int *beginI = I, *endI = I + length;
-    int *beginIt = Itemp, *endIt = Itemp + length;
-    T *beginJ = J, *endJ = J + length;
-    T *beginJt = Jtemp, *endJt = Jtemp + length;
-    for (int shift = 0; shift < 32; shift += 8)
-    {
-        size_t count[0x100] = {};
-        for (int *p = beginI; p != endI; p++)
-            count[(*p >> shift) & 0xFF]++;
-        int *bucketI[0x100], *qI = beginIt;
-        T *bucketJ[0x100], *qJ = beginJt;
-        for (int i = 0; i < 0x100; ++i)
-        {
-            bucketI[i] = qI;
-            bucketJ[i] = qJ;
-            qI += count[i];
-            qJ += count[i];
-        }
-        int *p = beginI;
-        T *q = beginJ;
-        for (; p != endI; p++, q++)
-        {
-            int idx = (*p >> shift) & 0xFF;
-            *bucketI[idx]++ = *p;
-            *bucketJ[idx]++ = *q;
-        }
-        std::swap(beginI, beginIt);
-        std::swap(beginJ, beginJt);
-        std::swap(endI, endIt);
-        std::swap(endJ, endJt);
-    }
-}
+private:
+    float *arr;
+
+public:
+    sort_dist(float *arr) : arr(arr) {}
+    bool operator()(int i, int j) const { return arr[i] < arr[j]; }
+};
 
 struct ArcBox
 {
@@ -72,15 +52,15 @@ private:
     int m_h, m_w, m_connect, m_iter, m_iterSwitch;
 
     unsigned short *m_color;
-    int *m_dist, *m_treeu, *m_treev, *m_dtemp;
+    int *m_treeu, *m_treev;
     int m_treeSize, m_regionnum;
+
+    float *m_dist, *m_dtemp;
 
     int *m_temp;
 
     // JL, ZY : Three array to store range image data
-    unsigned short *m_BGRX, *m_BGRY, *m_BGRZ, *m_BGRDepth, *m_BGRRemission;
-    float *m_coord3D, *m_remission, *m_depth;
-    int *m_coord2D;
+    float *m_coord3D, *m_remission, *m_interpolated3D;
 
 public:
     SuperpixelHierarchyMex()
@@ -92,17 +72,11 @@ public:
         m_arctmp = NULL;
         m_color = NULL;
         m_temp = NULL;
-        // JL, ZY
-        m_BGRX = NULL;
-        m_BGRY = NULL;
-        m_BGRZ = NULL;
-        m_BGRDepth = NULL;
-        m_BGRRemission = NULL;
 
+        // JL, ZY
         m_coord3D = NULL;
-        m_depth = NULL;
         m_remission = NULL;
-        m_coord2D = NULL;
+        m_interpolated3D = NULL;
     }
 
     ~SuperpixelHierarchyMex() { clean(); }
@@ -125,15 +99,16 @@ public:
         memset(m_frtarc, 0, sizeof(ArcBox *) * m_vexnum);
 
         m_color = new unsigned short[m_vexnum * 3];
-        m_temp = new int[8 * m_vexnum];
+        m_temp = new int[6 * m_vexnum];
         m_vex = m_temp + 0 * m_vexnum;
         m_size = m_temp + 1 * m_vexnum;
         m_parent = m_temp + 2 * m_vexnum;
         m_label = m_temp + 3 * m_vexnum;
-        m_dtemp = m_temp + 4 * m_vexnum;
-        m_dist = m_temp + 5 * m_vexnum;
-        m_treeu = m_temp + 6 * m_vexnum;
-        m_treev = m_temp + 7 * m_vexnum;
+        m_treeu = m_temp + 4 * m_vexnum;
+        m_treev = m_temp + 5 * m_vexnum;
+
+        m_dtemp = new float[m_vexnum];
+        m_dist = new float[m_vexnum];
 
         for (int i = 0; i < m_vexnum; ++i)
         {
@@ -148,23 +123,13 @@ public:
         m_treeSize = 0;
 
         // JL, ZY : range image
-        m_BGRX = new unsigned short[m_vexnum * 3];
-        m_BGRY = new unsigned short[m_vexnum * 3];
-        m_BGRZ = new unsigned short[m_vexnum * 3];
-        m_BGRDepth = new unsigned short[m_vexnum * 3];
-        m_BGRRemission = new unsigned short[m_vexnum * 3];
-
         m_coord3D = new float[m_vexnum * 3];
         m_remission = new float[m_vexnum];
-        m_depth = new float[m_vexnum];
-
-        m_coord2D = new int[m_vexnum * 2];
+        m_interpolated3D = new float[m_vexnum * 4];
     }
 
-    void buildTree(unsigned char *img, RangeImage &rangeImage, unsigned char *edge = NULL)
+    void buildTree(RangeImage &rangeImage, bool metrics[4], unsigned char *edge = NULL)
     {
-        //uchar *image = shiftBGR(rangeImage.createImageFromXYZ());
-        createVexRGB(img, m_color);
         createVexRIData(rangeImage);
         buildGraph(edge);
         m_iter = 0;
@@ -172,7 +137,7 @@ public:
         while (m_vexnum > 1)
         {
             ++m_iter;
-            nearestNeighbor(maxDistColor);
+            nearestNeighbor(maxDistColor, metrics);
             growRegion();
             merge();
         }
@@ -208,11 +173,11 @@ public:
         return NULL;
     }
 
-    void nearestNeighbor(int &maxDistColor)
+    void nearestNeighbor(int &maxDistColor, bool metrics[4])
     {
 
         for (int i = 0; i < m_vexnum; ++i)
-            m_dist[i] = INT_MAX;
+            m_dist[i] = FLT_MAX;
         for (int n = 0; n < m_arcnum; ++n)
         {
             ArcBox *arc = m_arcptr[n];
@@ -220,17 +185,6 @@ public:
             int v = arc->v;
             int lu = m_label[u];
             int lv = m_label[v];
-            unsigned short *uc = m_color + 3 * u;
-            unsigned short *vc = m_color + 3 * v;
-            int dc[3];
-            dc[0] = uc[0] - vc[0];
-            dc[1] = uc[1] - vc[1];
-            dc[2] = uc[2] - vc[2];
-
-            // [1] color term
-            int distColor = (abs(dc[0]) + abs(dc[1]) + abs(dc[2])) / 3;
-            // [2] boundary term
-            int distEdge = arc->confidence;
             // JL, ZY [3] range image term
             // Spatial 3D
             float ux = m_coord3D[3 * u + 0];
@@ -241,31 +195,55 @@ public:
             float vy = m_coord3D[3 * v + 1];
             float vz = m_coord3D[3 * v + 2];
 
-            float dx = (ux - vx) * 10;
-            float dy = (uy - vy) * 100;
-            float dz = (uz - vz) * 10;
+            float dx = (ux - vx);
+            float dy = (uy - vy);
+            float dz = (uz - vz);
 
-            int dist3D = (int)(sqrtf(dx * dx + dy * dy + dz * dz));
+            float dr = sqrtf(dx * dx + dy * dy + dz * dz);
 
-            // Spatial 2D
-            int ux2 = m_coord2D[2 * u + 0];
-            int uy2 = m_coord2D[2 * u + 1];
+            // Remission distance
+            float ur = m_remission[u];
+            float vr = m_remission[v];
+            float di = ur - vr;
+            di = sqrt(di * di);
+            // metrics
+            float distMetrics = 0;
+            if (metrics[SH_METRIC_X])
+            {
+                float um = m_interpolated3D[4 * u + SH_METRIC_X];
+                float vm = m_interpolated3D[4 * v + SH_METRIC_X];
+                float dif = um - vm;
+                distMetrics += dif * dif;
+            }
+            if (metrics[SH_METRIC_Y])
+            {
+                float um = m_interpolated3D[4 * u + SH_METRIC_Y];
+                float vm = m_interpolated3D[4 * v + SH_METRIC_Y];
+                float dif = um - vm;
+                distMetrics += dif * dif;
+            }
+            if (metrics[SH_METRIC_Z])
+            {
+                float um = m_interpolated3D[4 * u + SH_METRIC_Z];
+                float vm = m_interpolated3D[4 * v + SH_METRIC_Z];
+                float dif = um - vm;
+                distMetrics += dif * dif;
+            }
+            if (metrics[SH_METRIC_REMISSION])
+            {
+                float um = m_interpolated3D[4 * u + SH_METRIC_REMISSION];
+                float vm = m_interpolated3D[4 * v + SH_METRIC_REMISSION];
+                float dif = um - vm;
+                distMetrics += dif * dif;
+            }
+            if (distMetrics != 0)
+            {
+                distMetrics = sqrt(distMetrics);
+            }
 
-            int vx2 = m_coord2D[2 * v + 0];
-            int vy2 = m_coord2D[2 * v + 1];
+            float dist = dr + di + distMetrics;
 
-            int dx2 = (ux2 - vx2) * 100;
-            int dy2 = (uy2 - vy2) * 100;
-
-            int dist2D = (int)(sqrtf(dx2 * dx2 + dy2 * dy2));
-
-            //weight
-            float S = sqrtf((m_h * m_w) / m_vexnum);
-            float weight = m_connect / S;
-            // int dist = dist3D + weight * dist2D;
-            int dist = dist3D;
-
-            dist = distColor;
+            int distEdge = arc->confidence;
             if (m_iter > m_iterSwitch)
                 dist *= distEdge;
 
@@ -282,14 +260,26 @@ public:
                 m_dist[lv] = dist;
                 m_minarc[lv] = arc;
             }
+
+            return;
         }
     }
 
     void growRegion()
     {
+        int *indices = new int[m_vexnum];
+        for (int i = 0; i < m_vexnum; ++i)
+        {
+            indices[i] = i;
+        }
 
-        // radix sort
-        radixSortLSD(m_dist, m_dtemp, m_minarc, m_arctmp, m_vexnum);
+        std::sort(indices, indices + m_vexnum, sort_dist(m_dist));
+
+        for (int i = 0; i < m_vexnum; ++i)
+        {
+            m_arctmp[i] = m_minarc[indices[i]];
+        }
+        swap(m_minarc, m_arctmp);
 
         for (int i = 0; i < m_vexnum; ++i)
         {
@@ -334,19 +324,19 @@ public:
                 int s2 = m_size[pu];
                 int s = s1 + s2;
                 m_size[pu] = s;
-                m_color[3 * pu + 0] = (m_color[3 * u + 0] * s1 + m_color[3 * pu + 0] * s2) / s;
-                m_color[3 * pu + 1] = (m_color[3 * u + 1] * s1 + m_color[3 * pu + 1] * s2) / s;
-                m_color[3 * pu + 2] = (m_color[3 * u + 2] * s1 + m_color[3 * pu + 2] * s2) / s;
 
                 // JL, ZY, update array
-                // update coord3D
+                // update coord3D, remission, metrics
                 m_coord3D[3 * pu + 0] = (m_coord3D[3 * u + 0] * s1 + m_coord3D[3 * pu + 0] * s2) / s;
                 m_coord3D[3 * pu + 1] = (m_coord3D[3 * u + 1] * s1 + m_coord3D[3 * pu + 1] * s2) / s;
                 m_coord3D[3 * pu + 2] = (m_coord3D[3 * u + 2] * s1 + m_coord3D[3 * pu + 2] * s2) / s;
 
-                // update coord2D
-                m_coord2D[2 * pu + 0] = (m_coord2D[2 * u + 0] * s1 + m_coord2D[2 * pu + 0] * s2) / s;
-                m_coord2D[2 * pu + 1] = (m_coord2D[2 * u + 1] * s1 + m_coord2D[2 * pu + 1] * s2) / s;
+                m_remission[pu] = (m_remission[u] * s1 + m_remission[pu] * s2) / s;
+
+                m_interpolated3D[4 * pu + SH_METRIC_X] = (m_interpolated3D[4 * u + SH_METRIC_X] * s1 + m_interpolated3D[4 * pu + SH_METRIC_X] * s2) / s;
+                m_interpolated3D[4 * pu + SH_METRIC_Y] = (m_interpolated3D[4 * u + SH_METRIC_Y] * s1 + m_interpolated3D[4 * pu + SH_METRIC_Y] * s2) / s;
+                m_interpolated3D[4 * pu + SH_METRIC_Z] = (m_interpolated3D[4 * u + SH_METRIC_Z] * s1 + m_interpolated3D[4 * pu + SH_METRIC_Z] * s2) / s;
+                m_interpolated3D[4 * pu + SH_METRIC_REMISSION] = (m_interpolated3D[4 * u + SH_METRIC_REMISSION] * s1 + m_interpolated3D[4 * pu + SH_METRIC_REMISSION] * s2) / s;
             }
         }
         m_vexnum = m_regionnum;
@@ -464,17 +454,9 @@ private:
         delete[] m_color;
         delete[] m_temp;
         // JL, ZY
-        delete[] m_BGRX;
-        delete[] m_BGRY;
-        delete[] m_BGRZ;
-        delete[] m_BGRDepth;
-        delete[] m_BGRRemission;
-
         delete[] m_remission;
+        delete[] m_interpolated3D;
         delete[] m_coord3D;
-        delete[] m_depth;
-
-        delete[] m_coord2D;
     }
 
     int computeEdge(int h, int w, int connect)
@@ -681,45 +663,20 @@ private:
     // JL, ZY : set range image data
     void createVexRIData(RangeImage &rangeImage)
     {
-        unsigned char *shift_BGRX = shiftBGR(rangeImage.createColorMat({RI_X}));
-        unsigned char *shift_BGRY = shiftBGR(rangeImage.createColorMat({RI_Y}));
-        unsigned char *shift_BGRZ = shiftBGR(rangeImage.createColorMat({RI_Z}));
-        unsigned char *shift_BGRDepth = shiftBGR(rangeImage.createColorMat({RI_DEPTH}));
-        unsigned char *shift_BGRRemission = shiftBGR(rangeImage.createColorMat({RI_REMISSION}));
-        createVexLab(shift_BGRX, m_BGRX);
-        createVexLab(shift_BGRY, m_BGRY);
-        createVexLab(shift_BGRZ, m_BGRZ);
-        createVexLab(shift_BGRDepth, m_BGRDepth);
-        createVexLab(shift_BGRRemission, m_BGRRemission);
-
-        const riVertex *riData = rangeImage.getData();
+        const vector<float> *interpolatedData = rangeImage.getNormalizedAndInterpolatedData();
+        riVertex riData;
         for (int i = 0; i < m_vexmax; i++)
         {
-            m_coord3D[i * 3] = riData[i].x;
-            m_coord3D[i * 3 + 1] = riData[i].y;
-            m_coord3D[i * 3 + 2] = riData[i].z;
-            m_depth[i] = riData[i].depth;
-            m_remission[i] = riData[i].remission;
-            m_coord2D[i * 2] = i % m_w;
-            m_coord2D[i * 2 + 1] = i / m_h;
+            riData = rangeImage.getNormalizedValue(i);
+            m_coord3D[i * 3 + SH_METRIC_X] = riData.x;
+            m_coord3D[i * 3 + SH_METRIC_Y] = riData.y;
+            m_coord3D[i * 3 + SH_METRIC_Z] = riData.z;
+            m_remission[i] = riData.remission;
+            m_interpolated3D[i * 4 + SH_METRIC_X] = interpolatedData->at(i * 4 + SH_METRIC_X);
+            m_interpolated3D[i * 4 + SH_METRIC_Y] = interpolatedData->at(i * 4 + SH_METRIC_Y);
+            m_interpolated3D[i * 4 + SH_METRIC_Z] = interpolatedData->at(i * 4 + SH_METRIC_Z);
+            m_interpolated3D[i * 4 + SH_METRIC_REMISSION] = interpolatedData->at(i * 4 + SH_METRIC_REMISSION);
         }
-    }
-
-    unsigned char *shiftBGR(cv::Mat data)
-    {
-        cv::Mat_<float> imgLine = data.reshape(1, m_h * m_w).t();
-        unsigned char *image_shift = (unsigned char *)calloc((m_h * m_w) * 3, sizeof(unsigned char));
-
-        for (int i = 0; i < m_w; i++)
-        {
-            for (int j = 0; j < m_h; j++)
-            {
-                image_shift[j + i * m_h] = imgLine(i + j * m_w);
-                image_shift[j + i * m_h + m_h * m_w] = imgLine(i + j * m_w + m_h * m_w);
-                image_shift[j + i * m_h + 2 * m_h * m_w] = imgLine(i + j * m_w + 2 * m_h * m_w);
-            }
-        }
-        return image_shift;
     }
 };
 

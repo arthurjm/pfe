@@ -77,7 +77,7 @@ float computeAccuracy(Slic *slic, const riVertex *riData, int width)
 void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> nbSpxVec, bool metrics[4])
 {
     // The range image contains the ground truth data on label.
-    PointCloud pc(pathPointCloud, pathLabel, nullptr);
+    PointCloud pc(pathPointCloud, pathLabel);
 
     RangeImage ri = pc.generateRangeImage(true);
     // RangeImage ri(pathPointCloud, pathLabel);
@@ -90,14 +90,13 @@ void benchmark(string pathPointCloud, string pathLabel, bool mode, vector<int> n
 
     // Make sure that first element is the largest
     std::sort(nbSpxVec.begin(), nbSpxVec.end(), std::greater<int>());
-    vector<int> weightVec({20});
     cout << "Benchmark on : " << pathPointCloud << endl;
 
     for (long unsigned int j = 0; j < nbSpxVec.size(); j++)
     {
         if (!mode || j == 0) // re-segmentation or first segmentation
         {
-            slic.generateSuperpixels(nbSpxVec[j], weightVec[0], ri, metrics);
+            slic.generateSuperpixels(nbSpxVec[j], ri, metrics);
             slic.createConnectivity();
             slic.createHierarchy(metrics);
         }
@@ -279,38 +278,149 @@ int main(int argc, char **argv)
     // use default files
     else
     {
-        pointClouds.push_back("../../data/velodyne/000000.bin");
-        pointClouds.push_back("../../data/velodyne/000001.bin");
-        pointClouds.push_back("../../data/velodyne/000002.bin");
-        pointClouds.push_back("../../data/velodyne/000003.bin");
-        pointClouds.push_back("../../data/velodyne/000004.bin");
+        //     pointClouds.push_back("../../data/velodyne/000000.bin");
+        //     pointClouds.push_back("../../data/velodyne/000001.bin");
+        //     pointClouds.push_back("../../data/velodyne/000002.bin");
+        //     pointClouds.push_back("../../data/velodyne/000003.bin");
+        //     pointClouds.push_back("../../data/velodyne/000004.bin");
 
-        labels.push_back("../../data/labels/000000.label");
-        labels.push_back("../../data/labels/000001.label");
-        labels.push_back("../../data/labels/000002.label");
-        labels.push_back("../../data/labels/000003.label");
-        labels.push_back("../../data/labels/000004.label");
+        //     labels.push_back("../../data/labels/000000.label");
+        //     labels.push_back("../../data/labels/000001.label");
+        //     labels.push_back("../../data/labels/000002.label");
+        //     labels.push_back("../../data/labels/000003.label");
+        //     labels.push_back("../../data/labels/000004.label");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/00/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/00/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/00/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/00/velodyne/000800.bin");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/01/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/01/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/01/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/01/velodyne/000800.bin");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/02/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/02/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/02/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/02/velodyne/000800.bin");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/03/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/03/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/03/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/03/velodyne/000800.bin");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/05/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/05/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/05/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/05/velodyne/000800.bin");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/06/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/06/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/06/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/06/velodyne/000800.bin");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/07/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/07/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/07/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/07/velodyne/000800.bin");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/08/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/08/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/08/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/08/velodyne/000800.bin");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/09/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/09/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/09/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/09/velodyne/000800.bin");
+
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/10/velodyne/000000.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/10/velodyne/000200.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/10/velodyne/000400.bin");
+        pointClouds.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/pc_sequences/10/velodyne/000800.bin");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/00/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/00/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/00/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/00/labels/000800.label");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/01/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/01/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/01/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/01/labels/000800.label");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/02/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/02/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/02/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/02/labels/000800.label");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/03/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/03/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/03/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/03/labels/000800.label");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/05/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/05/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/05/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/05/labels/000800.label");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/06/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/06/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/06/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/06/labels/000800.label");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/07/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/07/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/07/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/07/labels/000800.label");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/08/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/08/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/08/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/08/labels/000800.label");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/09/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/09/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/09/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/09/labels/000800.label");
+
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/10/labels/000000.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/10/labels/000200.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/10/labels/000400.label");
+        labels.push_back("/home/julien/Desktop/benchmark_data/benchmark_data/label_sequences/10/labels/000800.label");
     }
+
+    vector<string> files;
 
     // benchmark on files
     int pointCloudsSize = pointClouds.size();
     int labelsSize = labels.size();
+    // for (int i = 0; i < pointCloudsSize; i++)
+    // {
+    //     string pointCloud = getFileName(pointClouds.at(i));
+    //     for (int j = 0; j < labelsSize; j++)
+    //     {
+    //         string label = getFileName(labels.at(j));
+    //         if (pointCloud == label)
+    //         {
+    //             files.push_back(getFileName(pointClouds.at(i)));
+    //             benchmark(pointClouds.at(i), labels.at(j), modeHierarchy, nbSpxVec, metrics);
+    //         }
+    //     }
+    // }
+
     for (int i = 0; i < pointCloudsSize; i++)
     {
-        string pointCloud = getFileName(pointClouds.at(i));
-        for (int j = 0; j < labelsSize; j++)
-        {
-            string label = getFileName(labels.at(j));
-            if (pointCloud == label)
-            {
-                benchmark(pointClouds.at(i), labels.at(j), modeHierarchy, nbSpxVec, metrics);
-            }
-        }
+        files.push_back(getFileName(pointClouds.at(i)));
+        benchmark(pointClouds.at(i), labels.at(i), modeHierarchy, nbSpxVec, metrics);
     }
 
     Gnuplot plt;
 
     plt.set_style("lines");
+    plt.set_title("accuracy on different files");
+    plt.set_legend("right bottom");
     plt.set_xlabel("nbSpx");
     plt.set_ylabel("accuracy");
     vector<double> spx;
@@ -328,9 +438,9 @@ int main(int argc, char **argv)
 
         // save to png the plot with different accuracy for each file
         if (i == _result.begin()->second.size() - 1)
-            plt.savetopng("test");
+            plt.savetopng("filesAccuracy");
 
-        plt.plot_xy(spx, accVec);
+        plt.plot_xy(spx, accVec, files.at(i));
         spx.clear();
         accVec.clear();
     }
@@ -384,8 +494,12 @@ int main(int argc, char **argv)
     plt2.set_style("lines");
     plt2.set_xlabel("nbSpx");
     plt2.set_ylabel("accuracy");
-
+    plt2.set_legend("right bottom");
+    plt2.set_title("average accuracy");
+    plt2.plot_xy(spx, accVec, "average accuracy");
+    //plt2.set_title("notitle");
+    plt2.set_style("points");
     plt2.savetopng("accuracy");
-    plt2.plot_xy(spx, accVec);
+    plt2.plot_xy(spx, accVec, "average accuracy");
     return 0;
 }

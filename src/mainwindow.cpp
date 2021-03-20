@@ -197,7 +197,6 @@ void MainWindow::save()
     if (QfileName == nullptr)
         return;
     string fileName = QfileName.toStdString() + ".label";
-    cout << fileName << endl;
     _pc->saveLabels(fileName);
 }
 
