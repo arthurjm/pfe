@@ -94,6 +94,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(_ui->metric_remission, &QCheckBox::clicked, this, [this]() { updateMetrics(SLIC_METRIC_REMISSION); });
 
     QString fileName = QFileDialog::getOpenFileName(this, "Open a range image", QString("../data/velodyne"), "Binary file (*.bin)");
+    _pc = nullptr;
     if (fileName.isEmpty() || fileName.isNull())
     {
         return;
@@ -139,7 +140,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
 MainWindow::~MainWindow()
 {
-    delete _ui;
+    if (_pc != nullptr)
+        delete _pc;
+    if (_ui != nullptr)
+        delete _ui;
 }
 
 void MainWindow::openFile()
@@ -185,6 +189,11 @@ void MainWindow::openFile()
 
 void MainWindow::openLabels()
 {
+    if (_pc == nullptr)
+    {
+        cerr << "need to load pointcloud file" << endl;
+        return;
+    }
     QString fileName = QFileDialog::getOpenFileName(this, "Open labels", QString("../data/label"), "Label file (*.label)");
     if (fileName == nullptr)
         return;
@@ -193,6 +202,11 @@ void MainWindow::openLabels()
 
 void MainWindow::save()
 {
+    if (_pc == nullptr)
+    {
+        cerr << "need to load pointcloud file" << endl;
+        return;
+    }
     QString QfileName = QFileDialog::getSaveFileName(this, "Save labels", QString("../data"), "Label file (*.label)");
     if (QfileName == nullptr)
         return;
@@ -319,6 +333,11 @@ void MainWindow::updateMetrics(int metric)
 
 void MainWindow::updateColor(Color colorMode)
 {
+    if (_pc == nullptr)
+    {
+        cerr << "need to load pointcloud file " << endl;
+        return;
+    }
     _pc->ChangeColor(colorMode);
     _pclVisualizer->updatePointCloud(_pc->getPointCloud(), "point_cloud");
     _ui->vtkWidget->update();

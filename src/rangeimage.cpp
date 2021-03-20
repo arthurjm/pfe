@@ -18,11 +18,6 @@ void RangeImage::freeData()
 
 RangeImage::RangeImage(RangeImage &ri) : _data(ri._data), _width(ri._width), _height(ri._height)
 {
-    //     _data = (riVertex *)malloc(sizeof(riVertex) * _width * _height);
-    //     for (int i = 0; i < _width * _height; i++)
-    //     {
-    //         _data[i] = ri._data[i];
-    //     }
     for (int i = 0; i < 4; i++)
     {
         _minValue[i] = ri._minValue[i];

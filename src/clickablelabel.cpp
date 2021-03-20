@@ -148,6 +148,11 @@ void ClickableLabel::updateSuperpixels(int pNbSpx)
  */
 void ClickableLabel::updateDisplay()
 {
+    if (_rangeImage.getHeight() == 0 || _rangeImage.getWidth() == 0)
+    {
+        cerr << "invalid range image" << endl;
+        return;
+    }
     Mat display, leftImg, rightImg;
     if (_isScribble)
         leftImg = applyZoom(_coloredImg.clone());
@@ -188,6 +193,12 @@ void ClickableLabel::updateClusters()
 void ClickableLabel::deleteSelection()
 {
 
+    if (_rangeImage.getWidth() == 0 || _rangeImage.getHeight() == 0)
+    {
+        cerr << "invalid range image in ClickableLabel::deleteSelection" << endl;
+        return;
+    }
+
     _slic->clearScribbleClusters();
     _slic->clearSelectedClusters();
 
@@ -201,7 +212,6 @@ void ClickableLabel::deleteSelection()
         _zoomLeftImg = applyZoom(_leftImgContours.clone());
     updateDisplay();
 }
-
 
 /*
  *  Get the global coordinate based on the current zoom, the image coordinate
@@ -545,6 +555,11 @@ void ClickableLabel::setContours(bool showContours)
 cv::Mat ClickableLabel::getDisplayMat(int type, bool isGray, bool interpolate, bool closing, bool equalHist)
 {
     cv::Mat m;
+    if (_rangeImage.getWidth() == 0 || _rangeImage.getHeight() == 0)
+    {
+        cerr << "invalid size of the range image in ClickableLabel::getDisplayMat" << endl;
+        return m;
+    }
     if (type > RI_XYZ || type < RI_X)
     {
         cerr << "Invalide type in ClickableLabel::getDisplayMat, it must in interval from 0 to 6!" << endl;
