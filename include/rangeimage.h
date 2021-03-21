@@ -59,7 +59,7 @@ public:
     /**
      * Default constructor
      * */
-    RangeImage() : _data(nullptr) {}
+    RangeImage() : _data(nullptr), _width(0), _height(0) {}
 
     /**
      * Copy constructor
@@ -214,7 +214,7 @@ private:
     cv::Mat morphErode(cv::Mat img);
 
     // contain the raw datas of the range image
-    riVertex *_data;
+    riVertex *_data = nullptr;
     // contain normalized and intepolated raw data
     std::vector<float> _normalizedAndInterpolatedData;
 

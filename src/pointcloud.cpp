@@ -55,6 +55,12 @@ void PointCloud::createPointCloud(string fileName)
 
 RangeImage PointCloud::generateRangeImage(bool groundTruth, int width, int height)
 {
+    if (_pointCloud->size() == 0)
+    {
+        cerr << "void point cloud need to load pointcloud file" << endl;
+        return RangeImage();
+    }
+
     riVertex *data = (riVertex *)malloc(sizeof(riVertex) * width * height);
     assert(data);
 
@@ -160,7 +166,7 @@ bool PointCloud::openLabels(string fileName)
         }
         else
         {
-            cout << "Invalid size: " << _labels.size() << " labels with " << _pointCloud->size() << " points" << endl;
+            cerr << "Invalid size: " << tmpLabels.size() << " labels with " << _pointCloud->size() << " points" << endl;
         }
         return true;
     }
@@ -186,12 +192,22 @@ bool PointCloud::saveLabels(string fileName)
 
 void PointCloud::ChangeColor(Color colorMode)
 {
+    if (_pointCloud == nullptr)
+    {
+        cerr << "void pointcloud, need to load correct pointcloud file " << endl;
+        return;
+    }
     int i = 0;
 
     switch (colorMode)
     {
     case Color::Projection:
     {
+        if (_pointCloud->size() == 0)
+        {
+            cerr << "void pointcloud, need to load correct pointcloud file " << endl;
+            return;
+        }
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
         {
             it->r = 255;
@@ -212,6 +228,11 @@ void PointCloud::ChangeColor(Color colorMode)
 
     case Color::GroundTruth:
     {
+        if (_labels.size() == 0)
+        {
+            cerr << "void labels, need to load correct label file " << endl;
+            return;
+        }
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
         {
             uint16_t l = _labels.at(i);
@@ -233,7 +254,7 @@ void PointCloud::ChangeColor(Color colorMode)
 
         if (_selectedLabels.size() != _pointCloud->size())
         {
-            cout << "Invalid size: " << _labels.size() << " selected labels with " << _pointCloud->size() << " points" << endl;
+            cerr << "Invalid size: " << _labels.size() << " selected labels with " << _pointCloud->size() << " points" << endl;
             break;
         }
         for (KittiPointCloud::iterator it = _pointCloud->begin(); it != _pointCloud->end(); ++it)
@@ -257,7 +278,7 @@ void PointCloud::ChangeColor(Color colorMode)
         this->getSelectedLabels();
         if (_selectedLabels.size() != _pointCloud->size())
         {
-            cout << "Invalid size: " << _labels.size() << " selected labels with " << _pointCloud->size() << " points" << endl;
+            cerr << "Invalid size: " << _labels.size() << " selected labels with " << _pointCloud->size() << " points" << endl;
             break;
         }
         _projectedLabels = _selectedLabels;
