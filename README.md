@@ -1,7 +1,7 @@
 # Interactive segmentation software for 3D LiDAR pointclouds
 
 
-![](https://drive.google.com/drive/folders/1iS6lTlWG6nOQl46tCKXQkngVCCSiAOxu "Software screenshot example")
+![](https://raw.githubusercontent.com/arthurjm/pfe/main/docs/ri-segmentation-app.png "Software screenshot example")
 
 ## Minimum required dependencies :
 
