@@ -336,7 +336,7 @@ void SuperpixelHierarchy::binaryLabelisationConnected()
                     minFusion = lvl;
             }
         }
-        minFusion = max(1, minFusion); //TODO:CHECK IF NEEDED
+        minFusion = max(1, minFusion);
         int indexObject = _hierarchyClusters(minFusion - 1, obj[i]);
         for (int i = 0; i < _nbClusters; i++)
         {

@@ -19,7 +19,6 @@ ClickableLabel::ClickableLabel(QWidget *parent)
     labelisationMode = 2;
     for (int i = 0; i < 4; ++i)
         _metrics[i] = false;
-    // _sh = new SuperpixelHierarchy();
 }
 
 /*
@@ -27,7 +26,6 @@ ClickableLabel::ClickableLabel(QWidget *parent)
  */
 ClickableLabel::~ClickableLabel()
 {
-    //delete _sh;
     delete _slic;
 }
 
@@ -56,8 +54,7 @@ void ClickableLabel::setImgRef(Mat pImg)
 {
     _imgRef = pImg;
     _coloredImg = pImg;
-    //_imgContours = imread("../../../data/images/bigcat_edge.png");
-    _imgContours = pImg; // changed in the futur
+    _imgContours = pImg;
 }
 
 void ClickableLabel::setRangeImage(RangeImage &ri)
@@ -342,13 +339,11 @@ void ClickableLabel::mouseMoveEvent(QMouseEvent *event)
         if (_isScribble)
         {
             drawLineTo(QPoint(x, y), getObjMarkerColor());
-            // _sh->addObjectCluster(cv::Point2i(x, y));
             _slic->addObjectCluster(cv::Point2i(x, y));
             _slic->multiLabelisationConnected(_currentLabel);
         }
         else
         {
-            // _sh->selectCluster(Point2i(x, y));
             _slic->selectCluster(Point2i(x, y), _currentLabel);
         }
     }
@@ -382,9 +377,7 @@ void ClickableLabel::wheelEvent(QWheelEvent *event)
     {
         if (!_isScribble)
         {
-            // int newLevel = _sh->zoomInHierarchy(_maxLevel);
             _slic->zoomInTree();
-            // updateSuperpixels(newLevel, _sh->getCurrentWeight(), false);
         }
         zoomIn(event->x(), event->y());
     }
@@ -392,13 +385,10 @@ void ClickableLabel::wheelEvent(QWheelEvent *event)
     {
         if (!_isScribble)
         {
-            // int newLevel = _sh->zoomOutHierarchy();
             _slic->zoomOutTree();
-            // updateSuperpixels(newLevel, _sh->getCurrentWeight(), false);
         }
         zoomOut(event->x(), event->y());
     }
-    // updateSlider(_sh->getCurrentLevel());
     updateSuperpixels(_slic->getTreeLevel());
     updateSlider(_slic->getTreeLevel());
     updateDisplay();

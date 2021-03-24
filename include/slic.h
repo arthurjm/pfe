@@ -142,7 +142,6 @@ public:
     int levelOfFusion(int label1, int label2);
 
     /**
-     * 
      * @param pImage
      * */
     void displaySaliency(cv::Mat &pImage);
@@ -152,12 +151,11 @@ public:
      * */
     void displayMultipleSaliency(cv::Mat &pImage);
     /**
-     * 
-     * @param pImage
+     * Display the selected clusters by reducing clusters intensity and changing their contours in red.
+     * @param pImage The target image (cv::Mat).
      * */
     void displayClusters(cv::Mat &pImage);
 
-    /* JL, ZY */
     /**
      * 
      * @param backgroundImage
@@ -172,22 +170,22 @@ public:
     cv::Mat displayGraySelection(cv::Mat pImage);
 
     /**
-     * 
-     * @param pImage
-     * @param pImageRef
+     * Display the selected clusters on pImage by filling them with pixels values of pImageRef.
+     * @param pImage the target image (cv::Mat)  
+     * @param pImageRef the source image (cv::Mat)
      * */
     void getAndDisplaySelection(cv::Mat &pImage, const cv::Mat pImageRef);
 
     /* Functions relative to the selection/deselection of superpixels */
     /**
-     * 
-     * @param pPos
-     * @param label
+     * Add the superpixel containing the pixel pPos to the list of selected clusters if not yet done.
+     * @param pPos clicked position 
+     * @param label current label
      * */
     void selectCluster(cv::Point2i pPos, int label);
     /**
-     * 
-     * @param pPos
+     * Erase the superpixel containing the pixel pPos from the list of selected clusters if not yet done.
+     * @param pPos The pixel clicked.
      * */
     void deselectCluster(cv::Point2i pPos);
 
@@ -219,20 +217,22 @@ public:
 
     /* Return the selected region */
     /**
-     * 
-     * @param pImage
+     *  Fill in an image with white for pixels out of the selected region and with the pixel values in pImage for others.
+     * @param pImage The reference image (cv::Mat).
+     * @return The image (cv::Mat) representing the selected region of pImage.
      * */
     cv::Mat getRoiSelection(const cv::Mat pImage);
     /* Adapt selection of new segmentation from the current one */
 
     /**
-     * 
+     * Adapt selection of new segmentation from the current one (ie pOldSlic selection).
      * */
     void spreadSelection();
     /* Return the list of superpixels labels neighbours of a superpixel given by its label */
     /**
-     * 
-     * @param pLabelSpx
+     * Search for the neighbours of a superpixel given its label.
+     * @param pLabelSpx  The label (int) of the superpixel to process.
+     * @return The neighbours superpixels labels (vector<int>) of the superpixel to process.
      * */
     vector<int> findLabelNeighbours(size_t pLabelSpx);
 
@@ -333,15 +333,14 @@ private:
      * */
     void initData();
     /**
-     * 
-     * @param pCols
-     * @param pRows
+     * Initialisation of _cls from _nbLabels and _clusters.
+     * @param pCols image width
+     * @param pRows image height
      * */
     void initCls(int pCols, int pRows);
 
     /* The step size per cluster, and the colour (nc) and distance (ns)
      * parameters. */
-    // TODO: delete nc (weight)
     int _step, _nc;
     unsigned int _nbLabels = 0;
 

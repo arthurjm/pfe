@@ -413,7 +413,7 @@ void Slic::createHierarchy(bool metrics[4])
 
     cv::Mat_<int> L = _clusters.clone().reshape(1, h * w);
 
-    //_nbLabels = _nbLabels +1 ; // TODO : try to remove +1
+    
 
     _labelVec.assign(_nbLabels, -1);
     float comp_factor = 100.0 / (h * w);
@@ -744,12 +744,7 @@ int Slic::levelOfFusion(int label1, int label2)
     }
     return -1;
 }
-/*
- * Display the cluster centers.
- *
- * Input : The image to display upon (cv::Mat) and the colour (cv::Vec3b).
- * Output: -
- */
+
 void Slic::displayCenterGrid(cv::Mat &pImage, cv::Scalar pColour)
 {
     for (int i = 0; i < _centers.rows; i++)
@@ -758,12 +753,7 @@ void Slic::displayCenterGrid(cv::Mat &pImage, cv::Scalar pColour)
     }
 }
 
-/*
- * Display a single pixel wide contour around the clusters.
- *
- * Input : The target image (cv::Mat) and contour colour (cv::Vec3b).
- * Output: -
- */
+
 void Slic::displayContours(cv::Mat &pImage, cv::Vec3b pColour)
 {
     const int dc8[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
@@ -895,13 +885,6 @@ void Slic::displayMultipleSaliency(cv::Mat &pImage)
     treeLevel = save;
 }
 
-/*
- * Give the pixels of each cluster the same colour values. The specified colour
- * is the mean RGB colour per cluster.
- *
- * Input : The target image (cv::Mat).
- * Output: -
- */
 void Slic::colourWithClusterMeans(cv::Mat &pImage)
 {
     vector<cv::Vec3i> colours(_centers.rows);
@@ -940,12 +923,6 @@ void Slic::colourWithClusterMeans(cv::Mat &pImage)
     }
 }
 
-/*
- * Display the selected clusters by reducing clusters intensity and changing their contours in red.
- *
- * Input : The target image (cv::Mat).
- * Output: -
- */
 void Slic::displayClusters(cv::Mat &pImage)
 {
     for (unsigned int index = 0; index < _selectedClusters.size(); ++index)
@@ -970,12 +947,6 @@ void Slic::displayClusters(cv::Mat &pImage)
     }
 }
 
-/*
- * Display the selected clusters on pImage by filling them with pixels values of pImageRef.
- *
- * Input : The target image (cv::Mat) and the source image (cv::Mat).
- * Output: -
- */
 void Slic::getAndDisplaySelection(cv::Mat &pImage, const cv::Mat pImageRef)
 {
     for (unsigned int index = 0; index < _selectedClusters.size(); ++index)
@@ -1047,12 +1018,6 @@ cv::Mat Slic::displayGraySelection(cv::Mat pImage)
     return output;
 }
 
-/*
- * Add the superpixel containing the pixel pPos to the list of selected clusters if not yet done.
- *
- * Input : The pixel (cv::Point2i) clicked.
- * Output: 0 if the superpixel has been already selected, 1 if not.
- */
 void Slic::selectCluster(cv::Point2i pPos, int label)
 {
     int indexCluster = labelOfPixel(pPos.y, pPos.x);
@@ -1083,12 +1048,6 @@ void Slic::selectCluster(cv::Point2i pPos, int label)
     }
 }
 
-/*
- * Erase the superpixel containing the pixel pPos from the list of selected clusters if not yet done.
- *
- * Input : The pixel (cv::Point2i) clicked.
- * Output: 1 if the superpixel has been already deselected, 0 if not.
- */
 void Slic::deselectCluster(cv::Point2i pPos)
 {
     int indexCluster = labelOfPixel(pPos.y, pPos.x);
@@ -1155,12 +1114,6 @@ void Slic::clearSelectedClusters()
     _selectedClusters.clear();
 }
 
-/*
- * Fill in an image with white for pixels out of the selected region and with the pixel values in pImage for others.
- *
- * Input : The reference image (cv::Mat).
- * Output: The image (cv::Mat) representing the selected region of pImage.
- */
 cv::Mat Slic::getRoiSelection(const cv::Mat pImage)
 {
     cv::Mat imgToSave(pImage.rows, pImage.cols, CV_8UC3, cv::Scalar(255, 255, 255));
@@ -1168,12 +1121,7 @@ cv::Mat Slic::getRoiSelection(const cv::Mat pImage)
     return imgToSave;
 }
 
-/*
- * Initialisation of _cls from _nbLabels and _clusters.
- *
- * Input : The size (int,int) of the image.
- * Output: -
- */
+
 void Slic::initCls(int pRows, int pCols)
 {
     vector<vector<pair<int, int>>> new_cls(_nbLabels);
@@ -1196,12 +1144,7 @@ void Slic::initCls(int pRows, int pCols)
     }
 }
 
-/*
- * Adapt selection of new segmentation from the current one (ie pOldSlic selection).
- *
- * Input : The slic (Slic) which contains the selected clusters to spread.
- * Output: -
- */
+
 void Slic::spreadSelection()
 {
     for (size_t spx_label = 0; spx_label < _cls.size(); ++spx_label)
@@ -1226,12 +1169,7 @@ void Slic::spreadSelection()
     }
 }
 
-/*
- * Search for the neighbours of a superpixel given its label.
- *
- * Input : The label (int) of the superpixel to process.
- * Output: The neighbours superpixels labels (vector<int>) of the superpixel to process.
- */
+
 vector<int> Slic::findLabelNeighbours(size_t pLabelSpx)
 {
     vector<int> neighLabels;
