@@ -74,7 +74,7 @@ void SuperpixelHierarchy::getLevels(int *parent, int *treeu, int *treev, int &nv
     _hierarchyClusters = cv::Mat(levels.size(), _nbClusters, CV_32FC1);
 
     int lvl;
-    for (int n = 0; n < levels.size(); n++)
+    for (size_t n = 0; n < levels.size(); n++)
     {
         lvl = levels[n];
         if (lvl < 1 || lvl > nvertex)
@@ -115,7 +115,7 @@ void SuperpixelHierarchy::getLevels(int *parent, int *treeu, int *treev, int &nv
         }
     }
     _hierarchyPixels = tree;
-    for (int n = 0; n < levels.size(); n++)
+    for (size_t n = 0; n < levels.size(); n++)
     {
         for (int i = 0; i < nvertex; ++i)
         {
@@ -129,7 +129,7 @@ void SuperpixelHierarchy::initPic()
 {
     vector<vector<pair<int, int>>> pic(_nbClusters);
     vector<pair<int, int>> tmp;
-    for (unsigned int i = 0; i < _nbClusters; i++)
+    for (int i = 0; i < _nbClusters; i++)
     {
         pic[i] = tmp;
     }
@@ -308,7 +308,7 @@ void SuperpixelHierarchy::displaySaliency(cv::Mat &pImage, int n)
 cv::Mat SuperpixelHierarchy::displayAllSaliency(cv::Mat pImage)
 {
     cv::Mat output = pImage.clone();
-    for (int n = 0; n < levels.size() - 1; n++)
+    for (size_t n = 0; n < levels.size() - 1; n++)
     {
         displaySaliency(output, n);
     }
@@ -322,14 +322,14 @@ void SuperpixelHierarchy::binaryLabelisationConnected()
     _selectedClusters.clear();
     int lvl, minFusion;
 
-    for (int i = 0; i < obj.size(); i++)
+    for (size_t i = 0; i < obj.size(); i++)
     {
         if (bg.empty())
             minFusion = levels.size() - 1;
         else
         {
             minFusion = INT_MAX;
-            for (int j = 0; j < bg.size(); j++)
+            for (size_t j = 0; j < bg.size(); j++)
             {
                 lvl = levelOfFusion(obj[i], bg[j]);
                 if (lvl < minFusion)
@@ -351,10 +351,10 @@ void SuperpixelHierarchy::binaryLabelisationConnected()
     }
 
     //Connexity, not sure if 100% needed
-    for (int i = 0; i < bg.size(); i++)
+    for (size_t i = 0; i < bg.size(); i++)
     {
         minFusion = INT_MAX;
-        for (int j = 0; j < obj.size(); j++)
+        for (size_t j = 0; j < obj.size(); j++)
         {
             lvl = levelOfFusion(bg[i], obj[j]);
             if (lvl < minFusion)
@@ -378,7 +378,7 @@ void SuperpixelHierarchy::binaryLabelisationConnected()
 cv::Mat SuperpixelHierarchy::displaySelection(cv::Mat backgroundImage, cv::Mat selectionImage)
 {
     cv::Mat output = backgroundImage.clone();
-    for (int index = 0; index < _selectedClusters.size(); index++)
+    for (size_t index = 0; index < _selectedClusters.size(); index++)
     {
         for (int cluster = 0; cluster < _nbClusters; cluster++)
         {
@@ -399,7 +399,7 @@ cv::Mat SuperpixelHierarchy::displaySelection(cv::Mat backgroundImage, cv::Mat s
 cv::Mat SuperpixelHierarchy::displayGreySelection(cv::Mat pImage)
 {
     cv::Mat output = pImage.clone();
-    for (int index = 0; index < _selectedClusters.size(); index++)
+    for (size_t index = 0; index < _selectedClusters.size(); index++)
     {
         for (int cluster = 0; cluster < _nbClusters; cluster++)
         {
@@ -463,7 +463,7 @@ void SuperpixelHierarchy::deselectCluster(cv::Point2i pPos)
 
 int SuperpixelHierarchy::levelOfFusion(int label1, int label2)
 {
-    for (int lvl = 0; lvl < levels.size(); lvl++)
+    for (size_t lvl = 0; lvl < levels.size(); lvl++)
     {
         if (_hierarchyClusters(lvl, label1) == _hierarchyClusters(lvl, label2))
             return lvl;
